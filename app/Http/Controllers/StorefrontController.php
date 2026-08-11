@@ -12,7 +12,7 @@ class StorefrontController extends Controller
     {
         $categories = Category::where('status', 'active')->limit(4)->get();
         $featuredProducts = Product::where('is_active', true)
-                                   ->where('is_featured', true)
+                                   ->latest()
                                    ->limit(8)
                                    ->get();
         
@@ -22,11 +22,14 @@ class StorefrontController extends Controller
     public function shop(Request $request)
     {
         $query = Product::where('is_active', true);
+        $currentCategory = null;
         
         if ($request->filled('category')) {
-            $query->whereHas('category', function($q) use ($request) {
-                $q->where('slug', $request->category);
-            });
+            $cat = Category::where('slug', $request->category)->first();
+            if ($cat) {
+                $currentCategory = $cat;
+                $query->whereIn('category_id', $cat->getAllDescendantIds());
+            }
         }
 
         if ($request->filled('max_price')) {
@@ -38,7 +41,22 @@ class StorefrontController extends Controller
         }
 
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%');
+            $search = $request->q;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('brand', function($q3) use ($search) {
+                      $q3->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('category', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhereHas('parent', function($p1) use ($search) {
+                             $p1->where('name', 'like', "%{$search}%")
+                                ->orWhereHas('parent', function($p2) use ($search) {
+                                    $p2->where('name', 'like', "%{$search}%");
+                                });
+                         });
+                  });
+            });
         }
 
         if ($request->filled('sort')) {
@@ -57,9 +75,8 @@ class StorefrontController extends Controller
         }
         
         $products = $query->paginate(12)->withQueryString();
-        $categories = Category::where('status', 'active')->get();
         
-        return view('store.shop', compact('products', 'categories'));
+        return view('store.shop', compact('products', 'currentCategory'));
     }
 
     public function product($slug)

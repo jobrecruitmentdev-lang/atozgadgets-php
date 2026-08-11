@@ -36,13 +36,19 @@
         </div>
         <nav class="sidebar-nav">
             <a href="{{ route('account.dashboard') }}" class="nav-link {{ request()->routeIs('account.dashboard') ? 'active' : '' }}">
-                <i data-lucide="layout-dashboard"></i> Dashboard
+                <i data-lucide="user"></i> My Profile
             </a>
             <a href="{{ route('account.orders') }}" class="nav-link {{ request()->routeIs('account.orders') ? 'active' : '' }}">
                 <i data-lucide="shopping-bag"></i> My Orders
             </a>
             <a href="{{ route('account.addresses') }}" class="nav-link {{ request()->routeIs('account.addresses') ? 'active' : '' }}">
                 <i data-lucide="map-pin"></i> Addresses
+            </a>
+            <form id="logout-form-account" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
+            <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form-account').submit();" style="color: #ef4444; margin-top: 20px;">
+                <i data-lucide="log-out"></i> Logout
             </a>
         </nav>
     </aside>

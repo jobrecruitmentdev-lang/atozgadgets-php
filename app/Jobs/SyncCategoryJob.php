@@ -34,16 +34,10 @@ class SyncCategoryJob implements ShouldQueue
     {
         if (!$this->category->cj_keyword) return;
 
-        $subcategoryId = $this->category->subcategories->first()?->id;
-        if (!$subcategoryId) {
-            Log::warning("[SyncCategoryJob] Skipping {$this->category->name}: no subcategories.");
-            return;
-        }
-
         Log::info("[SyncCategoryJob] Processing {$this->category->name}...");
 
         for ($page = 1; $page <= $this->pagesPerCategory; $page++) {
-            $hasMore = CjSyncService::processCategoryPage($this->category, $subcategoryId, $page);
+            $hasMore = CjSyncService::processCategoryPage($this->category, $page);
             if (!$hasMore) {
                 break;
             }

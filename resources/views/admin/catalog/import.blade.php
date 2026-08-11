@@ -67,6 +67,19 @@
     th { text-align: left; padding: 16px 24px; font-size: 12px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color); background: rgba(128,128,128,0.02); }
     td { padding: 16px 24px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
     .badge-cj { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.2); display: inline-flex; align-items: center; gap: 4px; }
+    
+    .action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 4px; display: inline-flex; }
+    .action-btn:hover { color: var(--text-primary); background: rgba(128,128,128,0.1); }
+    .action-btn.delete:hover { color: #ef4444; }
+
+    /* Modal / Form */
+    .form-container { display: none; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .form-header h2 { font-size: 18px; font-weight: 700; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+    .modal-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 </style>
 
 <div class="page-header">
@@ -86,6 +99,88 @@
             <i data-lucide="sparkles" style="width:16px;"></i> Fetch New Products from CJ
         </button>
     </div>
+</div>
+
+@if(session('success'))
+    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(16,185,129,0.2);">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #ef4444; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        <ul style="margin: 0; padding-left: 20px;">
+            @foreach($errors->all() as $error)
+                <li style="font-size: 13px;">{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if(session('error'))
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #dc2626; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        {{ session('error') }}
+    </div>
+@endif
+
+<div class="form-container" id="productForm">
+    <div class="form-header">
+        <h2>Edit Product</h2>
+        <button class="action-btn" onclick="toggleForm()"><i data-lucide="x" style="width:20px;"></i></button>
+    </div>
+    <form action="" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Slug</label>
+                <input type="text" name="slug" required>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px; margin-top: 16px;">
+            <label>Description</label>
+            <textarea name="description" rows="3" style="padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); font-size: 14px; outline: none;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label>Image URL</label>
+            <input type="url" name="thumbnail_image" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Price ($)</label>
+                <input type="number" step="0.01" name="price" required>
+            </div>
+            <div class="form-group">
+                <label>Stock Quantity</label>
+                <input type="number" name="stock_quantity" required>
+            </div>
+        </div>
+        <div class="form-grid" style="margin-top: 16px;">
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category_id" required>
+                    <option value="">Select Category</option>
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Brand (Optional)</label>
+                <select name="brand_id">
+                    <option value="">Select Brand</option>
+                    @foreach($brands as $brand)
+                        <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <button type="submit" style="margin-top: 24px; padding: 10px 24px; border-radius: 8px; font-weight: 600; background: var(--accent); color: white; border: none; cursor: pointer;">Update Product</button>
+    </form>
 </div>
 
 <!-- STAGED PRODUCTS TAB -->
@@ -121,12 +216,9 @@
                             <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ $prod->sku }}</td>
                             <td style="font-weight: 700; color: var(--accent);">${{ number_format($prod->price, 2) }}</td>
                             <td><span class="badge-cj"><i data-lucide="sparkles" style="width:10px;"></i> CJ Dropship</span></td>
-                            <td style="text-align: right;">
-                                <form action="{{ route('admin.catalog.products.destroy', $prod->id) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer;"><i data-lucide="trash-2" style="width:16px;"></i></button>
-                                </form>
+                            <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                                <button class="action-btn" onclick="openEditProduct({{ json_encode($prod) }})"><i data-lucide="edit" style="width:16px;"></i></button>
+                                <button class="action-btn delete" onclick="showDeleteConfirm({{ $prod->id }}, '{{ addslashes($prod->name) }}')" title="Delete Product"><i data-lucide="trash-2" style="width:16px;"></i></button>
                             </td>
                         </tr>
                     @endforeach
@@ -169,10 +261,60 @@
         </div>
     </div>
     
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 600;" id="resultsCount">0 Products Found</h3>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <label style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Sort by:</label>
+            <select id="sortSelect" onchange="sortAndRenderResults()" style="padding: 8px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px; outline: none; cursor: pointer;">
+                <option value="best_match">Best Match</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="newest">Newest First</option>
+                <option value="lists">Most Listed (Lists)</option>
+                <option value="inventory">Inventory (Highest)</option>
+            </select>
+        </div>
+    </div>
+
     <div id="resultsGrid" class="results-grid"></div>
 </div>
 
 <script>
+    function toggleForm() {
+        const form = document.getElementById('productForm');
+        form.style.display = 'none';
+    }
+
+    function openEditProduct(product) {
+        const form = document.getElementById('productForm');
+        const formEl = form.querySelector('form');
+        
+        formEl.action = `/admin/catalog/products/${product.id}`;
+        
+        formEl.querySelector('input[name="name"]').value = product.name;
+        formEl.querySelector('input[name="slug"]').value = product.slug;
+        formEl.querySelector('textarea[name="description"]').value = product.description || '';
+        formEl.querySelector('input[name="price"]').value = product.price;
+        formEl.querySelector('input[name="stock_quantity"]').value = product.stock_quantity;
+        formEl.querySelector('select[name="category_id"]').value = product.category_id;
+        formEl.querySelector('select[name="brand_id"]').value = product.brand_id || '';
+        formEl.querySelector('input[name="thumbnail_image"]').value = product.thumbnail_image || '';
+        
+        form.style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showDeleteConfirm(id, name) {
+        const modal = document.getElementById('deleteConfirmModal');
+        document.getElementById('deleteProductName').innerText = name;
+        document.getElementById('deleteForm').action = `/admin/catalog/products/${id}`;
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
     function switchTab(tab) {
         document.getElementById('tab-staged').classList.remove('active');
         document.getElementById('tab-fetch').classList.remove('active');
@@ -202,8 +344,10 @@
             
             if(data.data && data.data.list && data.data.list.length > 0) {
                 searchResults = data.data.list;
-                renderResults();
+                document.getElementById('resultsCount').innerText = `${searchResults.length} Products Found`;
+                sortAndRenderResults();
             } else {
+                document.getElementById('resultsCount').innerText = `0 Products Found`;
                 resultsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">No products found matching your search.</div>`;
             }
         } catch (error) {
@@ -213,6 +357,34 @@
         searchBtn.disabled = false;
         searchBtn.innerHTML = `<i data-lucide="trending-up" style="width:16px;"></i> Fetch Products`;
         lucide.createIcons();
+    }
+    
+    function sortAndRenderResults() {
+        const sortBy = document.getElementById('sortSelect').value;
+        
+        searchResults.sort((a, b) => {
+            const priceA = parseFloat(a.sellPrice) || 0;
+            const priceB = parseFloat(b.sellPrice) || 0;
+            const listedA = parseInt(a.listedNum) || 0;
+            const listedB = parseInt(b.listedNum) || 0;
+            const createTimeA = parseInt(a.createTime) || 0;
+            const createTimeB = parseInt(b.createTime) || 0;
+            const inventoryA = parseFloat(a.productWeight) || 0; 
+            const inventoryB = parseFloat(b.productWeight) || 0; 
+            
+            switch(sortBy) {
+                case 'price_asc': return priceA - priceB;
+                case 'price_desc': return priceB - priceA;
+                case 'newest': return createTimeB - createTimeA;
+                case 'lists': return listedB - listedA;
+                case 'inventory': return inventoryB - inventoryA; // CJ doesn't expose exact inventory in list, fallback to best match
+                case 'best_match':
+                default:
+                    return 0; // Keep original order
+            }
+        });
+        
+        renderResults();
     }
     
     function renderResults() {
@@ -311,4 +483,25 @@
     .lucide-spin { animation: lucide-spin 2s linear infinite; }
     @keyframes lucide-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
+
+<!-- Custom Delete Modal -->
+<div class="modal-overlay" id="deleteConfirmModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Confirm Delete</h3>
+            <button onclick="closeDeleteConfirm()" style="background:none; border:none; cursor:pointer; color: var(--text-secondary);"><i data-lucide="x" style="width:20px;"></i></button>
+        </div>
+        <div style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+            Are you sure you want to delete <strong id="deleteProductName" style="color: var(--text-primary);"></strong>? This action cannot be undone.
+        </div>
+        <form id="deleteForm" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            <div style="display:flex; justify-content:flex-end; gap: 12px;">
+                <button type="button" onclick="closeDeleteConfirm()" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); background:transparent; color: var(--text-secondary); cursor:pointer; font-weight: 600; font-size: 13px;">Cancel</button>
+                <button type="submit" style="background: #ef4444; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer;">Delete Product</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

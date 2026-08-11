@@ -109,6 +109,15 @@
         .card-title { font-size: 17px; font-weight: 600; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.2px; line-height: 1.4; color: #fff; }
         .card-price { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 20px; text-shadow: 0 2px 10px rgba(201,169,98,0.2); }
 
+        /* Pagination CSS Fixes for Tailwind Default View */
+        nav[role="navigation"] { display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-top: 40px; }
+        nav[role="navigation"] svg { width: 20px; height: 20px; }
+        nav[role="navigation"] p { display: none; }
+        nav[role="navigation"] .flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        nav[role="navigation"] a, nav[role="navigation"] span { padding: 10px 16px; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--text-primary); transition: all 0.3s; text-decoration: none; }
+        nav[role="navigation"] a:hover { background: rgba(201,169,98,0.1); border-color: var(--accent); }
+        nav[role="navigation"] span[aria-current="page"] { background: var(--accent); color: #000; font-weight: 700; border-color: var(--accent); }
+
         /* Footer Ported */
         footer { background: #000; color: #fff; padding: 60px 0 30px; margin-top: 80px; border-top: 1px solid var(--glass-border); position: relative; overflow: hidden; }
         footer::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 50%; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.5; }
@@ -144,24 +153,49 @@
                     <img src="{{ asset('brand/atoz-logo.png') }}" alt="AtoZ Gadgetz Logo" style="width: auto; height: 80px; border-radius: 0; filter: none; mix-blend-mode: screen;">
                 </a>
 
-                <div class="search-bar">
-                    <i data-lucide="search"></i>
-                    <input type="text" placeholder="Search for gadgets, accessories...">
-                </div>
+                <form action="{{ route('store.shop') }}" method="GET" class="search-bar">
+                    <button type="submit" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center;">
+                        <i data-lucide="search"></i>
+                    </button>
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search for gadgets, accessories...">
+                </form>
 
                 <div class="nav-icons">
-                    <a href="{{ route('login') }}" class="icon-btn" aria-label="Account"><i data-lucide="user"></i></a>
-                    
+                    @auth
+                        @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+                            <a href="{{ route('admin.dashboard') }}" class="icon-btn" aria-label="Admin Dashboard" title="Admin Dashboard" style="{{ request()->routeIs('admin.dashboard') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.1);' : '' }}">
+                                <i data-lucide="user-check"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('account.dashboard') }}" class="icon-btn" aria-label="Account" title="My Account" style="{{ request()->routeIs('account.dashboard') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.1);' : '' }}">
+                                <i data-lucide="user-check"></i>
+                            </a>
+                        @endif
+                    @else
+                        <a href="{{ route('login') }}" class="icon-btn" aria-label="Login" title="Login" style="{{ request()->routeIs('login') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.1);' : '' }}">
+                            <i data-lucide="user"></i>
+                        </a>
+                    @endauth
+
                     <a href="#" class="icon-btn" aria-label="Wishlist">
                         <i data-lucide="heart"></i>
                     </a>
 
-                    <a href="{{ route('store.cart') }}" class="icon-btn" aria-label="Cart">
+                    <a href="{{ route('store.cart') }}" class="icon-btn" aria-label="Cart" style="{{ request()->routeIs('store.cart') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.1);' : '' }}">
                         <i data-lucide="shopping-cart"></i>
                         @if(session('cart') && count(session('cart')) > 0)
                             <span class="badge">{{ count(session('cart')) }}</span>
                         @endif
                     </a>
+                    
+                    @auth
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline-flex; align-items: center;">
+                        @csrf
+                        <button type="submit" class="icon-btn" aria-label="Logout" title="Logout" style="border: none; background: transparent; cursor: pointer; padding: 0;">
+                            <i data-lucide="log-out" style="color: #ef4444; width: 22px; height: 22px;"></i>
+                        </button>
+                    </form>
+                    @endauth
                 </div>
             </div>
         </div>
@@ -169,31 +203,40 @@
         <div class="categories-row">
             <div class="container">
                 <nav class="categories-nav">
-                    <a href="{{ route('store.shop') }}" class="cat-link">All Products</a>
+                    <a href="{{ route('store.shop') }}" class="cat-link" style="{{ request()->routeIs('store.shop') && !request()->hasAny(['category', 'sort', 'max_price']) ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">All Products</a>
                     
-                    <div class="mega-dropdown">
-                        <a href="{{ route('store.shop', ['category' => 'electronics']) }}" class="cat-link">Electronics <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
-                        <div class="mega-menu">
-                            <a href="{{ route('store.shop', ['category' => 'mobile-accessories']) }}">Mobile Accessories</a>
-                            <a href="{{ route('store.shop', ['category' => 'smartwatches']) }}">Smartwatches</a>
-                            <a href="{{ route('store.shop', ['category' => 'gaming']) }}">Gaming</a>
-                        </div>
-                    </div>
+                    @if(isset($globalCategories))
+                        @foreach($globalCategories as $cat)
+                            @if($cat->children->count() > 0)
+                                <div class="mega-dropdown">
+                                    <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link" style="{{ request('category') == $cat->slug ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">
+                                        {{ $cat->name }} <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
+                                    </a>
+                                    <div class="mega-menu">
+                                        @foreach($cat->children as $child)
+                                            <div>
+                                                <a href="{{ route('store.shop', ['category' => $child->slug]) }}" style="padding: 10px 16px; font-weight: 700; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; display: block; text-decoration: none; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">{{ $child->name }}</a>
+                                                @if($child->children->count() > 0)
+                                                    @include('store.partials.mega_tree', ['categories' => $child->children, 'depth' => 0])
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link" style="{{ request('category') == $cat->slug ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">
+                                    {{ $cat->name }}
+                                </a>
+                            @endif
+                        @endforeach
+                    @endif
 
                     <div class="mega-dropdown">
-                        <a href="{{ route('store.shop', ['category' => 'smart-home']) }}" class="cat-link">Smart Home <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
+                        <a href="{{ route('store.shop', ['sort' => 'price_asc']) }}" class="cat-link" style="{{ request('sort') == 'price_asc' || request('sort') == 'discount_desc' || request()->has('max_price') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">Deals <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
                         <div class="mega-menu">
-                            <a href="{{ route('store.shop', ['category' => 'security-cameras']) }}">Security Cameras</a>
-                            <a href="{{ route('store.shop', ['category' => 'home-automation']) }}">Home Automation</a>
-                        </div>
-                    </div>
-
-                    <div class="mega-dropdown">
-                        <a href="{{ route('store.shop', ['sort' => 'price_asc']) }}" class="cat-link" style="color: var(--accent);">Deals <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
-                        <div class="mega-menu">
-                            <a href="{{ route('store.shop', ['max_price' => 10]) }}">Under $10</a>
-                            <a href="{{ route('store.shop', ['max_price' => 50]) }}">Under $50</a>
-                            <a href="{{ route('store.shop', ['sort' => 'discount_desc']) }}">Limited Offers</a>
+                            <a href="{{ route('store.shop', ['max_price' => 10]) }}" style="{{ request('max_price') == 10 ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Under $10</a>
+                            <a href="{{ route('store.shop', ['max_price' => 50]) }}" style="{{ request('max_price') == 50 ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Under $50</a>
+                            <a href="{{ route('store.shop', ['sort' => 'discount_desc']) }}" style="{{ request('sort') == 'discount_desc' ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Limited Offers</a>
                         </div>
                     </div>
                 </nav>

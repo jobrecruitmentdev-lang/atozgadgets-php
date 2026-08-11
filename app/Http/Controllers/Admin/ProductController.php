@@ -11,6 +11,11 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'admin']);
+    }
+
     public function index(Request $request)
     {
         $query = Product::query();
@@ -56,8 +61,8 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'stock_quantity' => 'required|integer',
             'category_id' => 'required|integer',
-            'subcategory_id' => 'nullable|integer',
             'brand_id' => 'nullable|integer',
+            'thumbnail_image' => 'nullable|string|max:255',
         ]);
 
         $validated['sku'] = 'MAN-' . strtoupper(Str::random(6));
@@ -82,8 +87,8 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'stock_quantity' => 'required|integer',
             'category_id' => 'required|integer',
-            'subcategory_id' => 'nullable|integer',
             'brand_id' => 'nullable|integer',
+            'thumbnail_image' => 'nullable|string|max:255',
         ]);
 
         $product->update($validated);
@@ -94,8 +99,12 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-        $product->delete();
-
-        return redirect()->route('admin.catalog.products')->with('success', 'Product deleted successfully.');
+        
+        try {
+            $product->delete();
+            return redirect()->route('admin.catalog.products')->with('success', 'Product deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('admin.catalog.products')->with('error', 'Unable to delete product due to database constraints: ' . $e->getMessage());
+        }
     }
 }

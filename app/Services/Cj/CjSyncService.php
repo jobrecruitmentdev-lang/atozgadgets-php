@@ -14,7 +14,7 @@ class CjSyncService
      * Processes a single page of CJ API results using O(1) Bulk Upserts.
      * This eliminates the N+1 query problem by doing exactly 3 queries per 20 items.
      */
-    public static function processCategoryPage($category, $subcategoryId, $page)
+    public static function processCategoryPage($category, $page)
     {
         try {
             $result = CjProductService::searchProducts($category->cj_keyword, $page, 20);
@@ -42,7 +42,6 @@ class CjSyncService
 
                 $productUpserts[] = [
                     'category_id' => $category->id,
-                    'subcategory_id' => $subcategoryId,
                     'name' => $name,
                     'slug' => Str::slug(substr($name, 0, 40)) . '-' . substr(md5($sku), 0, 6),
                     'sku' => $sku,

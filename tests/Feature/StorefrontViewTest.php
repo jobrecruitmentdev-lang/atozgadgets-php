@@ -40,9 +40,24 @@ class StorefrontViewTest extends TestCase
      */
     public function test_single_product_loads()
     {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@test.com'],
+            [
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'mobile' => '1234567890',
+                'role_id' => 1,
+                'password' => 'secret',
+                'is_active' => true
+            ]
+        );
         $category = \App\Models\Category::firstOrCreate(
             ['slug' => 'tech-test-slug'],
             ['name' => 'Tech Test', 'status' => 'active']
+        );
+        $subcategory = \App\Models\SubCategory::firstOrCreate(
+            ['slug' => 'tech-sub-test-slug'],
+            ['category_id' => $category->id, 'name' => 'Tech Sub Test', 'status' => 'active']
         );
         $product = \App\Models\Product::firstOrCreate(
             ['slug' => 'smart-watch-test'],
@@ -51,8 +66,8 @@ class StorefrontViewTest extends TestCase
                 'sku' => 'SKU-SMART-WATCH-TEST',
                 'price' => 199.99,
                 'category_id' => $category->id,
-                'subcategory_id' => 1,
-                'created_by' => 1,
+                'subcategory_id' => $subcategory->id,
+                'created_by' => $user->id,
                 'is_active' => true
             ]
         );

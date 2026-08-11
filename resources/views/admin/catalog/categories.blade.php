@@ -30,14 +30,24 @@
 
 <div class="page-header">
     <h1 class="page-title">Categories ({{ $categories->count() }})</h1>
-    <button class="btn-primary" onclick="openModal()">
+    <button class="btn-primary" onclick="openAddCategory()">
         <i data-lucide="plus" style="width:16px;"></i> Add Category
     </button>
 </div>
 
 @if(session('success'))
-    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(16,185,129,0.2);">
+    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(16,185,129,0.2);">
         {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #ef4444; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        <ul style="margin: 0; padding-left: 20px;">
+            @foreach($errors->all() as $error)
+                <li style="font-size: 13px;">{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
 @endif
 
@@ -61,7 +71,7 @@
         <tbody>
             @forelse($categories as $cat)
                 <tr>
-                    <td style="font-weight: 600;">{{ $cat->name }}</td>
+                    <td style="font-weight: 600;">{{ $cat->full_path }}</td>
                     <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ $cat->slug }}</td>
                     <td>{{ $cat->products_count }} products</td>
                     <td><span class="badge-status">{{ ucfirst($cat->status ?? 'active') }}</span></td>
@@ -70,23 +80,18 @@
                             <i data-lucide="filter" style="width:14px;"></i> Products ({{ $cat->products_count }})
                         </a>
 
+                        <button type="button" style="background:none; border:none; color: var(--accent); cursor:pointer; padding: 6px; display: inline-flex; align-items: center;" onclick="openEditCategory({{ json_encode($cat) }})" title="Edit Category">
+                            <i data-lucide="edit" style="width:16px;"></i>
+                        </button>
+
                         @if($cat->products_count > 0)
-                            <form action="{{ route('admin.catalog.categories.destroy', $cat->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <input type="hidden" name="force" value="1">
-                                <button type="submit" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #ef4444; padding: 6px 10px; border-radius: 6px; cursor:pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" onclick="return confirm('⚠️ WARNING: Category \'{{ $cat->name }}\' contains {{ $cat->products_count }} product(s).\n\nDeleting will PERMANENTLY ERASE this category and ALL {{ $cat->products_count }} associated product(s).\n\nDo you want to proceed?')">
-                                    <i data-lucide="trash-2" style="width:14px;"></i> Delete All
-                                </button>
-                            </form>
+                            <button type="button" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #ef4444; padding: 6px 10px; border-radius: 6px; cursor:pointer; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" onclick="showCategoryDeleteConfirm({{ $cat->id }}, '{{ addslashes($cat->name) }}', {{ $cat->products_count }})">
+                                <i data-lucide="trash-2" style="width:14px;"></i> Delete All
+                            </button>
                         @else
-                            <form action="{{ route('admin.catalog.categories.destroy', $cat->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" style="background:none; border:none; color: #ef4444; cursor:pointer; padding: 6px;" onclick="return confirm('Delete category \'{{ $cat->name }}\'?')" title="Delete Category">
-                                    <i data-lucide="trash-2" style="width:16px;"></i>
-                                </button>
-                            </form>
+                            <button type="button" style="background:none; border:none; color: #ef4444; cursor:pointer; padding: 6px; display: inline-flex; align-items: center;" onclick="showCategoryDeleteConfirm({{ $cat->id }}, '{{ addslashes($cat->name) }}', 0)" title="Delete Category">
+                                <i data-lucide="trash-2" style="width:16px;"></i>
+                            </button>
                         @endif
                     </td>
                 </tr>
@@ -113,6 +118,15 @@
                 <input type="text" name="name" required placeholder="e.g. Smartwatches">
             </div>
             <div class="form-group">
+                <label>Parent Category (Optional)</label>
+                <select name="parent_id" style="padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); outline: none;">
+                    <option value="">-- None (Top Level) --</option>
+                    @foreach($categories as $parentCat)
+                        <option value="{{ $parentCat->id }}">{{ $parentCat->full_path }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Description</label>
                 <textarea name="description" rows="3" placeholder="Category description..."></textarea>
             </div>
@@ -127,5 +141,127 @@
 <script>
     function openModal() { document.getElementById('categoryModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('categoryModal').style.display = 'none'; }
+
+    function openEditCategory(category) {
+        const modal = document.getElementById('categoryModal');
+        const title = modal.querySelector('.modal-header h3');
+        const form = modal.querySelector('form');
+        
+        // Change action and method
+        form.action = `/admin/catalog/categories/${category.id}`;
+        
+        let methodInput = form.querySelector('input[name="_method"]');
+        if (!methodInput) {
+            methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PUT';
+            form.appendChild(methodInput);
+        } else {
+            methodInput.value = 'PUT';
+        }
+        
+        title.innerText = 'Edit Category';
+        form.querySelector('button[type="submit"]').innerText = 'Update Category';
+        
+        // Fill fields
+        form.querySelector('input[name="name"]').value = category.name;
+        
+        const parentSelect = form.querySelector('select[name="parent_id"]');
+        if (parentSelect) {
+            parentSelect.value = category.parent_id || '';
+            
+            // Disable its own option so it can't be its own parent
+            Array.from(parentSelect.options).forEach(opt => {
+                opt.disabled = (opt.value == category.id);
+            });
+        }
+
+        form.querySelector('textarea[name="description"]').value = category.description || '';
+        
+        modal.style.display = 'flex';
+    }
+
+    function openAddCategory() {
+        const modal = document.getElementById('categoryModal');
+        const title = modal.querySelector('.modal-header h3');
+        const form = modal.querySelector('form');
+        
+        // Change action and remove _method
+        form.action = "{{ route('admin.catalog.categories.store') }}";
+        const methodInput = form.querySelector('input[name="_method"]');
+        if (methodInput) {
+            methodInput.remove();
+        }
+        
+        title.innerText = 'Add New Category';
+        form.querySelector('button[type="submit"]').innerText = 'Save Category';
+        
+        // Clear fields
+        form.querySelector('input[name="name"]').value = '';
+        
+        const parentSelect = form.querySelector('select[name="parent_id"]');
+        if (parentSelect) {
+            parentSelect.value = '';
+            // Re-enable all options
+            Array.from(parentSelect.options).forEach(opt => {
+                opt.disabled = false;
+            });
+        }
+
+        form.querySelector('textarea[name="description"]').value = '';
+        
+        modal.style.display = 'flex';
+    }
+
+    function showCategoryDeleteConfirm(id, name, productsCount) {
+        const modal = document.getElementById('deleteConfirmModal');
+        document.getElementById('deleteForm').action = `/admin/catalog/categories/${id}`;
+        
+        const title = document.getElementById('deleteModalTitle');
+        const message = document.getElementById('deleteModalMessage');
+        const forceInput = document.getElementById('deleteForceInput');
+        const submitBtn = document.getElementById('deleteSubmitBtn');
+
+        if (productsCount > 0) {
+            title.innerText = '⚠️ Cascade Delete Category';
+            message.innerHTML = `Category <strong>${name}</strong> contains <strong>${productsCount} product(s)</strong>.<br><br>Deleting it will <strong>PERMANENTLY ERASE</strong> the category and all associated products! Are you absolutely sure?`;
+            forceInput.value = '1';
+            submitBtn.innerText = 'Delete All';
+        } else {
+            title.innerText = 'Confirm Delete';
+            message.innerHTML = `Are you sure you want to delete category <strong>${name}</strong>?`;
+            forceInput.value = '0';
+            submitBtn.innerText = 'Delete Category';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
 </script>
+
+<!-- Custom Delete Modal -->
+<div class="modal-overlay" id="deleteConfirmModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);">
+    <div class="modal-card" style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 420px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 id="deleteModalTitle" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Confirm Delete</h3>
+            <button onclick="closeDeleteConfirm()" style="background:none; border:none; cursor:pointer; color: var(--text-secondary);"><i data-lucide="x" style="width:20px;"></i></button>
+        </div>
+        <div id="deleteModalMessage" style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+            Are you sure you want to delete <strong id="deleteCategoryName" style="color: var(--text-primary);"></strong>?
+        </div>
+        <form id="deleteForm" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="force" id="deleteForceInput" value="0">
+            <div style="display:flex; justify-content:flex-end; gap: 12px;">
+                <button type="button" onclick="closeDeleteConfirm()" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); background:transparent; color: var(--text-secondary); cursor:pointer; font-weight: 600; font-size: 13px;">Cancel</button>
+                <button type="submit" id="deleteSubmitBtn" class="btn btn-primary" style="background: #ef4444; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer;">Delete Category</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

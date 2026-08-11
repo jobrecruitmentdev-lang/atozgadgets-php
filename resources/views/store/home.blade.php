@@ -282,7 +282,7 @@
         @forelse($featuredProducts as $index => $product)
             @if($index < 4)
                 <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ $index * 100 }}">
-                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80' }}" alt="{{ $product->name }}">
+                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? 'https://loremflickr.com/400/400/gadgets' }}" alt="{{ $product->name }}">
                     <div class="card-title">{{ $product->name }}</div>
                     <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
                     <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
@@ -290,7 +290,7 @@
             @endif
         @empty
             <a href="/product/mock-watch" class="card" data-aos="fade-up" data-aos-delay="100">
-                <img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80" alt="Smart Watch">
+                <img loading="lazy" decoding="async" src="https://loremflickr.com/400/400/smartwatch" alt="Smart Watch">
                 <div class="card-title">Ultra Smart Watch Series 9</div>
                 <div class="card-price">$29.99</div>
                 <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>

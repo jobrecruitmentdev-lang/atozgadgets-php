@@ -23,8 +23,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if ($this->app->environment('production') || env('APP_ENV') === 'production') {
+        if (\Illuminate\Support\Facades\App::environment('production')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+        
+        view()->composer('*', function ($view) {
+            if (!isset($view->globalCategories)) {
+                try {
+                    $categories = \App\Models\Category::whereNull('parent_id')
+                        ->where('status', 'active')
+                        ->with(['children' => function($q) {
+                            $q->where('status', 'active')->with(['children' => function($q2) {
+                                $q2->where('status', 'active');
+                            }]);
+                        }])
+                        ->get();
+                    $view->with('globalCategories', $categories);
+                } catch (\Exception $e) {
+                    $view->with('globalCategories', collect([]));
+                }
+            }
+        });
     }
 }

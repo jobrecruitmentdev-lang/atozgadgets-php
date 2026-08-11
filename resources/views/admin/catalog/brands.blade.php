@@ -30,14 +30,24 @@
 
 <div class="page-header">
     <h1 class="page-title">Brands ({{ $brands->count() }})</h1>
-    <button class="btn-primary" onclick="openModal()">
+    <button class="btn-primary" onclick="openAddBrand()">
         <i data-lucide="plus" style="width:16px;"></i> Add Brand
     </button>
 </div>
 
 @if(session('success'))
-    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(16,185,129,0.2);">
+    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(16,185,129,0.2);">
         {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #ef4444; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        <ul style="margin: 0; padding-left: 20px;">
+            @foreach($errors->all() as $error)
+                <li style="font-size: 13px;">{{ $error }}</li>
+            @endforeach
+        </ul>
     </div>
 @endif
 
@@ -64,13 +74,12 @@
                     <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ $brand->slug }}</td>
                     <td><span class="badge-status">{{ ucfirst($brand->status ?? 'active') }}</span></td>
                     <td style="text-align: right;">
-                        <form action="{{ route('admin.catalog.brands.destroy', $brand->id) }}" method="POST" style="display:inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" style="background:none; border:none; color: #ef4444; cursor:pointer;" onclick="return confirm('Delete this brand?')">
-                                <i data-lucide="trash-2" style="width:16px;"></i>
-                            </button>
-                        </form>
+                        <button type="button" style="background:none; border:none; color: var(--accent); cursor:pointer; padding: 6px; display: inline-flex; align-items: center;" onclick="openEditBrand({{ json_encode($brand) }})" title="Edit Brand">
+                            <i data-lucide="edit" style="width:16px;"></i>
+                        </button>
+                        <button type="button" style="background:none; border:none; color: #ef4444; cursor:pointer; padding: 6px; display: inline-flex; align-items: center;" onclick="showBrandDeleteConfirm({{ $brand->id }}, '{{ addslashes($brand->name) }}', {{ $brand->products_count ?? 0 }})" title="Delete Brand">
+                            <i data-lucide="trash-2" style="width:16px;"></i>
+                        </button>
                     </td>
                 </tr>
             @empty
@@ -110,5 +119,106 @@
 <script>
     function openModal() { document.getElementById('brandModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('brandModal').style.display = 'none'; }
+
+    function openEditBrand(brand) {
+        const modal = document.getElementById('brandModal');
+        const title = modal.querySelector('.modal-header h3');
+        const form = modal.querySelector('form');
+        
+        // Change action and method
+        form.action = `/admin/catalog/brands/${brand.id}`;
+        
+        let methodInput = form.querySelector('input[name="_method"]');
+        if (!methodInput) {
+            methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PUT';
+            form.appendChild(methodInput);
+        } else {
+            methodInput.value = 'PUT';
+        }
+        
+        title.innerText = 'Edit Brand';
+        form.querySelector('button[type="submit"]').innerText = 'Update Brand';
+        
+        // Fill fields
+        form.querySelector('input[name="name"]').value = brand.name;
+        form.querySelector('input[name="logo"]').value = brand.logo || '';
+        
+        modal.style.display = 'flex';
+    }
+
+    function openAddBrand() {
+        const modal = document.getElementById('brandModal');
+        const title = modal.querySelector('.modal-header h3');
+        const form = modal.querySelector('form');
+        
+        // Change action and remove _method
+        form.action = "{{ route('admin.catalog.brands.store') }}";
+        const methodInput = form.querySelector('input[name="_method"]');
+        if (methodInput) {
+            methodInput.remove();
+        }
+        
+        title.innerText = 'Add New Brand';
+        form.querySelector('button[type="submit"]').innerText = 'Save Brand';
+        
+        // Clear fields
+        form.querySelector('input[name="name"]').value = '';
+        form.querySelector('input[name="logo"]').value = '';
+        
+        modal.style.display = 'flex';
+    }
+
+    function showBrandDeleteConfirm(id, name, productsCount) {
+        const modal = document.getElementById('deleteConfirmModal');
+        document.getElementById('deleteForm').action = `/admin/catalog/brands/${id}`;
+        
+        const title = document.getElementById('deleteModalTitle');
+        const message = document.getElementById('deleteModalMessage');
+        const forceInput = document.getElementById('deleteForceInput');
+        const submitBtn = document.getElementById('deleteSubmitBtn');
+
+        if (productsCount > 0) {
+            title.innerText = '⚠️ Cascade Delete Brand';
+            message.innerHTML = `Brand <strong>${name}</strong> is associated with <strong>${productsCount} product(s)</strong>.<br><br>Deleting it will <strong>PERMANENTLY ERASE</strong> the brand and all associated products! Are you absolutely sure?`;
+            forceInput.value = '1';
+            submitBtn.innerText = 'Delete All';
+        } else {
+            title.innerText = 'Confirm Delete';
+            message.innerHTML = `Are you sure you want to delete brand <strong>${name}</strong>?`;
+            forceInput.value = '0';
+            submitBtn.innerText = 'Delete Brand';
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
 </script>
+
+<!-- Custom Delete Modal -->
+<div class="modal-overlay" id="deleteConfirmModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);">
+    <div class="modal-card" style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 420px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 id="deleteModalTitle" style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Confirm Delete</h3>
+            <button onclick="closeDeleteConfirm()" style="background:none; border:none; cursor:pointer; color: var(--text-secondary);"><i data-lucide="x" style="width:20px;"></i></button>
+        </div>
+        <div id="deleteModalMessage" style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+            Are you sure you want to delete <strong id="deleteBrandName" style="color: var(--text-primary);"></strong>?
+        </div>
+        <form id="deleteForm" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            <input type="hidden" name="force" id="deleteForceInput" value="0">
+            <div style="display:flex; justify-content:flex-end; gap: 12px;">
+                <button type="button" onclick="closeDeleteConfirm()" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); background:transparent; color: var(--text-secondary); cursor:pointer; font-weight: 600; font-size: 13px;">Cancel</button>
+                <button type="submit" id="deleteSubmitBtn" class="btn btn-primary" style="background: #ef4444; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer;">Delete Brand</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

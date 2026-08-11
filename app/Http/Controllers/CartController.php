@@ -52,4 +52,42 @@ class CartController extends Controller
         
         return view('store.checkout', compact('cart', 'total'));
     }
+
+    public function processCheckout(Request $request)
+    {
+        $cart = session()->get('cart', []);
+        if(empty($cart)) {
+            return redirect()->route('store.cart');
+        }
+
+        $total = 0;
+        foreach($cart as $item) {
+            $total += $item['price'] * $item['quantity'];
+        }
+
+        // Add dummy shipping cost if under 30
+        if($total < 30) {
+            $total += 5.99;
+        }
+
+        $paymentMethod = $request->input('payment_method', 'paypal');
+
+        // Create Order (Mock logic for now)
+        $order = \App\Models\Order::create([
+            'user_id' => auth()->id() ?? 1,
+            'total_amount' => $total,
+            'status' => 'processing'
+        ]);
+
+        \App\Models\Payment::create([
+            'order_id' => $order->id,
+            'amount' => $total,
+            'payment_method' => $paymentMethod,
+            'status' => 'completed'
+        ]);
+
+        session()->forget('cart');
+
+        return redirect()->route('store.home')->with('success', 'Order placed successfully! Paid via ' . ucfirst($paymentMethod) . '.');
+    }
 }

@@ -31,18 +31,17 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background-image: radial-gradient(circle at 50% 50%, rgba(201, 169, 98, 0.1), transparent 50%);
             background-size: cover;
             background-attachment: fixed;
-            overflow: hidden;
+            padding: 20px;
+            overflow-x: hidden;
         }
 
         .auth-container {
             width: 100%;
             max-width: 420px;
+            margin: 6vh auto;
             padding: 40px;
             background: var(--glass-bg);
             backdrop-filter: blur(16px);

@@ -11,6 +11,11 @@ use Illuminate\Support\Str;
 
 class CatalogController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'admin']);
+    }
+
     private $demoCatalog = [
         [
             'pid' => 'CJ-SMART-PRO-PROJECTOR-01',
@@ -64,25 +69,45 @@ class CatalogController extends Controller
 
     public function import()
     {
-        $categories = \App\Models\Category::with('subcategories')->get();
+        $categories = \App\Models\Category::with('children')->get();
+        $brands = \App\Models\Brand::all();
         $stagedProducts = \App\Models\Product::where('fulfillment_type', 'cj')->get();
-        return view('admin.catalog.import', compact('categories', 'stagedProducts'));
+        return view('admin.catalog.import', compact('categories', 'brands', 'stagedProducts'));
+    }
+
+    private function getCjAccessToken()
+    {
+        return \Illuminate\Support\Facades\Cache::remember('cj_access_token', 86400, function () {
+            $email = env('CJ_API_EMAIL');
+            $key = env('CJ_API_KEY');
+            if (!$email || !$key) return null;
+
+            $response = \Illuminate\Support\Facades\Http::post('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken', [
+                'email' => $email,
+                'password' => $key
+            ]);
+
+            if ($response->successful() && $response->json('result') === true) {
+                return $response->json('data.accessToken');
+            }
+            return null;
+        });
     }
 
     public function searchCjApi(Request $request)
     {
         $keyword = strtolower($request->query('keyword', ''));
-        $token = env('CJ_API_TOKEN', 'mock-token-if-empty');
+        $token = $this->getCjAccessToken();
 
         // Check if we are using the live API
-        if ($token !== 'mock-token-if-empty' && $token !== '') {
-            $response = Http::withHeaders([
+        if ($token) {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'CJ-Access-Token' => $token,
                 'Content-Type' => 'application/json'
             ])->get('https://developers.cjdropshipping.com/api2.0/v1/product/list', [
-                'keyword' => $keyword,
+                'productNameEn' => $keyword,
                 'pageNum' => 1,
-                'pageSize' => 20
+                'pageSize' => 100
             ]);
 
             if ($response->successful()) {
@@ -93,28 +118,11 @@ class CatalogController extends Controller
             }
         }
 
-        // Sandbox / Demo Flow matching the Express backend
-        $filtered = array_filter($this->demoCatalog, function ($item) use ($keyword) {
-            return str_contains(strtolower($item['productNameEn']), $keyword) || 
-                   str_contains(strtolower($item['categoryName']), $keyword);
-        });
-
-        // If no matches in demo catalog, generate a dynamic mock product for the keyword
-        if (empty($filtered)) {
-            $filtered = [[
-                'pid' => 'CJ-MOCK-' . strtoupper(substr(md5($keyword), 0, 6)),
-                'productNameEn' => 'AtoZ Smart ' . ucfirst($keyword) . ' Gadget',
-                'productSku' => 'CJ-' . strtoupper(substr($keyword, 0, 4)) . '-01',
-                'sellPrice' => 19.99,
-                'productImage' => 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop',
-                'categoryName' => 'Electronics & Gadgets',
-            ]];
-        }
-
         return response()->json([
-            'result' => true,
+            'result' => false,
+            'message' => 'No real products found or CJ API error.',
             'data' => [
-                'list' => array_values($filtered)
+                'list' => []
             ]
         ]);
     }
@@ -126,10 +134,11 @@ class CatalogController extends Controller
             'title' => 'required|string',
             'price' => 'required|numeric',
             'image' => 'required|string',
-            'category' => 'nullable|string'
+            'category' => 'nullable|string',
+            'categoryId' => 'nullable|integer'
         ]);
 
-        $categoryId = 1;
+        $categoryId = $data['categoryId'] ?? 1;
 
         // Clean title logic exactly like the backend
         $cleanTitle = $data['title'];
@@ -143,13 +152,13 @@ class CatalogController extends Controller
         $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $cleanTitle, $slug, $data) {
             $product = Product::create([
                 'category_id' => $categoryId,
-                'subcategory_id' => 1, 
                 'name' => $cleanTitle,
                 'slug' => $slug,
                 'sku' => 'CJ-' . substr((string) Str::uuid(), 0, 8),
                 'price' => $data['price'] * 2.0, // Default 100% markup
                 'discount_price' => $data['price'] * 1.5,
                 'thumbnail_image' => $data['image'],
+                'stock_quantity' => 100,
                 'status' => 'active',
                 'is_active' => true,
                 'fulfillment_type' => 'cj',

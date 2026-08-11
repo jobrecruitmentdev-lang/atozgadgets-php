@@ -2,7 +2,7 @@
 
 @section('account_content')
 <div class="content-header">
-    <h1 class="content-title">Dashboard</h1>
+    <h1 class="content-title">My Profile</h1>
     <p style="color: var(--text-secondary);">Welcome back, {{ $user->first_name }}! Here's an overview of your account.</p>
 </div>
 

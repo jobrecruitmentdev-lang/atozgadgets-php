@@ -32,12 +32,27 @@
 <div class="breadcrumb" data-aos="fade-right">
     <a href="{{ route('store.home') }}">Home</a> <i data-lucide="chevron-right" style="width:14px;"></i>
     <a href="{{ route('store.shop') }}">Products</a> <i data-lucide="chevron-right" style="width:14px;"></i>
-    <span style="color: var(--text-primary);">{{ $product->name ?? 'Ultra Smart Watch' }}</span>
+    
+    @if(isset($product) && $product->category)
+        @php
+            $cat = $product->category;
+            $hierarchy = [];
+            while($cat) {
+                array_unshift($hierarchy, $cat);
+                $cat = $cat->parent;
+            }
+        @endphp
+        @foreach($hierarchy as $h)
+            <a href="{{ route('store.shop', ['category' => $h->slug]) }}">{{ $h->name }}</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+        @endforeach
+    @endif
+    
+    <span style="color: var(--text-primary);">{{ $product->name ?? 'Product Name' }}</span>
 </div>
 
 <div class="product-layout">
     <div class="product-gallery" data-aos="fade-up">
-        <img fetchpriority="high" decoding="sync" src="{{ $product->thumbnail_image ?? 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80' }}" alt="{{ $product->name ?? 'Product Image' }}" class="product-image">
+        <img fetchpriority="high" decoding="sync" src="{{ $product->thumbnail_image ?? 'https://loremflickr.com/800/800/gadgets' }}" alt="{{ $product->name ?? 'Product Image' }}" class="product-image">
     </div>
     
     <div class="product-info" data-aos="fade-left" data-aos-delay="100">

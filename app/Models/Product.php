@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'subcategory_id', 'brand_id', 'name', 'slug', 
+        'category_id', 'brand_id', 'name', 'slug', 
         'short_description', 'description', 'sku', 'barcode', 'price', 
         'discount_price', 'tax_percentage', 'stock_quantity', 'weight', 
         'length', 'width', 'height', 'thumbnail_image', 'handle', 'title', 
@@ -25,13 +25,33 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function subcategory()
-    {
-        return $this->belongsTo(SubCategory::class, 'subcategory_id');
-    }
-
     public function brand()
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($product) {
+            $tablesToDelete = [
+                'cart_items', 'featured_products', 'inventory', 'offer_products',
+                'product_attributes', 'product_images', 'product_reviews', 'product_variants',
+                'stock_movements', 'user_behaviour', 'wishlist_items', 'ratings'
+            ];
+            
+            foreach ($tablesToDelete as $table) {
+                if (\Illuminate\Support\Facades\Schema::hasTable($table) && \Illuminate\Support\Facades\Schema::hasColumn($table, 'product_id')) {
+                    \Illuminate\Support\Facades\DB::table($table)->where('product_id', $product->id)->delete();
+                }
+            }
+            
+            if (\Illuminate\Support\Facades\Schema::hasTable('cj_products')) {
+                \Illuminate\Support\Facades\DB::table('cj_products')->where('internal_product_id', $product->id)->delete();
+            }
+            
+            if (\Illuminate\Support\Facades\Schema::hasTable('order_items')) {
+                \Illuminate\Support\Facades\DB::table('order_items')->where('product_id', $product->id)->update(['product_id' => null]);
+            }
+        });
     }
 }

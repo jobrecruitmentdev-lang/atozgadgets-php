@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AdminCatalogViewTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Test the admin catalog import view loads with premium UI.
      *

@@ -68,6 +68,15 @@
         /* Utility Classes */
         .card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .text-muted { color: var(--text-secondary); }
+        
+        /* Pagination CSS Fixes for Tailwind Default View */
+        nav[role="navigation"] { display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-top: 10px; }
+        nav[role="navigation"] svg { width: 20px; height: 20px; }
+        nav[role="navigation"] p { display: none; } /* Hide the text "Showing 1 to x" if it messes up flex */
+        nav[role="navigation"] .flex { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        nav[role="navigation"] a, nav[role="navigation"] span { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); transition: background 0.2s; text-decoration: none; }
+        nav[role="navigation"] a:hover { background: rgba(128,128,128,0.1); }
+        nav[role="navigation"] span[aria-current="page"] { background: var(--accent); color: white; border-color: var(--accent); }
     </style>
 </head>
 <body>
@@ -95,6 +104,12 @@
                 <h3>System</h3>
                 <a href="{{ route('admin.reports') }}" class="nav-item {{ request()->routeIs('admin.reports') ? 'active' : '' }}"><i data-lucide="bar-chart-3" style="width:16px;"></i> Reports</a>
                 <a href="{{ route('admin.settings') }}" class="nav-item {{ request()->routeIs('admin.settings') ? 'active' : '' }}"><i data-lucide="settings" style="width:16px;"></i> Settings</a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
+                <a href="#" class="nav-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #ef4444;">
+                    <i data-lucide="log-out" style="width:16px;"></i> Logout
+                </a>
             </div>
         </div>
     </aside>

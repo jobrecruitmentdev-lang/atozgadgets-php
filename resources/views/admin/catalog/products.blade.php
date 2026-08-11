@@ -67,8 +67,24 @@
 </div>
 
 @if(session('success'))
-    <div style="padding: 12px; background: rgba(16, 185, 129, 0.1); color: #059669; border-radius: 8px; margin-bottom: 24px; border: 1px solid rgba(16, 185, 129, 0.2);">
+    <div style="padding: 12px 16px; background: rgba(16,185,129,0.1); color: #059669; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(16,185,129,0.2);">
         {{ session('success') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #ef4444; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        <ul style="margin: 0; padding-left: 20px;">
+            @foreach($errors->all() as $error)
+                <li style="font-size: 13px;">{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if(session('error'))
+    <div style="padding: 12px 16px; background: rgba(239,68,68,0.1); color: #dc2626; border-radius: 8px; margin-top: 20px; border: 1px solid rgba(239,68,68,0.2);">
+        {{ session('error') }}
     </div>
 @endif
 
@@ -92,6 +108,10 @@
         <div class="form-group" style="margin-bottom: 16px;">
             <label>Description</label>
             <textarea name="description" rows="3"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+            <label>Image URL</label>
+            <input type="url" name="thumbnail_image" placeholder="https://example.com/image.jpg">
         </div>
         <div class="form-grid">
             <div class="form-group">
@@ -209,12 +229,8 @@
                             @endif
                         </td>
                         <td style="text-align: right;">
-                            <button class="action-btn"><i data-lucide="edit" style="width:16px;"></i></button>
-                            <form action="{{ route('admin.catalog.products.destroy', $product->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="action-btn delete" onclick="return confirm('Delete this product?')"><i data-lucide="trash" style="width:16px;"></i></button>
-                            </form>
+                            <button class="action-btn" onclick="openEditProduct({{ json_encode($product) }})"><i data-lucide="edit" style="width:16px;"></i></button>
+                            <button class="action-btn delete" onclick="showDeleteConfirm({{ $product->id }}, '{{ addslashes($product->name) }}')" title="Delete Product"><i data-lucide="trash-2" style="width:16px;"></i></button>
                         </td>
                     </tr>
                 @empty
@@ -241,8 +257,107 @@
         if(form.style.display === 'block') {
             form.style.display = 'none';
         } else {
-            form.style.display = 'block';
+            openAddProduct();
         }
     }
+
+    function openEditProduct(product) {
+        const form = document.getElementById('productForm');
+        const title = form.querySelector('.form-header h2');
+        const formEl = form.querySelector('form');
+        
+        // Change action and method
+        formEl.action = `/admin/catalog/products/${product.id}`;
+        
+        // Ensure hidden _method input is present or created
+        let methodInput = formEl.querySelector('input[name="_method"]');
+        if (!methodInput) {
+            methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PUT';
+            formEl.appendChild(methodInput);
+        } else {
+            methodInput.value = 'PUT';
+        }
+        
+        // Change Title and Submit button text
+        title.innerText = 'Edit Product';
+        formEl.querySelector('button[type="submit"]').innerText = 'Update Product';
+        
+        // Fill fields
+        formEl.querySelector('input[name="name"]').value = product.name;
+        formEl.querySelector('input[name="slug"]').value = product.slug;
+        formEl.querySelector('textarea[name="description"]').value = product.description || '';
+        formEl.querySelector('input[name="price"]').value = product.price;
+        formEl.querySelector('input[name="stock_quantity"]').value = product.stock_quantity;
+        formEl.querySelector('select[name="category_id"]').value = product.category_id;
+        formEl.querySelector('select[name="brand_id"]').value = product.brand_id || '';
+        formEl.querySelector('input[name="thumbnail_image"]').value = product.thumbnail_image || '';
+        
+        form.style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function openAddProduct() {
+        const form = document.getElementById('productForm');
+        const title = form.querySelector('.form-header h2');
+        const formEl = form.querySelector('form');
+        
+        // Change action and remove _method
+        formEl.action = "{{ route('admin.catalog.products.store') }}";
+        const methodInput = formEl.querySelector('input[name="_method"]');
+        if (methodInput) {
+            methodInput.remove();
+        }
+        
+        // Change Title and Submit button text
+        title.innerText = 'Add Manual Product';
+        formEl.querySelector('button[type="submit"]').innerText = 'Create Product';
+        
+        // Clear fields
+        formEl.querySelector('input[name="name"]').value = '';
+        formEl.querySelector('input[name="slug"]').value = '';
+        formEl.querySelector('textarea[name="description"]').value = '';
+        formEl.querySelector('input[name="price"]').value = '';
+        formEl.querySelector('input[name="stock_quantity"]').value = '';
+        formEl.querySelector('select[name="category_id"]').value = '';
+        formEl.querySelector('select[name="brand_id"]').value = '';
+        formEl.querySelector('input[name="thumbnail_image"]').value = '';
+        
+        form.style.display = 'block';
+    }
+
+    function showDeleteConfirm(id, name) {
+        const modal = document.getElementById('deleteConfirmModal');
+        document.getElementById('deleteProductName').innerText = name;
+        document.getElementById('deleteForm').action = `/admin/catalog/products/${id}`;
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteConfirm() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
 </script>
+
+<!-- Custom Delete Modal -->
+<div class="modal-overlay" id="deleteConfirmModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(4px);">
+    <div class="modal-card" style="background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 400px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary);">Confirm Delete</h3>
+            <button onclick="closeDeleteConfirm()" style="background:none; border:none; cursor:pointer; color: var(--text-secondary);"><i data-lucide="x" style="width:20px;"></i></button>
+        </div>
+        <div style="margin-bottom: 24px; color: var(--text-secondary); font-size: 14px; line-height: 1.5;">
+            Are you sure you want to delete <strong id="deleteProductName" style="color: var(--text-primary);"></strong>? This action cannot be undone.
+        </div>
+        <form id="deleteForm" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            <div style="display:flex; justify-content:flex-end; gap: 12px;">
+                <button type="button" onclick="closeDeleteConfirm()" style="padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border-color); background:transparent; color: var(--text-secondary); cursor:pointer; font-weight: 600; font-size: 13px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background: #ef4444; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer;">Delete Product</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
