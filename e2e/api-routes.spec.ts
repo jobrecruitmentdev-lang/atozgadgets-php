@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, APIRequestContext } from '@playwright/test';
 
 test.describe('AtoZGadgets PHP API E2E Test Suite', () => {
 
@@ -33,26 +33,66 @@ test.describe('AtoZGadgets PHP API E2E Test Suite', () => {
     expect(response.status()).toBe(401);
   });
 
-  test('GET /api/admin/cj/search returns CJ catalog search results', async ({ request }) => {
-    const response = await request.get('/admin/api/catalog/search?keyword=drone');
-    expect(response.status()).toBe(200);
-    const data = await response.json();
-    expect(data.data.list.length).toBeGreaterThan(0);
-  });
+  test.describe('Protected Admin CJ Dropshipping Routes', () => {
+    let authContext: APIRequestContext;
+    let importedProductId: number | null = null;
 
-  test('POST /admin/api/catalog/import-item imports CJ product safely', async ({ request }) => {
-    const response = await request.post('/admin/api/catalog/import-item', {
-      data: {
-        pid: 'CJ-PW-TEST-001',
-        title: 'Playwright E2E Test Gadget',
-        price: 29.99,
-        image: 'https://example.com/item.jpg',
-        category: 'Electronics'
+    test.beforeAll(async ({ playwright, request }) => {
+      // 1. Skip if no admin credentials are provided in env (prevents failure on live server without credentials)
+      if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+        test.skip(true, 'ADMIN_EMAIL and ADMIN_PASSWORD env vars are required for live admin tests.');
+      }
+
+      // 2. Perform Login to get session cookies
+      const loginRes = await request.post('/login', {
+        form: {
+          email: process.env.ADMIN_EMAIL,
+          password: process.env.ADMIN_PASSWORD
+        }
+      });
+      expect(loginRes.status()).toBe(200); // Or 302 depending on controller
+
+      // 3. Create a new context with the cookies from the login response
+      const storageState = await request.storageState();
+      authContext = await playwright.request.newContext({ storageState });
+    });
+
+    test('GET /admin/api/catalog/search returns CJ catalog search results', async () => {
+      if(!authContext) return;
+      const response = await authContext.get('/admin/api/catalog/search?keyword=drone');
+      expect(response.status()).toBe(200);
+      const data = await response.json();
+      expect(data.data.list.length).toBeGreaterThan(0);
+    });
+
+    test('POST /admin/api/catalog/import-item imports CJ product safely', async () => {
+      if(!authContext) return;
+      const response = await authContext.post('/admin/api/catalog/import-item', {
+        data: {
+          pid: 'CJ-PW-TEST-001',
+          title: 'Playwright E2E Test Gadget',
+          price: 29.99,
+          image: 'https://example.com/item.jpg',
+          category: 'Electronics'
+        }
+      });
+      expect(response.status()).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      
+      // Save ID for cleanup
+      if (data.internal_id) {
+        importedProductId = data.internal_id;
       }
     });
-    expect(response.status()).toBe(200);
-    const data = await response.json();
-    expect(data.success).toBe(true);
+
+    test.afterAll(async () => {
+      // Cleanup: Delete the junk product from the live database
+      if (importedProductId && authContext) {
+        const delRes = await authContext.delete(`/admin/catalog/products/${importedProductId}`);
+        expect([200, 302]).toContain(delRes.status());
+      }
+    });
   });
 
   test('POST /api/payment/razorpay/create-order returns order payload', async ({ request }) => {
