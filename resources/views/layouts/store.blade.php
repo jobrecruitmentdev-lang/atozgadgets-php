@@ -78,7 +78,9 @@
         @media (min-width: 768px) { .search-bar { display: block; } }
         .search-bar input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 12px 20px 12px 45px; border-radius: 12px; color: #fff; outline: none; transition: all 0.3s; }
         .search-bar input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.1); }
-        .search-bar i, .search-bar svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); width: 18px; height: 18px; }
+        .search-bar button.search-btn { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; z-index: 10; padding: 0; }
+        .search-bar button.search-btn:hover { color: var(--accent); }
+        .search-bar button.search-btn svg, .search-bar button.search-btn i { width: 18px; height: 18px; }
 
         .nav-icons { display: flex; align-items: center; gap: 10px; }
         .icon-btn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--text-primary); transition: all 0.3s; position: relative; border: none; background: transparent; cursor: pointer; }
@@ -178,7 +180,7 @@
                 </a>
 
                 <form action="{{ route('store.shop') }}" method="GET" class="search-bar">
-                    <button type="submit" aria-label="Submit Search" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center;">
+                    <button type="submit" aria-label="Submit Search" class="search-btn">
                         <i data-lucide="search" aria-hidden="true"></i>
                     </button>
                     <label for="searchInput" class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">Search</label>
