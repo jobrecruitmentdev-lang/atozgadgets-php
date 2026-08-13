@@ -32,6 +32,7 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
         }
         /* Performance Fix: Use fixed pseudo-element instead of background-attachment: fixed on body */
         body::before {
@@ -105,7 +106,7 @@
         .mega-menu a:hover, .mega-menu a:focus { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
 
         /* Mobile Menu Overlay */
-        .mobile-menu-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 2000; transform: translateX(-100%); transition: transform 0.4s var(--ease-premium); display: flex; flex-direction: column; padding: 20px; }
+        .mobile-menu-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 2000; transform: translateX(-100%); transition: transform 0.4s var(--ease-premium); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
         .mobile-menu-overlay.active { transform: translateX(0); }
         .mobile-menu-close { align-self: flex-end; background: transparent; border: none; color: var(--text-primary); cursor: pointer; padding: 10px; }
         .mobile-nav-list { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }

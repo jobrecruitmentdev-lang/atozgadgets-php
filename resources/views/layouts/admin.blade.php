@@ -40,7 +40,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); display: flex; min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-primary); display: flex; min-height: 100vh; overflow-x: hidden; }
         a { text-decoration: none; color: inherit; }
 
         /* Sidebar */
