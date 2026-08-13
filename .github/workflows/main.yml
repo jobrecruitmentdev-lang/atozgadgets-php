@@ -1,0 +1,60 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite
+        coverage: none
+
+    - name: Install Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    # Ponytail Security: Natively built into Composer, takes 1 second.
+    - name: Security Check
+      run: composer audit
+
+    - name: Prepare Environment
+      run: |
+        cp .env.example .env
+        php artisan key:generate
+
+    - name: Run Tests
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+      run: |
+        touch database/database.sqlite
+        php artisan migrate --force
+        php artisan test
+
+    # Ponytail Deploy: Only runs if tests pass AND we are on the main branch.
+    # Note: Requires HOSTINGER_HOST, HOSTINGER_USER, and HOSTINGER_SSH_KEY in GitHub Secrets
+    - name: Deploy to Hostinger
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USER }}
+        key: ${{ secrets.HOSTINGER_SSH_KEY }}
+        script: |
+          cd /home/u390470426/domains/atozgadgetz.com/public_html
+          git pull origin main
+          composer install --optimize-autoloader --no-dev
+          php artisan migrate --force
+          php artisan optimize:clear
+          php artisan config:cache
