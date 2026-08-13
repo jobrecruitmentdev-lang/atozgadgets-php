@@ -336,7 +336,7 @@
                             createOrder: function(data, actions) {
                                 return fetch("{{ route('payment.paypal.create') }}", {
                                     method: "post",
-                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" }
+                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" }
                                 }).then(res => res.json()).then(orderData => {
                                     if (orderData.error) throw new Error(orderData.error);
                                     return orderData.id;
@@ -345,7 +345,7 @@
                             onApprove: function(data, actions) {
                                 return fetch("{{ route('payment.paypal.capture') }}", {
                                     method: "post",
-                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" },
+                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" },
                                     body: JSON.stringify({ paypal_order_id: data.orderID })
                                 }).then(res => res.json()).then(orderData => {
                                     if (orderData.success) {

@@ -34,8 +34,8 @@ class PaymentController extends Controller
         try {
             $order = PayPalService::createOrder($total);
             return response()->json($order);
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'PayPal Error: ' . $e->getMessage()], 500);
         }
     }
 
@@ -73,8 +73,8 @@ class PaymentController extends Controller
             }
             
             return response()->json(['success' => false, 'error' => 'Capture failed', 'details' => $capture], 400);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => 'PayPal Error: ' . $e->getMessage()], 500);
         }
     }
 }
