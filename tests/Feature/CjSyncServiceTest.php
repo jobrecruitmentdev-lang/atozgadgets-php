@@ -63,13 +63,14 @@ class CjSyncServiceTest extends TestCase
         );
 
         // Create a fake SubCategory
-        $subCategory = \App\Models\SubCategory::firstOrCreate(
+        $subCategory = Category::firstOrCreate(
             ['slug' => 'test-subcategory'],
             [
                 'name' => 'Test Subcategory',
-                'category_id' => $category->id,
+                'parent_id' => $category->id,
                 'description' => 'Test sub',
-                'is_active' => true
+                'is_active' => true,
+                'status' => 'active'
             ]
         );
 

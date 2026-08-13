@@ -66,7 +66,7 @@
         </div>
         
         <div class="description">
-            {!! $product->description ?? 'Experience the next generation of smart wearables. Features include bluetooth calling, waterproof design, heart rate monitoring, and a stunning edge-to-edge display.' !!}
+            {!! nl2br(e($product->description ?? 'Experience the next generation of smart wearables. Features include bluetooth calling, waterproof design, heart rate monitoring, and a stunning edge-to-edge display.')) !!}
         </div>
         
         <form action="{{ route('store.cart.add') }}" method="POST">

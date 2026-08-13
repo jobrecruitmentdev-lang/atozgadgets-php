@@ -54,14 +54,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Payment Gateways (Razorpay & PayPal 1:1 match)
-Route::prefix('payment')->group(function () {
-    Route::post('razorpay/create-order', [\App\Http\Controllers\PaymentController::class, 'razorpayCreateOrder']);
-    Route::post('razorpay/verify', [\App\Http\Controllers\PaymentController::class, 'razorpayVerify']);
-    Route::post('paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder']);
-    Route::post('paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder']);
-});
-
 // Unauthenticated CJ Webhook
 Route::post('cj/webhook', [\App\Http\Controllers\Api\Admin\CJDropshippingController::class, 'webhook']);
 
@@ -89,4 +81,12 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::apiResource('notifications', \App\Http\Controllers\NotificationController::class);
     Route::apiResource('returns', \App\Http\Controllers\ReturnOrderController::class);
     Route::apiResource('user_sessions', \App\Http\Controllers\UserSessionController::class);
+});
+
+// ==========================================
+// PAYMENT APIs
+// ==========================================
+Route::prefix('payment')->group(function () {
+    Route::post('paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder']);
+    Route::post('paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder']);
 });

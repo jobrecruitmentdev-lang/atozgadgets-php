@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Dashboard') - AtoZGadgets</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
             --bg-color: #f9fafb;
@@ -116,10 +121,14 @@
 
     <div class="main-wrapper">
         <header class="top-header">
-            <div class="header-search">
-                <i data-lucide="search" style="width:16px; color:var(--text-secondary);"></i>
-                <input type="text" placeholder="Search anything...">
-            </div>
+            <!-- Search is now a functional form if needed -->
+            <form action="{{ route('admin.catalog.products') }}" method="GET" class="header-search">
+                <button type="submit" aria-label="Search" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center;">
+                    <i data-lucide="search" style="width:16px;" aria-hidden="true"></i>
+                </button>
+                <label for="adminSearch" class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">Search</label>
+                <input type="text" id="adminSearch" name="search" placeholder="Search products...">
+            </form>
             <div class="header-actions">
                 <a href="{{ route('store.home') }}" target="_blank" style="font-size:14px; font-weight:500; color:var(--accent); margin-right:12px; text-decoration:none;">View Storefront</a>
                 <button class="icon-btn"><i data-lucide="bell" style="width:20px;"></i></button>
@@ -133,7 +142,13 @@
     </div>
 
     <script>
-        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', () => {
+            if(typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                window.addEventListener('load', () => lucide.createIcons());
+            }
+        });
     </script>
 </body>
 </html>

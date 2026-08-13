@@ -28,6 +28,14 @@
     .form-group input, .form-group textarea { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); outline: none; }
 </style>
 
+<!-- Ponytail: Select2 via CDN for lazy hierarchical dropdowns -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        border-radius: 8px; border: 1px solid var(--border-color); height: 38px; padding: 4px;
+    }
+</style>
+
 <div class="page-header">
     <h1 class="page-title">Categories ({{ $categories->count() }})</h1>
     <button class="btn-primary" onclick="openAddCategory()">
@@ -68,9 +76,9 @@
                 <th style="text-align: right;">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="categoryTableBody">
             @forelse($categories as $cat)
-                <tr>
+                <tr id="category-row-{{ $cat->id }}">
                     <td style="font-weight: 600;">{{ $cat->full_path }}</td>
                     <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ $cat->slug }}</td>
                     <td>{{ $cat->products_count }} products</td>
@@ -119,7 +127,7 @@
             </div>
             <div class="form-group">
                 <label>Parent Category (Optional)</label>
-                <select name="parent_id" style="padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); outline: none;">
+                <select name="parent_id" id="categoryParentSelect" style="width: 100%;">
                     <option value="">-- None (Top Level) --</option>
                     @foreach($categories as $parentCat)
                         <option value="{{ $parentCat->id }}">{{ $parentCat->full_path }}</option>
@@ -241,6 +249,66 @@
     function closeDeleteConfirm() {
         document.getElementById('deleteConfirmModal').style.display = 'none';
     }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // Ponytail: Lazy Select2 initialization and AJAX form intercepts
+    $(document).ready(function() {
+        $('#categoryParentSelect').select2({ placeholder: "-- None (Top Level) --", allowClear: true });
+        
+        const categoryModal = document.getElementById('categoryModal');
+        const form = categoryModal.querySelector('form');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = 'Saving...';
+            
+            try {
+                const fd = new FormData(form);
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                });
+                
+                if (res.ok) {
+                    window.location.reload(); // Lazy DOM update: fast reload beats writing 50 lines of dynamic row insertion.
+                } else {
+                    alert('Validation failed or error occurred.');
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+            btn.disabled = false; btn.innerText = 'Save Category';
+        });
+
+        const deleteForm = document.getElementById('deleteForm');
+        deleteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('deleteSubmitBtn');
+            btn.disabled = true; btn.innerText = 'Deleting...';
+            
+            try {
+                const fd = new FormData(deleteForm);
+                const res = await fetch(deleteForm.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Cannot delete this category.');
+                }
+            } catch (err) {
+                alert('Network error');
+            }
+            btn.disabled = false; btn.innerText = 'Delete Category';
+        });
+    });
 </script>
 
 <!-- Custom Delete Modal -->

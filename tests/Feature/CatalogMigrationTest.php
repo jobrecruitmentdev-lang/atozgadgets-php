@@ -6,7 +6,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Category;
-use App\Models\SubCategory;
 use App\Models\Brand;
 use App\Models\Product;
 
@@ -39,15 +38,16 @@ class CatalogMigrationTest extends TestCase
 
         $this->assertDatabaseHas('categories', ['slug' => 'electronics']);
 
-        $subCategory = SubCategory::firstOrCreate(
+        $subCategory = Category::firstOrCreate(
             ['slug' => 'mobile-phones'],
             [
-                'category_id' => $category->id,
+                'parent_id' => $category->id,
                 'name' => 'Mobile Phones',
+                'status' => 'active'
             ]
         );
 
-        $this->assertDatabaseHas('sub_categories', ['slug' => 'mobile-phones']);
+        $this->assertDatabaseHas('categories', ['slug' => 'mobile-phones']);
 
         $brand = Brand::firstOrCreate(
             ['slug' => 'apple'],
@@ -59,8 +59,7 @@ class CatalogMigrationTest extends TestCase
         $product = Product::firstOrCreate(
             ['sku' => 'IPH15P-256'],
             [
-                'category_id' => $category->id,
-                'subcategory_id' => $subCategory->id,
+                'category_id' => $subCategory->id,
                 'brand_id' => $brand->id,
                 'name' => 'iPhone 15 Pro',
                 'slug' => 'iphone-15-pro',

@@ -38,7 +38,11 @@ class CategoryController extends Controller
         }
         $validated['status'] = $validated['status'] ?? 'active';
 
-        Category::create($validated);
+        $category = Category::create($validated);
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'category' => clone $category]);
+        }
 
         return redirect()->route('admin.catalog.categories')->with('success', 'Category created successfully.');
     }
@@ -69,6 +73,10 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'category' => $category]);
+        }
+
         return redirect()->route('admin.catalog.categories')->with('success', 'Category updated successfully.');
     }
 
@@ -87,9 +95,13 @@ class CategoryController extends Controller
                     $category->delete();
                 });
 
+                if ($request->ajax()) return response()->json(['success' => true]);
+
                 return redirect()->route('admin.catalog.categories')
                     ->with('success', "Category '{$category->name}' and all {$deletedCount} associated product(s) deleted successfully.");
             } catch (\Illuminate\Database\QueryException $e) {
+                if ($request->ajax()) return response()->json(['error' => 'Cannot cascade delete'], 400);
+
                 return redirect()->route('admin.catalog.categories')
                     ->with('error', "Cannot cascade delete Category '{$category->name}'. It might be constrained by subcategories or other entities.");
             }
@@ -97,14 +109,17 @@ class CategoryController extends Controller
 
         $productCount = $category->products()->count();
         if ($productCount > 0) {
+            if ($request->ajax()) return response()->json(['error' => 'Category has products'], 400);
             return redirect()->route('admin.catalog.categories')
                 ->with('error', "Category '{$category->name}' contains {$productCount} product(s). Use 'Delete Category & All Products' button to cascade delete, or reassign products first.");
         }
 
         try {
             $category->delete();
+            if ($request->ajax()) return response()->json(['success' => true]);
             return redirect()->route('admin.catalog.categories')->with('success', 'Category deleted successfully.');
         } catch (\Illuminate\Database\QueryException $e) {
+            if ($request->ajax()) return response()->json(['error' => 'Constraint error'], 400);
             return redirect()->route('admin.catalog.categories')->with('error', 'Unable to delete category due to database constraints.');
         }
     }

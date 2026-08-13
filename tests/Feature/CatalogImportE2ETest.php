@@ -26,6 +26,8 @@ class CatalogImportE2ETest extends TestCase
                 'password' => bcrypt('password'),
             ]);
         }
+        
+        $this->actingAs(\App\Models\User::find(1));
 
         // Ensure category ID 1 exists since the controller hardcodes it
         if (!Category::find(1)) {

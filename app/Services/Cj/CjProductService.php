@@ -64,6 +64,7 @@ class CjProductService
             if (isset($filters['countryCode'])) $params['countryCode'] = $filters['countryCode'];
 
             $response = Http::withHeaders(CjAuthService::getAuthHeaders())
+                ->timeout(10)->retry(3, 100)
                 ->get(self::getApiBaseUrl() . '/product/listV2', $params);
 
             $data = $response->json();

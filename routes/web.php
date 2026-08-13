@@ -32,7 +32,11 @@ Route::middleware('storefront')->group(function () {
     Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'addToCart'])->name('store.cart.add');
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('store.checkout');
     Route::post('/checkout', [\App\Http\Controllers\CartController::class, 'processCheckout'])->name('store.checkout.process');
+    
+    // Payments
     Route::post('/payment/payoneer', [\App\Http\Controllers\PaymentController::class, 'payWithPayoneer'])->name('payment.payoneer');
+    Route::post('/payment/paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder'])->name('payment.paypal.create');
+    Route::post('/payment/paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder'])->name('payment.paypal.capture');
 
     Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);

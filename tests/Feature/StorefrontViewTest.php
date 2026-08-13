@@ -45,7 +45,7 @@ class StorefrontViewTest extends TestCase
             [
                 'first_name' => 'Admin',
                 'last_name' => 'User',
-                'mobile' => '1234567890',
+                'mobile' => '1234567890_' . time(),
                 'role_id' => 1,
                 'password' => 'secret',
                 'is_active' => true
@@ -55,9 +55,9 @@ class StorefrontViewTest extends TestCase
             ['slug' => 'tech-test-slug'],
             ['name' => 'Tech Test', 'status' => 'active']
         );
-        $subcategory = \App\Models\SubCategory::firstOrCreate(
+        $subcategory = \App\Models\Category::firstOrCreate(
             ['slug' => 'tech-sub-test-slug'],
-            ['category_id' => $category->id, 'name' => 'Tech Sub Test', 'status' => 'active']
+            ['parent_id' => $category->id, 'name' => 'Tech Sub Test', 'status' => 'active']
         );
         $product = \App\Models\Product::firstOrCreate(
             ['slug' => 'smart-watch-test'],
@@ -65,8 +65,7 @@ class StorefrontViewTest extends TestCase
                 'name' => 'Smart Watch',
                 'sku' => 'SKU-SMART-WATCH-TEST',
                 'price' => 199.99,
-                'category_id' => $category->id,
-                'subcategory_id' => $subcategory->id,
+                'category_id' => $subcategory->id,
                 'created_by' => $user->id,
                 'is_active' => true
             ]

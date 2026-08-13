@@ -75,7 +75,7 @@ class User extends Authenticatable
      */
     public function getAuthPassword()
     {
-        return $this->hasPasswordHashColumn() ? $this->password_hash : $this->password;
+        return $this->hasPasswordHashColumn() ? ($this->attributes['password_hash'] ?? null) : ($this->attributes['password'] ?? null);
     }
 
     /**
@@ -100,7 +100,7 @@ class User extends Authenticatable
      */
     public function getPasswordAttribute()
     {
-        return $this->hasPasswordHashColumn() ? $this->password_hash : $this->password;
+        return $this->hasPasswordHashColumn() ? ($this->attributes['password_hash'] ?? null) : ($this->attributes['password'] ?? null);
     }
 
     /**

@@ -5,6 +5,13 @@
 
     RewriteEngine On
 
+    # Block sensitive files from direct access
+    RewriteRule ^\.ops-credentials\.php$ - [F,L]
+    RewriteRule ^\.private/ - [F,L]
+    RewriteRule ^super-dev\.log$ - [F,L]
+    RewriteRule ^human\.txt$ - [F,L]
+
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

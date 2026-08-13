@@ -4,10 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'AtoZGadgets - Premium Electronics')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Defer render-blocking scripts -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -25,9 +32,13 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             min-height: 100vh;
+        }
+        /* Performance Fix: Use fixed pseudo-element instead of background-attachment: fixed on body */
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
             background-image: radial-gradient(circle at 15% 50%, rgba(201, 169, 98, 0.05), transparent 25%),
                               radial-gradient(circle at 85% 30%, rgba(201, 169, 98, 0.08), transparent 25%);
-            background-attachment: fixed;
+            pointer-events: none;
         }
         a { text-decoration: none; color: inherit; }
         ul { list-style: none; }
@@ -60,7 +71,7 @@
         
         .nav-main { display: flex; align-items: center; justify-content: space-between; height: 100px; gap: 20px; }
         .logo-container { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.5px; }
-        .logo-container img { width: 40px; height: 40px; border-radius: 50%; filter: invert(1); }
+        .logo-container img { width: 40px; height: 40px; border-radius: 50%; filter: invert(1); transform: translateZ(0); }
         
         .search-bar { flex: 1; max-width: 600px; position: relative; display: none; }
         @media (min-width: 768px) { .search-bar { display: block; } }
@@ -84,10 +95,22 @@
         .cat-link { font-size: 14px; font-weight: 500; color: var(--text-primary); padding: 8px 16px; min-height: 44px; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; gap: 6px; }
         .cat-link:hover { background: rgba(255, 255, 255, 0.05); color: var(--accent); }
         .mega-dropdown { position: relative; }
-        .mega-menu { position: absolute; top: 100%; left: 0; min-width: 220px; background: #141414; border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s var(--ease-premium); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        .mega-dropdown:hover .mega-menu { opacity: 1; visibility: visible; transform: translateY(0); }
-        .mega-menu a { display: block; padding: 8px 12px; color: var(--text-secondary); font-size: 14px; border-radius: 8px; transition: all 0.2s; }
-        .mega-menu a:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+        .mega-menu { position: absolute; top: 100%; left: 0; min-width: 220px; background: #141414; border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s var(--ease-premium); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 100; }
+        
+        /* Touch Device Mega Menu Support */
+        .mega-dropdown:hover .mega-menu,
+        .mega-dropdown:focus-within .mega-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .mega-menu a { display: block; padding: 10px 12px; color: var(--text-secondary); font-size: 14px; border-radius: 8px; transition: all 0.2s; }
+        .mega-menu a:hover, .mega-menu a:focus { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 2000; transform: translateX(-100%); transition: transform 0.4s var(--ease-premium); display: flex; flex-direction: column; padding: 20px; }
+        .mobile-menu-overlay.active { transform: translateX(0); }
+        .mobile-menu-close { align-self: flex-end; background: transparent; border: none; color: var(--text-primary); cursor: pointer; padding: 10px; }
+        .mobile-nav-list { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
+        .mobile-nav-link { font-size: 18px; font-weight: 600; color: var(--text-primary); padding: 10px 0; border-bottom: 1px solid var(--glass-border); display: block; }
+
 
         /* Main Content */
         main { padding-top: 200px; min-height: 70vh; }
@@ -154,10 +177,11 @@
                 </a>
 
                 <form action="{{ route('store.shop') }}" method="GET" class="search-bar">
-                    <button type="submit" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center;">
-                        <i data-lucide="search"></i>
+                    <button type="submit" aria-label="Submit Search" style="background:transparent; border:none; cursor:pointer; color:var(--text-secondary); display:flex; align-items:center;">
+                        <i data-lucide="search" aria-hidden="true"></i>
                     </button>
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search for gadgets, accessories...">
+                    <label for="searchInput" class="sr-only" style="position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0;">Search</label>
+                    <input type="text" id="searchInput" name="q" value="{{ request('q') }}" placeholder="Search for gadgets, accessories...">
                 </form>
 
                 <div class="nav-icons">
@@ -244,6 +268,31 @@
         </div>
     </header>
 
+    <!-- Mobile Menu Container -->
+    <div class="mobile-menu-overlay" id="mobileMenu">
+        <button class="mobile-menu-close" id="closeMenuBtn" aria-label="Close Menu"><i data-lucide="x"></i></button>
+        <div class="mobile-nav-list">
+            <a href="{{ route('store.shop') }}" class="mobile-nav-link">All Products</a>
+            @if(isset($globalCategories))
+                @foreach($globalCategories as $cat)
+                    <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link">{{ $cat->name }}</a>
+                @endforeach
+            @endif
+            <a href="{{ route('store.shop', ['max_price' => 50]) }}" class="mobile-nav-link" style="color: var(--accent);">Under $50 Deals</a>
+            @auth
+                @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+                    <a href="{{ route('admin.dashboard') }}" class="mobile-nav-link">Admin Dashboard</a>
+                @else
+                    <a href="{{ route('account.dashboard') }}" class="mobile-nav-link">My Account</a>
+                @endif
+                <a href="#" onclick="event.preventDefault(); document.getElementById('mobile-logout').submit();" class="mobile-nav-link" style="color: #ef4444;">Logout</a>
+                <form id="mobile-logout" method="POST" action="{{ route('logout') }}" style="display:none;">@csrf</form>
+            @else
+                <a href="{{ route('login') }}" class="mobile-nav-link" style="color: var(--accent);">Login / Register</a>
+            @endauth
+        </div>
+    </div>
+
     <main class="container">
         @if(session('success'))
             <div style="background: rgba(52, 211, 153, 0.1); color: #34d399; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(52, 211, 153, 0.2);">
@@ -322,8 +371,33 @@
     </footer>
     
     <script>
-        // Initialize Lucide Icons
-        lucide.createIcons();
+        // Wait for DOM and Lucide (deferred load)
+        document.addEventListener('DOMContentLoaded', () => {
+            if(typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                // If deferred script is still loading
+                window.addEventListener('load', () => lucide.createIcons());
+            }
+
+            // Mobile Menu Logic
+            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            const closeBtn = document.getElementById('closeMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if(mobileBtn && mobileMenu) {
+                mobileBtn.addEventListener('click', () => {
+                    mobileMenu.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                });
+            }
+            if(closeBtn && mobileMenu) {
+                closeBtn.addEventListener('click', () => {
+                    mobileMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
 
         // Header Scroll Effect
         let lastScrollY = window.scrollY;

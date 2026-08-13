@@ -6,100 +6,75 @@ use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Order;
 use Illuminate\Support\Str;
+use App\Services\PayPalService;
+use App\Services\PaymentService;
 
 class PaymentController extends Controller
 {
-    /**
-     * Handle Payoneer Payment Gateway
-     */
-    public function payWithPayoneer(Request $request)
-    {
-        // 1. Validate the cart / order
-        $cart = session()->get('cart', []);
-        if (empty($cart)) {
-            return redirect()->route('store.cart')->with('error', 'Cart is empty');
-        }
 
-        $total = collect($cart)->sum(function($item) {
-            return $item['price'] * $item['quantity'];
-        });
-
-        $mockPayoneerResponse = [
-            'status' => 'success',
-            'transaction_id' => 'PAYONEER-' . Str::upper(Str::random(12))
-        ];
-
-        // Strict ACID Transaction: Order Creation & Payment Record
-        $order = null;
-        \Illuminate\Support\Facades\DB::transaction(function () use ($total, $mockPayoneerResponse, &$order) {
-            $order = Order::create([
-                'user_id' => 1,
-                'total_amount' => $total,
-                'status' => 'pending'
-            ]);
-
-            Payment::create([
-                'order_id' => $order->id,
-                'amount' => $total,
-                'payment_method' => 'payoneer',
-                'payoneer_transaction_id' => $mockPayoneerResponse['transaction_id'],
-                'status' => 'completed'
-            ]);
-
-            $order->update(['status' => 'processing']);
-        });
-
-        // Clear session cart after successful transaction commit
-        session()->forget('cart');
-
-        return redirect()->route('store.home')->with('success', "Order placed successfully! Paid via Payoneer (TxID: {$mockPayoneerResponse['transaction_id']}).");
-    }
-
-    /**
-     * Razorpay Create Order Endpoint
-     */
-    public function razorpayCreateOrder(Request $request)
-    {
-        $amount = $request->input('amount', 1000);
-        return response()->json([
-            'success' => true,
-            'id' => 'order_rzp_' . Str::random(10),
-            'currency' => 'INR',
-            'amount' => $amount * 100
-        ]);
-    }
-
-    /**
-     * Razorpay Verify Payment Endpoint
-     */
-    public function razorpayVerify(Request $request)
-    {
-        return response()->json([
-            'success' => true,
-            'status' => 'verified',
-            'transaction_id' => 'pay_rzp_' . Str::random(10)
-        ]);
-    }
 
     /**
      * PayPal Create Order Endpoint
      */
     public function paypalCreateOrder(Request $request)
     {
-        return response()->json([
-            'id' => 'PAYPAL-ORD-' . Str::upper(Str::random(8)),
-            'status' => 'CREATED'
-        ]);
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return response()->json(['error' => 'Cart is empty'], 400);
+        }
+
+        $total = collect($cart)->sum(function($item) {
+            return $item['price'] * $item['quantity'];
+        });
+
+        if ($total < 30) {
+            $total += 5.99; // Shipping
+        }
+
+        try {
+            $order = PayPalService::createOrder($total);
+            return response()->json($order);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
-    /**
-     * PayPal Capture Order Endpoint
-     */
     public function paypalCaptureOrder(Request $request)
     {
-        return response()->json([
-            'id' => 'PAYPAL-CAP-' . Str::upper(Str::random(8)),
-            'status' => 'COMPLETED'
+        $request->validate([
+            'paypal_order_id' => 'required|string'
         ]);
+        
+        try {
+            $capture = PayPalService::captureOrder($request->paypal_order_id);
+            
+            if (isset($capture['status']) && $capture['status'] === 'COMPLETED') {
+                $cart = session()->get('cart', []);
+                $total = collect($cart)->sum(function($item) {
+                    return $item['price'] * $item['quantity'];
+                });
+                if ($total < 30) { $total += 5.99; }
+
+                // Create Order and Process Payment atomically
+                \Illuminate\Support\Facades\DB::transaction(function () use ($total, $capture) {
+                    $order = Order::create([
+                        'user_id' => auth()->id() ?? 1,
+                        'total_amount' => $total,
+                        'status' => 'processing'
+                    ]);
+
+                    $amount = $capture['purchase_units'][0]['payments']['captures'][0]['amount']['value'] ?? 0;
+                    PaymentService::processPayment($order->id, 'paypal', $capture['id'], $amount);
+                });
+                
+                session()->forget('cart');
+
+                return response()->json(['success' => true, 'capture' => $capture, 'redirect' => route('store.home')]);
+            }
+            
+            return response()->json(['success' => false, 'error' => 'Capture failed', 'details' => $capture], 400);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

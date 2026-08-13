@@ -60,6 +60,15 @@
     .btn-import { width: 100%; padding: 10px; border-radius: 10px; background: var(--accent); color: #fff; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all 0.2s; }
     .btn-import:hover { opacity: 0.9; }
     .btn-import.success { background: #059669; }
+    
+    /* Floating Action Bar for Bulk Import */
+    .floating-action-bar { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--bg-color); border: 1px solid var(--accent); border-radius: 16px; padding: 16px 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 24px; transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 999; }
+    .floating-action-bar.visible { bottom: 40px; }
+    .selected-count { font-weight: 700; font-size: 16px; color: var(--accent); }
+    
+    .inline-input-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+    .inline-input-group label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+    .inline-input-group select, .inline-input-group input { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px; background: var(--bg-color); color: var(--text-primary); }
 
     /* Table Styles */
     .table-responsive { width: 100%; overflow-x: auto; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 16px; }
@@ -237,15 +246,15 @@
         </div>
         <div class="form-grid">
             <div class="form-group">
-                <label>Storefront Category</label>
-                <select id="importCategory">
+                <label>Default Storefront Category</label>
+                <select id="importCategory" onchange="updateLiveMargins()">
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="form-group">
-                <label>Markup Multiplier (e.g. 2.0)</label>
+                <label>Default Markup Multiplier (e.g. 2.0)</label>
                 <input type="number" id="importMarkup" value="2.0" step="0.1" min="1.1" onchange="updateLiveMargins()">
             </div>
         </div>
@@ -264,6 +273,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="font-size: 16px; font-weight: 600;" id="resultsCount">0 Products Found</h3>
         <div style="display: flex; align-items: center; gap: 12px;">
+            <button onclick="selectAll()" style="padding: 6px 12px; border-radius: 6px; background: var(--border-color); border: none; cursor: pointer; font-size: 12px; font-weight: 600;">Select All</button>
             <label style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Sort by:</label>
             <select id="sortSelect" onchange="sortAndRenderResults()" style="padding: 8px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 14px; outline: none; cursor: pointer;">
                 <option value="best_match">Best Match</option>
@@ -277,6 +287,14 @@
     </div>
 
     <div id="resultsGrid" class="results-grid"></div>
+</div>
+
+<!-- Floating Action Bar -->
+<div class="floating-action-bar" id="bulkActionBar">
+    <div class="selected-count" id="selectedCountText">0 Items Selected</div>
+    <button class="btn-import" style="width: auto; padding: 12px 32px;" onclick="importSelectedItems()">
+        <i data-lucide="download-cloud" style="width:18px;"></i> Import Selected to Database
+    </button>
 </div>
 
 <script>
@@ -387,46 +405,86 @@
         renderResults();
     }
     
+    let selectedItems = new Set();
+    
+    function toggleSelect(pid) {
+        if(selectedItems.has(pid)) {
+            selectedItems.delete(pid);
+        } else {
+            selectedItems.add(pid);
+        }
+        updateActionBar();
+    }
+    
+    function selectAll() {
+        const checkboxes = document.querySelectorAll('.product-checkbox');
+        let allChecked = true;
+        checkboxes.forEach(cb => { if(!cb.checked) allChecked = false; });
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            if(!allChecked) selectedItems.add(cb.value);
+            else selectedItems.delete(cb.value);
+        });
+        updateActionBar();
+    }
+    
+    function updateActionBar() {
+        const bar = document.getElementById('bulkActionBar');
+        if(selectedItems.size > 0) {
+            document.getElementById('selectedCountText').innerText = `${selectedItems.size} Items Selected`;
+            bar.classList.add('visible');
+        } else {
+            bar.classList.remove('visible');
+        }
+    }
+
     function renderResults() {
-        const markup = parseFloat(document.getElementById('importMarkup').value) || 2.0;
+        const defaultMarkup = parseFloat(document.getElementById('importMarkup').value) || 2.0;
+        const defaultCategory = document.getElementById('importCategory').value;
+        const defaultCategoryHtml = document.getElementById('importCategory').innerHTML;
         const resultsGrid = document.getElementById('resultsGrid');
         resultsGrid.innerHTML = '';
         
         searchResults.forEach(item => {
             const costPrice = parseFloat(item.sellPrice) || 10.0;
-            const retailPrice = (costPrice * markup).toFixed(2);
-            const profit = (costPrice * markup - costPrice).toFixed(2);
+            const retailPrice = (costPrice * defaultMarkup).toFixed(2);
             const cleanTitle = item.productNameEn.replace(/'/g, "\\'");
+            
+            const isChecked = selectedItems.has(item.pid) ? 'checked' : '';
             
             const card = document.createElement('div');
             card.className = 'product-card';
             card.innerHTML = `
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 10;">
+                    <input type="checkbox" class="product-checkbox" value="${item.pid}" onchange="toggleSelect('${item.pid}')" ${isChecked} style="width: 20px; height: 20px; cursor: pointer;">
+                </div>
                 <img src="${item.productImage}" class="product-img" alt="">
                 <div class="product-content">
                     <div class="product-category">${item.categoryName}</div>
                     <div class="product-title" title="${cleanTitle}">${item.productNameEn}</div>
                     
-                    <div class="price-calc">
+                    <div class="inline-input-group">
+                        <label>Target Category</label>
+                        <select id="cat_${item.pid}">${defaultCategoryHtml}</select>
+                    </div>
+                    
+                    <div class="inline-input-group">
+                        <label>Retail Price ($)</label>
+                        <input type="number" step="0.01" id="price_${item.pid}" value="${retailPrice}">
+                    </div>
+                    
+                    <div class="price-calc" style="margin-top: 8px;">
                         <div class="price-calc-item">
                             <span class="price-label">Supplier Cost</span>
                             <span class="price-value">$${costPrice.toFixed(2)}</span>
                         </div>
-                        <div class="price-calc-item" style="text-align: right;">
-                            <span class="price-label">Retail Target</span>
-                            <span class="price-value" style="color: var(--accent);">$${retailPrice}</span>
-                        </div>
-                        <div class="profit-row">
-                            <span class="price-label">Est. Profit/Unit:</span>
-                            <span class="profit-val">+$${profit}</span>
-                        </div>
                     </div>
                     
-                    <button class="btn-import" id="btn-import-${item.pid}" onclick="importProduct('${item.pid}', '${cleanTitle}', ${costPrice}, '${item.productImage}', '${item.categoryName}')">
-                        <i data-lucide="download" style="width:14px;"></i> Import to Database
-                    </button>
                 </div>
             `;
             resultsGrid.appendChild(card);
+            document.getElementById(`cat_${item.pid}`).value = defaultCategory;
         });
         lucide.createIcons();
     }
@@ -437,46 +495,60 @@
         }
     }
     
-    async function importProduct(pid, title, costPrice, image, category) {
-        const btn = document.getElementById(`btn-import-${pid}`);
-        const categoryId = document.getElementById('importCategory').value;
-        const markup = parseFloat(document.getElementById('importMarkup').value) || 2.0;
+    async function importSelectedItems() {
+        if(selectedItems.size === 0) return;
         
+        const btn = document.querySelector('#bulkActionBar .btn-import');
         btn.disabled = true;
-        btn.innerHTML = `<i data-lucide="loader-2" class="lucide-spin" style="width:14px;"></i> Importing...`;
-        lucide.createIcons();
         
-        try {
-            const response = await fetch('/admin/api/catalog/import-item', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    pid: pid,
-                    title: title,
-                    price: costPrice,
-                    image: image,
-                    category: category,
-                    categoryId: categoryId
-                })
-            });
-            
-            const result = await response.json();
-            
-            if(result.success) {
-                btn.className = 'btn-import success';
-                btn.innerHTML = `<i data-lucide="check-circle" style="width:14px;"></i> Imported`;
-                lucide.createIcons();
-            } else {
-                throw new Error('Import failed');
-            }
-        } catch (error) {
-            btn.style.background = '#ef4444';
-            btn.innerHTML = `<i data-lucide="x-circle" style="width:14px;"></i> Error`;
+        let successCount = 0;
+        let itemsArray = Array.from(selectedItems);
+        
+        // Ponytail: Simple sequential fetch loop instead of setting up WebSockets/Queues right now.
+        // It provides real-time progress to the user directly in the UI.
+        for (let i = 0; i < itemsArray.length; i++) {
+            const pid = itemsArray[i];
+            btn.innerHTML = `<i data-lucide="loader-2" class="lucide-spin" style="width:18px;"></i> Importing ${i+1} of ${itemsArray.length}...`;
             lucide.createIcons();
+            
+            const item = searchResults.find(x => x.pid === pid);
+            const overridePrice = document.getElementById(`price_${pid}`).value;
+            const overrideCategory = document.getElementById(`cat_${pid}`).value;
+            const cleanTitle = item.productNameEn.replace(/'/g, "\\'");
+            
+            try {
+                const response = await fetch('/admin/api/catalog/import-item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({
+                        pid: pid,
+                        title: cleanTitle,
+                        price: overridePrice,
+                        image: item.productImage,
+                        category: item.categoryName,
+                        categoryId: overrideCategory
+                    })
+                });
+                
+                if(response.ok) {
+                    successCount++;
+                    // Remove from UI visually
+                    selectedItems.delete(pid);
+                    const checkbox = document.querySelector(`.product-checkbox[value="${pid}"]`);
+                    if(checkbox) checkbox.closest('.product-card').style.opacity = '0.5';
+                }
+            } catch (error) {
+                console.error('Failed to import', pid);
+            }
         }
+        
+        btn.innerHTML = `<i data-lucide="check-circle" style="width:18px;"></i> Done (${successCount} imported)`;
+        lucide.createIcons();
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="download-cloud" style="width:18px;"></i> Import Selected to Database`;
+            updateActionBar();
+        }, 3000);
     }
 </script>
 <style>

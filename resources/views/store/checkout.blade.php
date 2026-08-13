@@ -3,6 +3,7 @@
 @section('title', 'Secure Checkout - AtoZGadgets')
 
 @section('content')
+<script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID') }}&currency=USD"></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
@@ -167,10 +168,12 @@
                     <p class="payment-desc">Powered by Razorpay. Supports Visa, Mastercard, Amex, UPI & Net Banking.</p>
                 </div>
 
-                <button type="submit" class="btn" id="pay-btn" style="width:100%; padding: 20px; font-size:18px; font-weight:700; background:#2563eb; color:#fff; border:none; margin-top: 24px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);">
+                <button type="submit" class="btn hidden" id="pay-btn" style="width:100%; padding: 20px; font-size:18px; font-weight:700; background:var(--accent); color:#000; border:none; margin-top: 24px; box-shadow: 0 10px 20px rgba(201,169,98, 0.2);">
                     <i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:8px;"></i>
-                    Pay Now
+                    Pay with Razorpay
                 </button>
+                
+                <div id="paypal-button-container" style="margin-top: 24px;"></div>
                 
                 <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:16px;">
                     By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
@@ -243,6 +246,41 @@
         const optRazorpay = document.getElementById('opt-razorpay');
         const payBtn = document.getElementById('pay-btn');
         const paymentInput = document.getElementById('payment_method_input');
+        const paypalContainer = document.getElementById('paypal-button-container');
+
+        // Initialize PayPal SDK
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                return fetch("{{ route('payment.paypal.create') }}", {
+                    method: "post",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Content-Type": "application/json"
+                    }
+                }).then(res => res.json()).then(orderData => {
+                    if (orderData.error) throw new Error(orderData.error);
+                    return orderData.id;
+                });
+            },
+            onApprove: function(data, actions) {
+                return fetch("{{ route('payment.paypal.capture') }}", {
+                    method: "post",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        paypal_order_id: data.orderID
+                    })
+                }).then(res => res.json()).then(orderData => {
+                    if (orderData.success) {
+                        window.location.href = orderData.redirect;
+                    } else {
+                        alert('Payment capture failed. Please try again.');
+                    }
+                });
+            }
+        }).render('#paypal-button-container');
 
         // Form Validation & Step Switch
         continueBtn.addEventListener('click', () => {
@@ -274,9 +312,8 @@
             optRazorpay.classList.remove('selected');
             optPaypal.querySelector('input').checked = true;
             paymentInput.value = 'paypal';
-            payBtn.style.background = '#2563eb';
-            payBtn.innerHTML = '<i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:8px;"></i> Pay with PayPal';
-            lucide.createIcons();
+            payBtn.classList.add('hidden');
+            paypalContainer.classList.remove('hidden');
         });
 
         optRazorpay.addEventListener('click', () => {
@@ -284,9 +321,8 @@
             optPaypal.classList.remove('selected-paypal');
             optRazorpay.querySelector('input').checked = true;
             paymentInput.value = 'razorpay';
-            payBtn.style.background = 'var(--accent)';
-            payBtn.style.color = '#000';
-            payBtn.innerHTML = '<i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:8px;"></i> Pay with Razorpay';
+            paypalContainer.classList.add('hidden');
+            payBtn.classList.remove('hidden');
             lucide.createIcons();
         });
     });
