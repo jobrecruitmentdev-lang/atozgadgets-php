@@ -3,7 +3,7 @@
 @section('title', 'Secure Checkout - AtoZGadgets')
 
 @section('content')
-<script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID', 'test') }}&currency=USD" defer></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ config('paypal.client_id') }}&currency=USD" defer></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }

@@ -25,7 +25,7 @@ class PayPalService
                 ]);
 
             if ($response->failed()) {
-                throw new \Exception('Failed to obtain PayPal Access Token');
+                throw new \Exception('Failed to obtain PayPal Access Token. Status: ' . $response->status() . ' Body: ' . $response->body());
             }
 
             return $response->json('access_token');
