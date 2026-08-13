@@ -65,8 +65,8 @@ class CartController extends Controller
         $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
         session([
-            'checkout_otp' => $otp,
-            'checkout_otp_expires_at' => now()->addMinutes(10)
+            'checkout_otp' => (string) $otp,
+            'checkout_otp_expires_at' => time() + 600 // 600 seconds = 10 minutes
         ]);
 
         // Ponytail: Send simple raw email instead of complex Mailable
@@ -90,7 +90,7 @@ class CartController extends Controller
         $sessionOtp = session('checkout_otp');
         $expiresAt = session('checkout_otp_expires_at');
 
-        if (!$sessionOtp || !$expiresAt || now()->isAfter($expiresAt)) {
+        if (!$sessionOtp || !$expiresAt || time() > $expiresAt) {
             return response()->json(['success' => false, 'error' => 'OTP has expired. Please go back and resend.']);
         }
 
