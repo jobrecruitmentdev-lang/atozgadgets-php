@@ -75,29 +75,10 @@ class CatalogController extends Controller
         return view('admin.catalog.import', compact('categories', 'brands', 'stagedProducts'));
     }
 
-    private function getCjAccessToken()
-    {
-        return \Illuminate\Support\Facades\Cache::remember('cj_access_token', 86400, function () {
-            $email = env('CJ_API_EMAIL');
-            $key = env('CJ_API_KEY');
-            if (!$email || !$key) return null;
-
-            $response = \Illuminate\Support\Facades\Http::post('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken', [
-                'email' => $email,
-                'password' => $key
-            ]);
-
-            if ($response->successful() && $response->json('result') === true) {
-                return $response->json('data.accessToken');
-            }
-            return null;
-        });
-    }
-
     public function searchCjApi(Request $request)
     {
         $keyword = strtolower($request->query('keyword', ''));
-        $token = $this->getCjAccessToken();
+        $token = \App\Services\CjDropshippingService::getAccessToken();
 
         // Check if we are using the live API
         if ($token) {
@@ -118,11 +99,19 @@ class CatalogController extends Controller
             }
         }
 
+        // Fallback to mock data if API fails or token is missing
+        $mockData = collect($this->demoCatalog);
+        if (!empty($keyword)) {
+            $mockData = $mockData->filter(function($item) use ($keyword) {
+                return str_contains(strtolower($item['productNameEn']), $keyword);
+            });
+        }
+
         return response()->json([
-            'result' => false,
-            'message' => 'No real products found or CJ API error.',
+            'result' => true,
+            'message' => 'Success (Mock Data)',
             'data' => [
-                'list' => []
+                'list' => $mockData->values()->toArray()
             ]
         ]);
     }
