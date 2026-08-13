@@ -9,13 +9,19 @@ use Illuminate\Support\Facades\Mail;
 
 class CartController extends Controller
 {
-    public function viewCart()
+    private function getCartTotal($cart)
     {
-        $cart = session()->get('cart', []);
         $total = 0;
         foreach($cart as $item) {
             $total += $item['price'] * $item['quantity'];
         }
+        return $total;
+    }
+
+    public function viewCart()
+    {
+        $cart = session()->get('cart', []);
+        $total = $this->getCartTotal($cart);
         
         return view('store.cart', compact('cart', 'total'));
     }
@@ -43,11 +49,7 @@ class CartController extends Controller
     public function checkout()
     {
         $cart = session()->get('cart', []);
-        
-        $total = 0;
-        foreach($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
-        }
+        $total = $this->getCartTotal($cart);
         
         return view('store.checkout', compact('cart', 'total'));
     }
@@ -68,8 +70,8 @@ class CartController extends Controller
         // Save shipping details to session
         session(['checkout_shipping' => $validated]);
 
-        // Generate 6 digit OTP
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        // Generate 6 digit OTP (Cryptographically Secure)
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
         session([
             'checkout_otp' => $otp,
@@ -92,7 +94,7 @@ class CartController extends Controller
 
     public function verifyOtp(Request $request)
     {
-        $request->validate(['otp' => 'required|string|length:6']);
+        $request->validate(['otp' => 'required|numeric|digits:6']);
 
         $sessionOtp = session('checkout_otp');
         $expiresAt = session('checkout_otp_expires_at');
@@ -119,10 +121,7 @@ class CartController extends Controller
             return redirect()->route('store.cart');
         }
 
-        $total = 0;
-        foreach($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
-        }
+        $total = $this->getCartTotal($cart);
 
         // Add dummy shipping cost if under 30
         if($total < 30) {
