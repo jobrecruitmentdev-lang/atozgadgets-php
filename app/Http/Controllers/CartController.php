@@ -9,19 +9,10 @@ use Illuminate\Support\Facades\Mail;
 
 class CartController extends Controller
 {
-    private function getCartTotal($cart)
-    {
-        $total = 0;
-        foreach($cart as $item) {
-            $total += $item['price'] * $item['quantity'];
-        }
-        return $total;
-    }
-
     public function viewCart()
     {
         $cart = session()->get('cart', []);
-        $total = $this->getCartTotal($cart);
+        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
         
         return view('store.cart', compact('cart', 'total'));
     }
@@ -49,7 +40,7 @@ class CartController extends Controller
     public function checkout()
     {
         $cart = session()->get('cart', []);
-        $total = $this->getCartTotal($cart);
+        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
         
         return view('store.checkout', compact('cart', 'total'));
     }
@@ -121,7 +112,7 @@ class CartController extends Controller
             return redirect()->route('store.cart');
         }
 
-        $total = $this->getCartTotal($cart);
+        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
         // Add dummy shipping cost if under 30
         if($total < 30) {
