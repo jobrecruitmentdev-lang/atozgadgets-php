@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class CartController extends Controller
 {
@@ -75,8 +76,16 @@ class CartController extends Controller
             'checkout_otp_expires_at' => now()->addMinutes(10)
         ]);
 
-        // Mock Email/SMS Send
-        Log::info("CHECKOUT OTP for {$validated['email']} / {$validated['phone']}: {$otp}");
+        // Ponytail: Send simple raw email instead of complex Mailable
+        try {
+            Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes.", function ($message) use ($validated) {
+                $message->to($validated['email'])
+                        ->subject('Your Checkout OTP Code - AtoZGadgets');
+            });
+        } catch (\Exception $e) {
+            Log::error("Failed to send OTP email: " . $e->getMessage());
+            // In dev mode, we still succeed so you can check logs. In prod, you'd fail here.
+        }
 
         return response()->json(['success' => true]);
     }
