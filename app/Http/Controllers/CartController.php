@@ -146,6 +146,9 @@ class CartController extends Controller
             'status' => 'completed'
         ]);
 
+        // ponytail: Sync to CJ inline. Move to Queue job if CJ API latency hurts UX.
+        \App\Services\CjDropshippingService::syncOrder($order, $cart);
+
         session()->forget(['cart', 'checkout_shipping', 'checkout_otp_verified']);
 
         return redirect()->route('store.home')->with('success', 'Order placed successfully! Paid via ' . ucfirst($paymentMethod) . '.');
