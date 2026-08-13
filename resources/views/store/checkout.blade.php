@@ -194,20 +194,40 @@
         const verifyOtpBtn = document.getElementById('verify-otp-btn');
         const editShippingBtn = document.getElementById('edit-shipping-btn');
         const resendOtpBtn = document.getElementById('resend-otp-btn');
+        const shippingForm = document.getElementById('shipping-form');
         
-        // Step 1 -> Step 1.5 (Send OTP)
+        // --- Caching System for Mobile Users ---
+        // Auto-load saved shipping data
+        const savedData = localStorage.getItem('atoz_shipping_cache');
+        if (savedData) {
+            try {
+                const parsed = JSON.parse(savedData);
+                Object.keys(parsed).forEach(key => {
+                    const input = shippingForm.elements[key];
+                    if (input && key !== '_token') input.value = parsed[key];
+                });
+            } catch(e) {}
+        }
+
+        // Auto-save shipping data on input
+        shippingForm.addEventListener('input', () => {
+            const formData = new FormData(shippingForm);
+            const dataObj = {};
+            formData.forEach((value, key) => dataObj[key] = value);
+            localStorage.setItem('atoz_shipping_cache', JSON.stringify(dataObj));
+        });
+        
+        // --- Step 1 -> Step 1.5 (Send OTP) ---
         saveShippingBtn.addEventListener('click', async () => {
-            const form = document.getElementById('shipping-form');
-            if(!form.checkValidity()) { form.reportValidity(); return; }
+            if(!shippingForm.checkValidity()) { shippingForm.reportValidity(); return; }
 
             document.getElementById('shipping-loader').style.display = 'inline-block';
             saveShippingBtn.disabled = true;
             document.getElementById('shipping-error').style.display = 'none';
 
-            const formData = new FormData(form);
+            const formData = new FormData(shippingForm);
             
             try {
-                // AJAX call to Backend (To be implemented in Controller)
                 const res = await fetch("{{ route('store.checkout.send-otp') }}", {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
@@ -245,8 +265,7 @@
 
         // Resend OTP
         resendOtpBtn.addEventListener('click', async () => {
-            const form = document.getElementById('shipping-form');
-            if(!form.checkValidity()) return;
+            if(!shippingForm.checkValidity()) return;
             
             resendOtpBtn.disabled = true;
             resendOtpBtn.innerText = 'Sending...';
@@ -256,7 +275,7 @@
                 const res = await fetch("{{ route('store.checkout.send-otp') }}", {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
-                    body: new FormData(form)
+                    body: new FormData(shippingForm)
                 });
                 
                 const data = await res.json();
@@ -283,6 +302,9 @@
             }, 5000);
         });
 
+        // Variable to ensure PayPal is rendered only once
+        let isPayPalRendered = false;
+
         // Step 1.5 -> Step 2 (Verify OTP)
         verifyOtpBtn.addEventListener('click', async () => {
             const otp = document.getElementById('otp-input').value;
@@ -306,6 +328,36 @@
                     step2.classList.remove('hidden');
                     btnStep15.classList.remove('active');
                     btnStep2.classList.add('active');
+
+                    // Initialize PayPal SDK ONLY when the container is visible
+                    if(typeof paypal !== 'undefined' && !isPayPalRendered) {
+                        isPayPalRendered = true;
+                        paypal.Buttons({
+                            createOrder: function(data, actions) {
+                                return fetch("{{ route('payment.paypal.create') }}", {
+                                    method: "post",
+                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" }
+                                }).then(res => res.json()).then(orderData => {
+                                    if (orderData.error) throw new Error(orderData.error);
+                                    return orderData.id;
+                                });
+                            },
+                            onApprove: function(data, actions) {
+                                return fetch("{{ route('payment.paypal.capture') }}", {
+                                    method: "post",
+                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" },
+                                    body: JSON.stringify({ paypal_order_id: data.orderID })
+                                }).then(res => res.json()).then(orderData => {
+                                    if (orderData.success) {
+                                        localStorage.removeItem('atoz_shipping_cache'); // Clear cache on success
+                                        window.location.href = orderData.redirect;
+                                    } else {
+                                        alert('Payment capture failed.');
+                                    }
+                                });
+                            }
+                        }).render('#paypal-button-container');
+                    }
                 } else {
                     document.getElementById('otp-error').innerText = data.error || 'Invalid OTP code.';
                     document.getElementById('otp-error').style.display = 'block';
@@ -318,31 +370,6 @@
             document.getElementById('otp-loader').style.display = 'none';
             verifyOtpBtn.disabled = false;
         });
-
-        // Initialize PayPal SDK (Only visible in Step 2)
-        if(typeof paypal !== 'undefined') {
-            paypal.Buttons({
-                createOrder: function(data, actions) {
-                    return fetch("{{ route('payment.paypal.create') }}", {
-                        method: "post",
-                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" }
-                    }).then(res => res.json()).then(orderData => {
-                        if (orderData.error) throw new Error(orderData.error);
-                        return orderData.id;
-                    });
-                },
-                onApprove: function(data, actions) {
-                    return fetch("{{ route('payment.paypal.capture') }}", {
-                        method: "post",
-                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" },
-                        body: JSON.stringify({ paypal_order_id: data.orderID })
-                    }).then(res => res.json()).then(orderData => {
-                        if (orderData.success) window.location.href = orderData.redirect;
-                        else alert('Payment capture failed.');
-                    });
-                }
-            }).render('#paypal-button-container');
-        }
     });
 </script>
 @endsection
