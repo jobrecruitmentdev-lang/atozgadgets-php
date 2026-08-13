@@ -37,4 +37,4 @@ jobs:
             
       - name: Post-Deploy Optimizations
         run: |
-          ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -v u390470426@217.21.74.188 "cd domains/atozgadgetz.com/public_html && php artisan optimize:clear && php artisan optimize"
+          ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no -o IdentitiesOnly=yes u390470426@217.21.74.188 "cd domains/atozgadgetz.com/public_html && rm -f bootstrap/cache/*.php && php artisan optimize:clear && php artisan optimize"
