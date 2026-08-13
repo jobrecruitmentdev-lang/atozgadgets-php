@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
@@ -41,9 +42,6 @@ class CartController extends Controller
     public function checkout()
     {
         $cart = session()->get('cart', []);
-        if(empty($cart)) {
-            return redirect()->route('store.cart');
-        }
         
         $total = 0;
         foreach($cart as $item) {
@@ -51,6 +49,58 @@ class CartController extends Controller
         }
         
         return view('store.checkout', compact('cart', 'total'));
+    }
+
+    public function sendOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'phone' => 'required',
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'address1' => 'required',
+            'city' => 'required',
+            'postal_code' => 'required',
+            'country' => 'required'
+        ]);
+
+        // Save shipping details to session
+        session(['checkout_shipping' => $validated]);
+
+        // Generate 6 digit OTP
+        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        session([
+            'checkout_otp' => $otp,
+            'checkout_otp_expires_at' => now()->addMinutes(10)
+        ]);
+
+        // Mock Email/SMS Send
+        Log::info("CHECKOUT OTP for {$validated['email']} / {$validated['phone']}: {$otp}");
+
+        return response()->json(['success' => true]);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate(['otp' => 'required|string|length:6']);
+
+        $sessionOtp = session('checkout_otp');
+        $expiresAt = session('checkout_otp_expires_at');
+
+        if (!$sessionOtp || !$expiresAt || now()->isAfter($expiresAt)) {
+            return response()->json(['success' => false, 'error' => 'OTP has expired. Please go back and resend.']);
+        }
+
+        if ($request->otp !== $sessionOtp) {
+            return response()->json(['success' => false, 'error' => 'Invalid OTP code.']);
+        }
+
+        // OTP Validated
+        session()->forget(['checkout_otp', 'checkout_otp_expires_at']);
+        session(['checkout_otp_verified' => true]);
+
+        return response()->json(['success' => true]);
     }
 
     public function processCheckout(Request $request)
@@ -70,13 +120,24 @@ class CartController extends Controller
             $total += 5.99;
         }
 
+        // Verify that OTP was verified
+        if(!session('checkout_otp_verified')) {
+            return redirect()->route('store.checkout')->with('error', 'Please verify your phone/email via OTP first.');
+        }
+
         $paymentMethod = $request->input('payment_method', 'paypal');
 
-        // Create Order (Mock logic for now)
+        // Create Order
+        $shipping = session('checkout_shipping', []);
+        
         $order = \App\Models\Order::create([
-            'user_id' => auth()->id() ?? 1,
+            'order_number' => 'ORD-' . strtoupper(uniqid()),
+            'user_id' => auth()->id(), // Nullable if guest checkout allowed
             'total_amount' => $total,
-            'status' => 'processing'
+            'status' => 'processing',
+            'shipping_address' => json_encode($shipping),
+            'contact_email' => $shipping['email'] ?? null,
+            'contact_phone' => $shipping['phone'] ?? null
         ]);
 
         \App\Models\Payment::create([
@@ -86,7 +147,7 @@ class CartController extends Controller
             'status' => 'completed'
         ]);
 
-        session()->forget('cart');
+        session()->forget(['cart', 'checkout_shipping', 'checkout_otp_verified']);
 
         return redirect()->route('store.home')->with('success', 'Order placed successfully! Paid via ' . ucfirst($paymentMethod) . '.');
     }

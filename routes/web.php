@@ -32,6 +32,8 @@ Route::middleware('storefront')->group(function () {
     Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'addToCart'])->name('store.cart.add');
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('store.checkout');
     Route::post('/checkout', [\App\Http\Controllers\CartController::class, 'processCheckout'])->name('store.checkout.process');
+    Route::post('/checkout/send-otp', [\App\Http\Controllers\CartController::class, 'sendOtp'])->name('store.checkout.send-otp');
+    Route::post('/checkout/verify-otp', [\App\Http\Controllers\CartController::class, 'verifyOtp'])->name('store.checkout.verify-otp');
     
     // Payments
     Route::post('/payment/payoneer', [\App\Http\Controllers\PaymentController::class, 'payWithPayoneer'])->name('payment.payoneer');

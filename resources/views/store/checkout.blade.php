@@ -3,7 +3,7 @@
 @section('title', 'Secure Checkout - AtoZGadgets')
 
 @section('content')
-<script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID') }}&currency=USD"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID', 'test') }}&currency=USD"></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
@@ -14,7 +14,7 @@
 
     /* Steps */
     .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; font-size: 14px; }
-    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); }
     .step-btn.active { color: var(--text-primary); }
 
     /* Forms */
@@ -27,13 +27,9 @@
     .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
 
     /* Payment Methods */
-    .payment-option { cursor: pointer; border: 2px solid var(--glass-border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; transition: all 0.3s; background: rgba(255,255,255,0.02); margin-bottom: 16px; }
-    .payment-option:hover { border-color: rgba(255,255,255,0.2); }
-    .payment-option.selected { border-color: var(--accent); background: rgba(201,169,98,0.05); }
-    .payment-option.selected-paypal { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
-    
+    .payment-option { border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(59,130,246,0.05); margin-bottom: 16px; }
     .payment-header { display: flex; justify-content: space-between; align-items: center; }
-    .payment-title { font-weight: 700; font-size: 16px; }
+    .payment-title { font-weight: 700; font-size: 16px; color:#3b82f6; }
     .payment-desc { font-size: 12px; color: var(--text-secondary); }
 
     /* Order Summary block */
@@ -52,6 +48,10 @@
 
     /* Utilities */
     .hidden { display: none; }
+    
+    /* Loader */
+    .loader { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-left: 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <div class="checkout-layout">
@@ -61,64 +61,32 @@
         <div class="step-indicator">
             <button class="step-btn active" id="btn-step-1">1. Shipping</button>
             <span style="color: var(--text-secondary);">/</span>
-            <button class="step-btn" id="btn-step-2" disabled>2. Payment</button>
+            <button class="step-btn" id="btn-step-1-5">2. Verification</button>
+            <span style="color: var(--text-secondary);">/</span>
+            <button class="step-btn" id="btn-step-2">3. Payment</button>
         </div>
 
-        <form id="checkout-form" action="{{ route('store.checkout') }}" method="POST">
+        <!-- Step 1: Shipping Form -->
+        <form id="shipping-form" data-aos="fade-in">
             @csrf
-            
-            <!-- Step 1: Shipping -->
-            <div id="step-1" class="form-section" data-aos="fade-in">
+            <div id="step-1" class="form-section">
                 <h2>Shipping Information</h2>
-                
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>First Name *</label>
-                        <input type="text" name="first_name" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Last Name *</label>
-                        <input type="text" name="last_name" required>
-                    </div>
+                    <div class="input-group"><label>First Name *</label><input type="text" name="first_name" required></div>
+                    <div class="input-group"><label>Last Name *</label><input type="text" name="last_name" required></div>
                 </div>
-
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>Email *</label>
-                        <input type="email" name="email" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Phone *</label>
-                        <input type="tel" name="phone" placeholder="+1 234 567 8900" required>
-                    </div>
+                    <div class="input-group"><label>Email *</label><input type="email" name="email" id="user-email" required></div>
+                    <div class="input-group"><label>Phone *</label><input type="tel" name="phone" id="user-phone" placeholder="+1 234 567 8900" required></div>
                 </div>
-
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label>Address Line 1 *</label>
-                    <input type="text" name="address1" required>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <label>Address Line 2</label>
-                    <input type="text" name="address2" placeholder="Apt, Suite, Floor (optional)">
-                </div>
-
+                <div class="input-group" style="margin-bottom: 20px;"><label>Address Line 1 *</label><input type="text" name="address1" required></div>
+                <div class="input-group" style="margin-bottom: 20px;"><label>Address Line 2</label><input type="text" name="address2" placeholder="Apt, Suite (optional)"></div>
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>City *</label>
-                        <input type="text" name="city" required>
-                    </div>
-                    <div class="input-group">
-                        <label>State / Province</label>
-                        <input type="text" name="state">
-                    </div>
+                    <div class="input-group"><label>City *</label><input type="text" name="city" required></div>
+                    <div class="input-group"><label>State / Province</label><input type="text" name="state"></div>
                 </div>
-
                 <div class="form-grid">
-                    <div class="input-group">
-                        <label>Postal Code *</label>
-                        <input type="text" name="postal_code" required>
-                    </div>
+                    <div class="input-group"><label>Postal Code *</label><input type="text" name="postal_code" required></div>
                     <div class="input-group">
                         <label>Country *</label>
                         <select name="country" required>
@@ -131,67 +99,60 @@
                     </div>
                 </div>
 
-                <button type="button" class="btn btn-primary" id="continue-btn" style="padding: 16px 32px; margin-top: 16px;">
-                    Continue to Payment &rarr;
-                </button>
-            </div>
-
-            <!-- Step 2: Payment -->
-            <div id="step-2" class="form-section hidden" data-aos="fade-in">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                    <h2>Select Payment Method</h2>
-                    <button type="button" class="step-btn" id="back-btn" style="color:var(--accent);">
-                        &larr; Edit Shipping
+                <div style="display:flex; align-items:center;">
+                    <button type="button" class="btn btn-primary" id="save-shipping-btn" style="padding: 16px 32px; margin-top: 16px; display:flex; align-items:center;">
+                        Verify & Continue <span class="loader" id="shipping-loader"></span>
                     </button>
+                    <p id="shipping-error" style="color: #ef4444; margin-left: 15px; display:none;"></p>
                 </div>
-
-                <input type="hidden" name="payment_method" id="payment_method_input" value="paypal">
-
-                <div class="payment-option selected-paypal" id="opt-paypal">
-                    <div class="payment-header">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="payment-title" style="color:#3b82f6;">PayPal</span>
-                            <span style="font-size:10px; background:#3b82f6; color:#fff; padding:2px 8px; border-radius:12px; font-weight:700;">Priority #1</span>
-                        </div>
-                        <input type="radio" name="gateway_dummy" checked style="accent-color:#3b82f6;">
-                    </div>
-                    <p class="payment-desc">Fast, secure global checkout with PayPal balance, Credit Card, or Pay Later.</p>
-                </div>
-
-                <div class="payment-option" id="opt-razorpay">
-                    <div class="payment-header">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="payment-title">Credit / Debit Card / UPI</span>
-                        </div>
-                        <input type="radio" name="gateway_dummy" style="accent-color:var(--accent);">
-                    </div>
-                    <p class="payment-desc">Powered by Razorpay. Supports Visa, Mastercard, Amex, UPI & Net Banking.</p>
-                </div>
-
-                <button type="submit" class="btn hidden" id="pay-btn" style="width:100%; padding: 20px; font-size:18px; font-weight:700; background:var(--accent); color:#000; border:none; margin-top: 24px; box-shadow: 0 10px 20px rgba(201,169,98, 0.2);">
-                    <i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:8px;"></i>
-                    Pay with Razorpay
-                </button>
-                
-                <div id="paypal-button-container" style="margin-top: 24px;"></div>
-                
-                <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:16px;">
-                    By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
-                </p>
             </div>
         </form>
+
+        <!-- Step 1.5: OTP Verification -->
+        <div id="step-1-5" class="form-section hidden" data-aos="fade-in">
+            <h2>Verify Your Details</h2>
+            <p style="color:var(--text-secondary); margin-bottom: 20px;">We have sent a 6-digit OTP to your email (<span id="display-email" style="color:#fff;"></span>).</p>
+            
+            <div class="input-group" style="max-width: 300px; margin-bottom: 20px;">
+                <label>Enter OTP Code *</label>
+                <input type="text" id="otp-input" placeholder="123456" maxlength="6" style="font-size:24px; letter-spacing:8px; text-align:center;">
+            </div>
+
+            <div style="display:flex; align-items:center;">
+                <button type="button" class="btn btn-primary" id="verify-otp-btn" style="padding: 16px 32px; display:flex; align-items:center;">
+                    Confirm & Proceed <span class="loader" id="otp-loader"></span>
+                </button>
+                <p id="otp-error" style="color: #ef4444; margin-left: 15px; display:none;">Invalid OTP code.</p>
+            </div>
+            <button type="button" id="edit-shipping-btn" style="background:none; border:none; color:var(--accent); margin-top:20px; cursor:pointer; font-weight:500;">&larr; Edit Shipping Info</button>
+        </div>
+
+        <!-- Step 2: Payment -->
+        <div id="step-2" class="form-section hidden" data-aos="fade-in">
+            <h2>Select Payment Method</h2>
+            <div class="payment-option">
+                <div class="payment-header">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="payment-title"><i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:4px;"></i> PayPal</span>
+                    </div>
+                </div>
+                <p class="payment-desc">Fast, secure checkout via PayPal.</p>
+            </div>
+            
+            <div id="paypal-button-container" style="margin-top: 24px;"></div>
+            
+            <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:16px;">
+                By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
+            </p>
+        </div>
     </div>
 
+    <!-- Order Summary -->
     <div class="order-summary" data-aos="fade-left">
         <div class="summary-card">
             <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 24px;">Order Summary</h2>
-            
             <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;">
-                @php 
-                    $subtotal = 0; 
-                    // Mock cart item for demo since session cart logic is backend dependent
-                    $subtotal += 29.99;
-                @endphp
+                @php $subtotal = 29.99; @endphp
                 <div class="summary-item">
                     <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80" alt="Watch">
                     <div class="item-info">
@@ -203,31 +164,13 @@
             </div>
 
             <div class="summary-totals">
-                <div class="total-row">
-                    <span style="color:var(--text-secondary);">Subtotal</span>
-                    <span>${{ number_format($subtotal, 2) }}</span>
-                </div>
+                <div class="total-row"><span style="color:var(--text-secondary);">Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
                 <div class="total-row">
                     <span style="color:var(--text-secondary);">Shipping</span>
-                    @if($subtotal >= 30)
-                        <span class="free-text">FREE</span>
-                    @else
-                        <span>$5.99</span>
-                        @php $subtotal += 5.99; @endphp
-                    @endif
+                    @if($subtotal >= 30) <span class="free-text">FREE</span>
+                    @else <span>$5.99</span> @php $subtotal += 5.99; @endphp @endif
                 </div>
-                @if($subtotal >= 30)
-                    <p style="font-size: 12px; color: #10b981; margin-top:-8px; margin-bottom:12px;">Free shipping applied (order over $30)</p>
-                @endif
-                <div class="total-row final">
-                    <span>Total</span>
-                    <span>${{ number_format($subtotal, 2) }}</span>
-                </div>
-            </div>
-            
-            <div style="display:flex; align-items:center; gap:8px; margin-top:20px; font-size:12px; color:var(--text-secondary);">
-                <i data-lucide="shield-check" style="color:#10b981; width:16px;"></i>
-                <span>SSL encrypted · Secure Checkout</span>
+                <div class="total-row final"><span>Total</span><span>${{ number_format($subtotal, 2) }}</span></div>
             </div>
         </div>
     </div>
@@ -236,95 +179,125 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const step1 = document.getElementById('step-1');
+        const step15 = document.getElementById('step-1-5');
         const step2 = document.getElementById('step-2');
+        
         const btnStep1 = document.getElementById('btn-step-1');
+        const btnStep15 = document.getElementById('btn-step-1-5');
         const btnStep2 = document.getElementById('btn-step-2');
-        const continueBtn = document.getElementById('continue-btn');
-        const backBtn = document.getElementById('back-btn');
 
-        const optPaypal = document.getElementById('opt-paypal');
-        const optRazorpay = document.getElementById('opt-razorpay');
-        const payBtn = document.getElementById('pay-btn');
-        const paymentInput = document.getElementById('payment_method_input');
-        const paypalContainer = document.getElementById('paypal-button-container');
+        const saveShippingBtn = document.getElementById('save-shipping-btn');
+        const verifyOtpBtn = document.getElementById('verify-otp-btn');
+        const editShippingBtn = document.getElementById('edit-shipping-btn');
+        
+        // Step 1 -> Step 1.5 (Send OTP)
+        saveShippingBtn.addEventListener('click', async () => {
+            const form = document.getElementById('shipping-form');
+            if(!form.checkValidity()) { form.reportValidity(); return; }
 
-        // Initialize PayPal SDK
-        paypal.Buttons({
-            createOrder: function(data, actions) {
-                return fetch("{{ route('payment.paypal.create') }}", {
-                    method: "post",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Content-Type": "application/json"
-                    }
-                }).then(res => res.json()).then(orderData => {
-                    if (orderData.error) throw new Error(orderData.error);
-                    return orderData.id;
+            document.getElementById('shipping-loader').style.display = 'inline-block';
+            saveShippingBtn.disabled = true;
+            document.getElementById('shipping-error').style.display = 'none';
+
+            const formData = new FormData(form);
+            
+            try {
+                // AJAX call to Backend (To be implemented in Controller)
+                const res = await fetch("{{ route('store.checkout.send-otp') }}", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
+                    body: formData
                 });
-            },
-            onApprove: function(data, actions) {
-                return fetch("{{ route('payment.paypal.capture') }}", {
-                    method: "post",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        paypal_order_id: data.orderID
-                    })
-                }).then(res => res.json()).then(orderData => {
-                    if (orderData.success) {
-                        window.location.href = orderData.redirect;
-                    } else {
-                        alert('Payment capture failed. Please try again.');
-                    }
-                });
+                
+                const data = await res.json();
+                
+                if(data.success) {
+                    document.getElementById('display-email').innerText = document.getElementById('user-email').value;
+                    step1.classList.add('hidden');
+                    step15.classList.remove('hidden');
+                    btnStep1.classList.remove('active');
+                    btnStep15.classList.add('active');
+                } else {
+                    document.getElementById('shipping-error').innerText = data.error || 'Failed to generate OTP';
+                    document.getElementById('shipping-error').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('shipping-error').innerText = 'Network Error. Try again.';
+                document.getElementById('shipping-error').style.display = 'block';
             }
-        }).render('#paypal-button-container');
 
-        // Form Validation & Step Switch
-        continueBtn.addEventListener('click', () => {
-            const requiredInputs = step1.querySelectorAll('input[required]');
-            let valid = true;
-            requiredInputs.forEach(input => {
-                if (!input.value) { valid = false; input.style.borderColor = 'red'; }
-                else { input.style.borderColor = 'var(--glass-border)'; }
-            });
-            if (valid) {
-                step1.classList.add('hidden');
-                step2.classList.remove('hidden');
-                btnStep1.classList.remove('active');
-                btnStep2.classList.add('active');
-                btnStep2.disabled = false;
-            }
+            document.getElementById('shipping-loader').style.display = 'none';
+            saveShippingBtn.disabled = false;
         });
 
-        backBtn.addEventListener('click', () => {
-            step2.classList.add('hidden');
+        // Edit Shipping (Go back)
+        editShippingBtn.addEventListener('click', () => {
+            step15.classList.add('hidden');
             step1.classList.remove('hidden');
-            btnStep2.classList.remove('active');
+            btnStep15.classList.remove('active');
             btnStep1.classList.add('active');
         });
 
-        // Payment Toggle
-        optPaypal.addEventListener('click', () => {
-            optPaypal.classList.add('selected-paypal');
-            optRazorpay.classList.remove('selected');
-            optPaypal.querySelector('input').checked = true;
-            paymentInput.value = 'paypal';
-            payBtn.classList.add('hidden');
-            paypalContainer.classList.remove('hidden');
+        // Step 1.5 -> Step 2 (Verify OTP)
+        verifyOtpBtn.addEventListener('click', async () => {
+            const otp = document.getElementById('otp-input').value;
+            if(otp.length !== 6) return;
+
+            document.getElementById('otp-loader').style.display = 'inline-block';
+            verifyOtpBtn.disabled = true;
+            document.getElementById('otp-error').style.display = 'none';
+
+            try {
+                const res = await fetch("{{ route('store.checkout.verify-otp') }}", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ otp: otp })
+                });
+                
+                const data = await res.json();
+                
+                if(data.success) {
+                    step15.classList.add('hidden');
+                    step2.classList.remove('hidden');
+                    btnStep15.classList.remove('active');
+                    btnStep2.classList.add('active');
+                } else {
+                    document.getElementById('otp-error').innerText = data.error || 'Invalid OTP code.';
+                    document.getElementById('otp-error').style.display = 'block';
+                }
+            } catch (e) {
+                document.getElementById('otp-error').innerText = 'Network error.';
+                document.getElementById('otp-error').style.display = 'block';
+            }
+
+            document.getElementById('otp-loader').style.display = 'none';
+            verifyOtpBtn.disabled = false;
         });
 
-        optRazorpay.addEventListener('click', () => {
-            optRazorpay.classList.add('selected');
-            optPaypal.classList.remove('selected-paypal');
-            optRazorpay.querySelector('input').checked = true;
-            paymentInput.value = 'razorpay';
-            paypalContainer.classList.add('hidden');
-            payBtn.classList.remove('hidden');
-            lucide.createIcons();
-        });
+        // Initialize PayPal SDK (Only visible in Step 2)
+        if(typeof paypal !== 'undefined') {
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return fetch("{{ route('payment.paypal.create') }}", {
+                        method: "post",
+                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" }
+                    }).then(res => res.json()).then(orderData => {
+                        if (orderData.error) throw new Error(orderData.error);
+                        return orderData.id;
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return fetch("{{ route('payment.paypal.capture') }}", {
+                        method: "post",
+                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json" },
+                        body: JSON.stringify({ paypal_order_id: data.orderID })
+                    }).then(res => res.json()).then(orderData => {
+                        if (orderData.success) window.location.href = orderData.redirect;
+                        else alert('Payment capture failed.');
+                    });
+                }
+            }).render('#paypal-button-container');
+        }
     });
 </script>
 @endsection
