@@ -77,7 +77,7 @@ class CartController extends Controller
             });
         } catch (\Exception $e) {
             Log::error("Failed to send OTP email: " . $e->getMessage());
-            // In dev mode, we still succeed so you can check logs. In prod, you'd fail here.
+            return response()->json(['success' => false, 'error' => 'Failed to send OTP email. Please check your SMTP configuration.']);
         }
 
         return response()->json(['success' => true]);
