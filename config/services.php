@@ -30,4 +30,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'cj' => [
+        'email' => env('CJ_API_EMAIL'),
+        'key' => env('CJ_API_KEY'),
+    ],
+
 ];

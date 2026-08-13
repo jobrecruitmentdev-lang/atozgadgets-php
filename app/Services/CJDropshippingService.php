@@ -11,8 +11,8 @@ class CjDropshippingService
     public static function getAccessToken()
     {
         return \Illuminate\Support\Facades\Cache::remember('cj_access_token', 86400, function () {
-            $email = env('CJ_API_EMAIL');
-            $key = env('CJ_API_KEY');
+            $email = config('services.cj.email');
+            $key = config('services.cj.key');
             if (!$email || !$key) return null;
 
             $response = Http::post('https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken', [
