@@ -11,6 +11,15 @@ class Order extends Model
 
     protected $guarded = ['id'];
 
+    protected static function booted()
+    {
+        static::creating(function ($order) {
+            if (empty($order->order_number)) {
+                $order->order_number = 'ORD-' . strtoupper(\Illuminate\Support\Str::random(10));
+            }
+        });
+    }
+
     /**
      * Get the user that placed the order.
      */

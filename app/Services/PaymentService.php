@@ -26,6 +26,7 @@ class PaymentService
                 'order_id' => $order->id,
                 'payment_method' => $paymentMethod,
                 'transaction_id' => $transactionId,
+                'payoneer_transaction_id' => $transactionId,
                 'amount' => $amount,
                 'status' => 'completed',
             ]);
