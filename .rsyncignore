@@ -1,6 +1,7 @@
 # Credentials & Environment Secrets
 .env
 .env.*
+auth.json
 .ops-credentials.php
 *.ops-credentials.php
 public/.ops-credentials.php
@@ -28,6 +29,9 @@ database/*.sqlite
 database/*.sqlite-journal
 *.zip
 *.tar.gz
+
+# Frontend Build Folders (Don't sync raw modules to prod)
+node_modules/
 
 # Automated Tests & E2E Reports
 tests
