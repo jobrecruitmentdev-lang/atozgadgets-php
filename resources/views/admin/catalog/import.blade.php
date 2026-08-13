@@ -34,7 +34,7 @@
     /* Search Bar Area */
     .search-area { position: relative; margin-top: 24px; display: flex; gap: 16px; }
     .search-input-wrapper { flex-grow: 1; position: relative; }
-    .search-input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
+    .search-input-wrapper i, .search-input-wrapper svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); }
     .search-input-wrapper input { width: 100%; padding: 14px 16px 14px 44px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); font-size: 15px; font-weight: 500; outline: none; transition: all 0.2s; }
     .search-input-wrapper input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
     
