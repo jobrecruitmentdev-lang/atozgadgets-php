@@ -338,7 +338,10 @@
                                     method: "post",
                                     headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" }
                                 }).then(res => res.json()).then(orderData => {
-                                    if (orderData.error) throw new Error(orderData.error);
+                                    if (!orderData || !orderData.id) {
+                                        const errMsg = orderData.error || orderData.message || (orderData.details && orderData.details[0] ? orderData.details[0].description : 'Server failed to create PayPal Order');
+                                        throw new Error(errMsg);
+                                    }
                                     return orderData.id;
                                 });
                             },
@@ -352,9 +355,13 @@
                                         localStorage.removeItem('atoz_shipping_cache'); // Clear cache on success
                                         window.location.href = orderData.redirect;
                                     } else {
-                                        alert('Payment capture failed.');
+                                        alert('Payment capture failed: ' + (orderData.error || 'Unknown error'));
                                     }
                                 });
+                            },
+                            onError: function(err) {
+                                console.error('PayPal Integration Error:', err);
+                                alert('Payment Error: ' + (err.message || 'Unable to process PayPal payment. Please try again.'));
                             }
                         }).render('#paypal-button-container');
                     }
