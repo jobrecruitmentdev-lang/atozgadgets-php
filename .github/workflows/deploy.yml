@@ -22,18 +22,19 @@ jobs:
         run: composer install --no-dev --optimize-autoloader
 
       - name: Setup SSH Key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.HOSTINGER_SSH_KEY }}
-
-
+        run: |
+          mkdir -p ~/.ssh
+          cat << 'EOF' > ~/.ssh/id_ed25519
+          ${{ secrets.HOSTINGER_SSH_KEY }}
+          EOF
+          chmod 600 ~/.ssh/id_ed25519
           
       - name: Deploy via Rsync
         run: |
-          rsync -avz -e "ssh -p 65002 -o StrictHostKeyChecking=no" \
+          rsync -avz -e "ssh -p 65002 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -v" \
             --exclude-from='.rsyncignore' \
             ./ u390470426@217.21.74.188:domains/atozgadgetz.com/public_html/
             
       - name: Post-Deploy Optimizations
         run: |
-          ssh -p 65002 -o StrictHostKeyChecking=no u390470426@217.21.74.188 "cd domains/atozgadgetz.com/public_html && php artisan optimize:clear && php artisan optimize"
+          ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -v u390470426@217.21.74.188 "cd domains/atozgadgetz.com/public_html && php artisan optimize:clear && php artisan optimize"
