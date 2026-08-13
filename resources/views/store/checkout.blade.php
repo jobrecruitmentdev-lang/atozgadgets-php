@@ -124,7 +124,11 @@
                 </button>
                 <p id="otp-error" style="color: #ef4444; margin-left: 15px; display:none;">Invalid OTP code.</p>
             </div>
-            <button type="button" id="edit-shipping-btn" style="background:none; border:none; color:var(--accent); margin-top:20px; cursor:pointer; font-weight:500;">&larr; Edit Shipping Info</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                <button type="button" id="edit-shipping-btn" style="background:none; border:none; color:var(--accent); cursor:pointer; font-weight:500;">&larr; Edit Shipping Info</button>
+                <button type="button" id="resend-otp-btn" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size: 14px;">Resend OTP</button>
+            </div>
+            <p id="resend-msg" style="color: #10b981; font-size: 12px; margin-top: 10px; display:none; text-align:right;">OTP resent successfully.</p>
         </div>
 
         <!-- Step 2: Payment -->
@@ -189,6 +193,7 @@
         const saveShippingBtn = document.getElementById('save-shipping-btn');
         const verifyOtpBtn = document.getElementById('verify-otp-btn');
         const editShippingBtn = document.getElementById('edit-shipping-btn');
+        const resendOtpBtn = document.getElementById('resend-otp-btn');
         
         // Step 1 -> Step 1.5 (Send OTP)
         saveShippingBtn.addEventListener('click', async () => {
@@ -236,6 +241,46 @@
             step1.classList.remove('hidden');
             btnStep15.classList.remove('active');
             btnStep1.classList.add('active');
+        });
+
+        // Resend OTP
+        resendOtpBtn.addEventListener('click', async () => {
+            const form = document.getElementById('shipping-form');
+            if(!form.checkValidity()) return;
+            
+            resendOtpBtn.disabled = true;
+            resendOtpBtn.innerText = 'Sending...';
+            document.getElementById('resend-msg').style.display = 'none';
+
+            try {
+                const res = await fetch("{{ route('store.checkout.send-otp') }}", {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
+                    body: new FormData(form)
+                });
+                
+                const data = await res.json();
+                if(res.status === 429) {
+                    document.getElementById('resend-msg').innerText = 'Please wait a minute before resending.';
+                    document.getElementById('resend-msg').style.color = '#ef4444';
+                } else if(data.success) {
+                    document.getElementById('resend-msg').innerText = 'OTP resent successfully!';
+                    document.getElementById('resend-msg').style.color = '#10b981';
+                } else {
+                    document.getElementById('resend-msg').innerText = data.error || 'Failed to resend OTP.';
+                    document.getElementById('resend-msg').style.color = '#ef4444';
+                }
+                document.getElementById('resend-msg').style.display = 'block';
+            } catch (e) {
+                document.getElementById('resend-msg').innerText = 'Network error.';
+                document.getElementById('resend-msg').style.color = '#ef4444';
+                document.getElementById('resend-msg').style.display = 'block';
+            }
+
+            setTimeout(() => {
+                resendOtpBtn.disabled = false;
+                resendOtpBtn.innerText = 'Resend OTP';
+            }, 5000);
         });
 
         // Step 1.5 -> Step 2 (Verify OTP)
