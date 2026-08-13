@@ -48,6 +48,13 @@ class PayPalService
                 ]
             ]);
 
+        if ($response->failed()) {
+            $json = $response->json();
+            $issue = $json['details'][0]['issue'] ?? ($json['name'] ?? 'UNPROCESSABLE_ENTITY');
+            $desc = $json['details'][0]['description'] ?? ($json['message'] ?? 'PayPal order creation rejected');
+            throw new \Exception("{$issue}: {$desc}");
+        }
+
         return $response->json();
     }
 
