@@ -15,7 +15,7 @@ class CjProductService
 {
     private static function getApiBaseUrl()
     {
-        return env('CJ_API_BASE_URL', 'https://developers.cjdropshipping.com/api2.0/v1');
+        return config('services.cj.base_url', 'https://developers.cjdropshipping.com/api2.0/v1');
     }
 
     private static function getDemoCatalog()

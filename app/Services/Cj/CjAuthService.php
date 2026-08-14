@@ -21,8 +21,8 @@ class CjAuthService
             return $token;
         }
 
-        $email = env('CJ_API_EMAIL');
-        $apiKey = env('CJ_API_KEY');
+        $email = config('services.cj.email');
+        $apiKey = config('services.cj.key');
 
         if (!$email || !$apiKey) {
             Log::warning('⚠️ CJ API Credentials missing in .env. Using CJ Sandbox Mode.');

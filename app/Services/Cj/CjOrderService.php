@@ -10,7 +10,7 @@ class CjOrderService
 {
     protected static function getApiUrl($endpoint)
     {
-        return config('services.cj.api_url', 'https://developers.cjdropshipping.com/api2.0/v1') . $endpoint;
+        return config('services.cj.base_url', 'https://developers.cjdropshipping.com/api2.0/v1') . $endpoint;
     }
 
     public static function placeOrder($orderId)

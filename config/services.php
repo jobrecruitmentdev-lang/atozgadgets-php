@@ -33,6 +33,7 @@ return [
     'cj' => [
         'email' => env('CJ_API_EMAIL'),
         'key' => env('CJ_API_KEY'),
+        'base_url' => env('CJ_API_BASE_URL', 'https://developers.cjdropshipping.com/api2.0/v1'),
     ],
 
 ];
