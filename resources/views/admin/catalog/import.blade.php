@@ -394,9 +394,14 @@
         
         searchResults.forEach(item => {
             const costPrice = parseFloat(item.sellPrice) || 10.0;
-            const retailPrice = (costPrice * markup).toFixed(2);
-            const profit = (costPrice * markup - costPrice).toFixed(2);
+            const msrpPrice = (costPrice * markup);
+            const retailPrice = (msrpPrice * 0.75).toFixed(2); // The actual selling price (discounted)
+            const profit = (retailPrice - costPrice).toFixed(2);
             const cleanTitle = item.productNameEn.replace(/'/g, "\\'");
+            
+            // Highlight loss if profit is negative
+            const profitColor = profit < 0 ? '#ef4444' : 'var(--accent)';
+            const profitPrefix = profit < 0 ? '' : '+';
             
             const card = document.createElement('div');
             card.className = 'product-card';
@@ -412,12 +417,12 @@
                             <span class="price-value">$${costPrice.toFixed(2)}</span>
                         </div>
                         <div class="price-calc-item" style="text-align: right;">
-                            <span class="price-label">Retail Target</span>
-                            <span class="price-value" style="color: var(--accent);">$${retailPrice}</span>
+                            <span class="price-label">Selling Price</span>
+                            <span class="price-value" style="color: var(--accent);">$${retailPrice} <span style="font-size: 10px; text-decoration: line-through; color: #9ca3af;">$${msrpPrice.toFixed(2)}</span></span>
                         </div>
                         <div class="profit-row">
                             <span class="price-label">Est. Profit/Unit:</span>
-                            <span class="profit-val">+$${profit}</span>
+                            <span class="profit-val" style="color: ${profitColor};">${profitPrefix}$${profit}</span>
                         </div>
                     </div>
                     
