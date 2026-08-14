@@ -83,40 +83,21 @@ class CatalogController extends Controller
     public function searchCjApi(Request $request)
     {
         $keyword = strtolower($request->query('keyword', ''));
-        $token = $this->getCjAccessToken();
-
-        // Check if we are using the live API
-        if ($token) {
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'CJ-Access-Token' => $token,
-                'Content-Type' => 'application/json'
-            ])->get('https://developers.cjdropshipping.com/api2.0/v1/product/list', [
-                'productNameEn' => $keyword,
-                'pageNum' => 1,
-                'pageSize' => 100
+        $result = \App\Services\Cj\CjProductService::searchProducts($keyword, 1, 100);
+        
+        if (empty($result['list'])) {
+            return response()->json([
+                'result' => false,
+                'message' => 'No products found.',
+                'data' => ['list' => []]
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                if (isset($data['data']['list']) && count($data['data']['list']) > 0) {
-                    return response()->json($data);
-                }
-            }
-        }
-
-        // Fallback to mock data if API fails or token is missing
-        $mockData = collect($this->demoCatalog);
-        if (!empty($keyword)) {
-            $mockData = $mockData->filter(function($item) use ($keyword) {
-                return str_contains(strtolower($item['productNameEn']), $keyword);
-            });
         }
 
         return response()->json([
             'result' => true,
-            'message' => 'Success (Mock Data)',
+            'message' => 'Success',
             'data' => [
-                'list' => $mockData->values()->toArray()
+                'list' => $result['list']
             ]
         ]);
     }
