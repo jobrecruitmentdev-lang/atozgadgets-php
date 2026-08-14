@@ -66,14 +66,27 @@ class CjProductService
                 ->get(self::getApiBaseUrl() . '/product/listV2', $params);
 
             $data = $response->json();
-            $rawData = $data['data'] ?? [];
+            // In listV2, it might be in $data['data']['list'] or $data['result']['list']
+            $rawData = $data['data'] ?? ($data['result'] ?? []);
             
             $list = $rawData['list'] ?? ($rawData['content'][0]['productList'] ?? ($rawData['content'] ?? []));
             $total = $rawData['totalRecords'] ?? ($rawData['total'] ?? (is_array($list) ? count($list) : 0));
 
             if (is_array($list) && count($list) > 0) {
-                Log::info("[CjProductService] Successfully fetched " . count($list) . " live products from CJ API!");
-                return ['list' => $list, 'total' => $total];
+                // Normalize keys for frontend
+                $normalizedList = array_map(function($item) {
+                    return [
+                        'pid' => $item['pid'] ?? ($item['productId'] ?? ''),
+                        'productNameEn' => $item['productNameEn'] ?? ($item['productName'] ?? ($item['title'] ?? '')),
+                        'productSku' => $item['productSku'] ?? ($item['sku'] ?? ''),
+                        'sellPrice' => $item['sellPrice'] ?? ($item['price'] ?? 0),
+                        'productImage' => $item['productImage'] ?? ($item['image'] ?? ''),
+                        'categoryName' => $item['categoryName'] ?? ($item['category'] ?? 'Uncategorized'),
+                    ];
+                }, $list);
+
+                Log::info("[CjProductService] Successfully fetched " . count($normalizedList) . " live products from CJ API!");
+                return ['list' => $normalizedList, 'total' => $total];
             }
 
             return ['list' => self::getDemoCatalog(), 'total' => count(self::getDemoCatalog())];
