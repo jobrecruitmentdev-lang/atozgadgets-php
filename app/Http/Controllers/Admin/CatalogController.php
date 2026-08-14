@@ -75,10 +75,15 @@ class CatalogController extends Controller
         return view('admin.catalog.import', compact('categories', 'brands', 'stagedProducts'));
     }
 
+    private function getCjAccessToken()
+    {
+        return \App\Services\Cj\CjAuthService::getAccessToken();
+    }
+
     public function searchCjApi(Request $request)
     {
         $keyword = strtolower($request->query('keyword', ''));
-        $token = \App\Services\CjDropshippingService::getAccessToken();
+        $token = $this->getCjAccessToken();
 
         // Check if we are using the live API
         if ($token) {

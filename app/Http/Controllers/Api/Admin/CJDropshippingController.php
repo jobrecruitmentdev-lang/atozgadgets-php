@@ -53,14 +53,15 @@ class CJDropshippingController extends Controller
      */
     public function placeOrder(Request $request, $orderId)
     {
-        $order = Order::findOrFail($orderId);
-        $order->update(['status' => 'processing']);
-
-        return response()->json([
-            'success' => true,
-            'cj_order_id' => 'CJ-ORD-' . strtoupper(substr(md5($orderId), 0, 8)),
-            'message' => 'Order placed with CJ Dropshipping successfully.'
-        ]);
+        try {
+            $order = \App\Services\Cj\CjOrderService::placeOrder($orderId);
+            return response()->json([
+                'success' => true,
+                'message' => 'Order placed with CJ Dropshipping successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -68,10 +69,15 @@ class CJDropshippingController extends Controller
      */
     public function cancelOrder(Request $request, $cjOrderId)
     {
-        return response()->json([
-            'success' => true,
-            'message' => "CJ Order {$cjOrderId} cancelled successfully."
-        ]);
+        try {
+            \App\Services\Cj\CjOrderService::cancelOrder($cjOrderId);
+            return response()->json([
+                'success' => true,
+                'message' => "CJ Order {$cjOrderId} cancelled successfully."
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -79,16 +85,15 @@ class CJDropshippingController extends Controller
      */
     public function syncShipment(Request $request, $orderId)
     {
-        $shipment = Shipment::where('order_id', $orderId)->first();
-        if ($shipment) {
-            $shipment->update(['status' => 'shipped']);
+        try {
+            $result = \App\Services\Cj\CjShipmentService::syncShipment($orderId);
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'status' => 'shipped',
-            'tracking_number' => 'CJTRK' . rand(10000000, 99999999)
-        ]);
     }
 
     /**
@@ -96,17 +101,12 @@ class CJDropshippingController extends Controller
      */
     public function webhook(Request $request)
     {
-        $event = $request->input('event', 'order.status_update');
-        $cjOrderId = $request->input('cj_order_id');
-        $status = $request->input('status', 'shipped');
-
-        if ($cjOrderId) {
-            $order = Order::where('id', str_replace('CJ-ORD-', '', $cjOrderId))->first();
-            if ($order) {
-                $order->update(['status' => $status]);
-            }
+        try {
+            \App\Services\Cj\CjShipmentService::handleWebhook($request->all());
+            return response()->json(['success' => true, 'event_received' => 'order.status_update']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('CJ Webhook Error: ' . $e->getMessage());
+            return response()->json(['success' => false], 500);
         }
-
-        return response()->json(['success' => true, 'event_received' => $event]);
     }
 }
