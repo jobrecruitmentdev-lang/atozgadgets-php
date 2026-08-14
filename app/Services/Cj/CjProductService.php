@@ -51,9 +51,9 @@ class CjProductService
             usleep(1100000); // 1.1s throttle
             
             $params = [
-                'productNameEn' => $keyword,
-                'pageNum' => $pageNum,
-                'pageSize' => $pageSize,
+                'keyWord' => $keyword,
+                'page' => $pageNum,
+                'size' => $pageSize,
             ];
 
             if (isset($filters['minPrice'])) $params['minPrice'] = $filters['minPrice'];
@@ -63,7 +63,7 @@ class CjProductService
 
             $response = Http::withHeaders(CjAuthService::getAuthHeaders())
                 ->timeout(10)->retry(3, 100)
-                ->get(self::getApiBaseUrl() . '/product/list', $params);
+                ->get(self::getApiBaseUrl() . '/product/listV2', $params);
 
             $data = $response->json();
             $rawData = $data['data'] ?? [];
