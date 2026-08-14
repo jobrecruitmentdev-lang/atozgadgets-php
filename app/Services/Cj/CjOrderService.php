@@ -35,8 +35,13 @@ class CjOrderService
 
         $countryCode = stripos($order->address->country, 'india') !== false ? 'IN' : 'US';
 
+        // Fetch best logistics method
+        $logisticName = self::getBestLogistic($countryCode, $products, $headers);
+
         $payload = [
             'orderNumber' => $order->order_number,
+            'fromCountryCode' => 'CN', // Defaulting to China warehouse
+            'logisticName' => $logisticName,
             'shippingCountryCode' => $countryCode,
             'shippingAddress' => $order->address->address_line1,
             'shippingAddress2' => $order->address->address_line2 ?? '',
@@ -49,15 +54,19 @@ class CjOrderService
         ];
 
         $response = Http::withHeaders($headers)
-            ->post(self::getApiUrl('/shopping/order/createOrder'), $payload);
+            ->post(self::getApiUrl('/shopping/order/createOrderV2'), $payload);
 
         $responseData = $response->json();
 
-        if ($responseData['code'] !== 200) {
+        if (!isset($responseData['code']) || $responseData['code'] !== 200) {
             throw new \Exception('CJ order creation failed: ' . json_encode($responseData));
         }
 
-        $cjOrderId = $responseData['data']['orderId'];
+        $cjOrderId = $responseData['data']['orderId'] ?? ($responseData['data'] ?? null);
+
+        if (!$cjOrderId) {
+            throw new \Exception('CJ order creation failed. No orderId returned. ' . json_encode($responseData));
+        }
 
         CjOrder::create([
             'internal_order_id' => $orderId,
@@ -68,6 +77,32 @@ class CjOrderService
         self::submitOrder($cjOrderId, $headers);
 
         return ['cjOrderId' => $cjOrderId];
+    }
+
+    private static function getBestLogistic($countryCode, $products, $headers)
+    {
+        // Simple fallback if no specific logistics found
+        $fallback = 'CJPacket Fast Line';
+        
+        try {
+            $response = Http::withHeaders($headers)
+                ->post(self::getApiUrl('/logistic/freightCalculate'), [
+                    'startCountryCode' => 'CN',
+                    'endCountryCode' => $countryCode,
+                    'products' => $products
+                ]);
+            
+            $data = $response->json();
+            if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
+                // Usually sorted, pick the first one or a known reliable one
+                return $data['data'][0]['logisticName'] ?? $fallback;
+            }
+        } catch (\Exception $e) {
+            // Log warning but proceed with fallback
+            \Illuminate\Support\Facades\Log::warning('CJ Freight calculation failed: ' . $e->getMessage());
+        }
+        
+        return $fallback;
     }
 
     private static function submitOrder($cjOrderId, $headers)
