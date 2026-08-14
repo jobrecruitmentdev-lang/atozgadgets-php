@@ -107,13 +107,21 @@ class CatalogController extends Controller
         $data = $request->validate([
             'pid' => 'required|string',
             'title' => 'required|string',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0.01',
             'image' => 'required|string',
             'category' => 'nullable|string',
-            'categoryId' => 'nullable|integer'
+            'categoryId' => 'nullable|integer',
+            'markup' => 'nullable|numeric|min:1.0|max:10.0'
         ]);
 
+        // Idempotency guard: prevent duplicate imports and orphaned products
+        $existing = \App\Models\CjProduct::where('cj_product_id', $data['pid'])->first();
+        if ($existing && $existing->internal_product_id) {
+            return response()->json(['success' => true, 'internal_id' => $existing->internal_product_id]);
+        }
+
         $categoryId = $data['categoryId'] ?? 1;
+        $markup = $data['markup'] ?? 2.0;
 
         // Clean title logic exactly like the backend
         $cleanTitle = $data['title'];
@@ -124,14 +132,14 @@ class CatalogController extends Controller
         $slug = Str::slug($cleanTitle) . '-' . substr((string) Str::uuid(), 0, 6);
 
         // Strict ACID Transaction - Create Product & CJ Product Pointer
-        $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $cleanTitle, $slug, $data) {
+        $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $cleanTitle, $slug, $data, $markup) {
             $product = Product::create([
                 'category_id' => $categoryId,
                 'name' => $cleanTitle,
                 'slug' => $slug,
                 'sku' => 'CJ-' . substr((string) Str::uuid(), 0, 8),
-                'price' => $data['price'] * 2.0, // Default 100% markup
-                'discount_price' => $data['price'] * 1.5,
+                'price' => $data['price'] * $markup,
+                'discount_price' => $data['price'] * ($markup * 0.75),
                 'thumbnail_image' => $data['image'],
                 'stock_quantity' => 100,
                 'status' => 'active',

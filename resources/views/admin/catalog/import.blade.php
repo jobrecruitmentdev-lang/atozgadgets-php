@@ -459,7 +459,8 @@
                     price: costPrice,
                     image: image,
                     category: category,
-                    categoryId: categoryId
+                    categoryId: categoryId,
+                    markup: markup
                 })
             });
             
