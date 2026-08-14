@@ -32,6 +32,12 @@ Route::prefix('categories')->group(function () {
 });
 
 // Protected Storefront Routes
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+Route::get('/cj-test-dump', [\App\Http\Controllers\Admin\CatalogController::class, 'testCjApiDump']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [\App\Http\Controllers\Api\AuthController::class, 'me']);
     
