@@ -14,6 +14,9 @@ updated: 2026-07-25
 - [[2026-07-25-Hybrid-Monolith-Architecture]]
 - [[2026-07-25-Database-Performance-Indexes]]
 
+## Integrations
+- [[CJ-Dropshipping-MOC]] — Full CJ API integration: auth, search, import, sync, orders, shipments
+
 ## Reference Docs
 - `../ARCHITECTURE.md` - Main repository architecture and recent changes log.
 - `../CLAUDE.md` - System bounds and rules.

@@ -23,7 +23,7 @@ class CjOrderService
         foreach ($order->items as $item) {
             if ($item->product->fulfillment_type === 'cj' && $item->product->cjProduct) {
                 $products[] = [
-                    'vid' => $item->product->cjProduct->cj_vid,
+                    'vid' => $item->product->cjProduct->cj_product_id, // Default to product ID
                     'quantity' => $item->quantity,
                 ];
             }
@@ -60,9 +60,9 @@ class CjOrderService
         $cjOrderId = $responseData['data']['orderId'];
 
         CjOrder::create([
-            'order_id' => $orderId,
+            'internal_order_id' => $orderId,
             'cj_order_id' => $cjOrderId,
-            'cj_status' => 'created',
+            'status' => 'created',
         ]);
 
         self::submitOrder($cjOrderId, $headers);

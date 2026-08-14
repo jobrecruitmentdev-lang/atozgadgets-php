@@ -61,7 +61,7 @@ class CjShipmentService
 
     public static function syncAllActiveShipments()
     {
-        $cjOrders = CjOrder::whereNotIn('cj_status', ['delivered', 'cancelled'])->get();
+        $cjOrders = CjOrder::whereNotIn('status', ['delivered', 'cancelled'])->get();
         $results = [];
         
         foreach ($cjOrders as $co) {
