@@ -41,7 +41,8 @@ class CjAuthService
 
             if ($response->successful() && isset($data['code']) && $data['code'] === 200 && isset($data['data'])) {
                 $token = $data['data']['accessToken'];
-                $expiryMs = strtotime($data['data']['tokenExpiryDate']) * 1000;
+                $expiryDate = $data['data']['accessTokenExpiryDate'] ?? ($data['data']['tokenExpiryDate'] ?? null);
+                $expiryMs = $expiryDate ? strtotime($expiryDate) * 1000 : 0;
                 if (!$expiryMs) {
                     $expiryMs = (time() + 86400) * 1000;
                 }
