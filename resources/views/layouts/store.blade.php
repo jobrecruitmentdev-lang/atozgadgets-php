@@ -439,5 +439,58 @@
             });
         });
     </script>
+    
+    @guest
+    <!-- Global Auth Modal Gate -->
+    <div id="authRequiredModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <div style="background: #141414; border: 1px solid var(--accent); border-radius: 20px; width: 90%; max-width: 400px; padding: 40px 30px; text-align: center; box-shadow: 0 25px 50px -12px rgba(201,169,98,0.25); position: relative;">
+            <button onclick="closeAuthModal()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer;"><i data-lucide="x" style="width: 24px;"></i></button>
+            
+            <div style="width: 60px; height: 60px; background: rgba(201,169,98,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--accent);">
+                <i data-lucide="lock" style="width: 30px; height: 30px;"></i>
+            </div>
+            
+            <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 10px; color: #fff;">Members Only Access</h2>
+            <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 30px; line-height: 1.5;">To search our premium catalog or add items to your cart, please login or register an account.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <a href="{{ route('login') }}" class="btn btn-primary" style="width: 100%; text-align: center;">Login to Continue</a>
+                <a href="{{ route('register') }}" class="btn" style="width: 100%; text-align: center; border: 1px solid var(--glass-border); color: #fff; transition: all 0.3s;" onmouseover="this.style.borderColor='var(--accent)';" onmouseout="this.style.borderColor='var(--glass-border)';">Create Free Account</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function requireAuth(e) {
+            e.preventDefault();
+            document.getElementById('authRequiredModal').style.display = 'flex';
+        }
+        function closeAuthModal() {
+            document.getElementById('authRequiredModal').style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Intercept Search Form
+            const searchForm = document.querySelector('.search-bar');
+            if (searchForm) {
+                searchForm.addEventListener('submit', requireAuth);
+            }
+            
+            // Intercept Add to Cart Forms
+            const cartForms = document.querySelectorAll('form[action*="cart/add"]');
+            cartForms.forEach(form => {
+                form.addEventListener('submit', requireAuth);
+            });
+            
+            // Intercept Direct Cart Buttons (if any are links)
+            const cartBtns = document.querySelectorAll('.btn-cart, .add-to-cart');
+            cartBtns.forEach(btn => {
+                if (btn.tagName === 'A' || btn.type === 'button') {
+                    btn.addEventListener('click', requireAuth);
+                }
+            });
+        });
+    </script>
+    @endguest
 </body>
 </html>
