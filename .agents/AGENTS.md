@@ -16,5 +16,15 @@
 - **Deployment Safety:** Do NOT use `npx tsc` or Git-based deployment on the live Hostinger server as it consumes excessive CPU/Memory and triggers the CloudLinux LVE limits. Always compile the `dist` folder locally and manually upload it via File Manager.
 - **Next.js Frontend Build Rule:** Never run `npm run build` or `next build` on the live Hostinger server. The Next.js build process (Turbopack, Jest workers, etc.) spawns over 90 processes and consumes massive amounts of RAM, instantly crashing the server. Always run `npx next build` locally and upload the `.next/` directory via `rsync` or File Manager.
 
+## SEO, Webmaster & Analytics Setup
+- **Static Verification Placement:** Always place third-party verification files (e.g. Google Search Console `google*.html`, Bing/IndexNow verification files) in both the project root and `public/` directory (e.g. `public/google1c9d8b5c6dcf337b.html`). This ensures Apache/Nginx web server root rewrites serve `200 OK` status immediately without 404 or route collisions.
+- **Analytics Integrity:** Google Analytics (`gtag.js`, GA4 ID `G-LS0E52WE2D`) must be loaded asynchronously in the `<head>` of storefront and auth Blade layouts (`resources/views/layouts/store.blade.php`, `resources/views/layouts/auth.blade.php`).
+
+## GitHub Push & CI/CD Deployment Workflow
+- **Git Push on Every Change:** After completing code changes, knowledge vault updates, or configuration fixes, always stage (`git add`), commit with a descriptive semantic message, and push directly to GitHub `origin main`.
+- **CI/CD Auto-Deploy:** Pushing to `main` automatically triggers GitHub Actions (`.github/workflows/deploy.yml`) to compile Composer autoloader, rsync filtered files to Hostinger production (`domains/atozgadgetz.com/public_html/`), run migrations, and optimize caches.
+- **Manual Fallback (`deploy.sh`):** If immediate deployment or verification is needed via terminal/WSL, execute `./deploy.sh push` step-by-step to push changes directly over SSH port 65002.
+
 ## Agent Behavior & Verification Rules
 - **Cross-Verification Rule:** Never give false-positive answers or assume context based solely on markdown documentation. When checking `.md` files (like `ARCHITECTURE.md`), you must always cross-verify the information against the actual codebase files (using search or view tools) to ensure it is accurate and currently implemented. Our goal is to solve the problem, not scale it into the future with incorrect assumptions.
+

@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'AtoZGadgets - Premium Electronics')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS0E52WE2D"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-LS0E52WE2D');
+    </script>
+
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     
