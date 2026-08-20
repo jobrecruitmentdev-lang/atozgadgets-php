@@ -2,20 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
+
+Route::get('/strategy-hub', function () {
+    return response()->view('admin.strategy_hub')
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
+})->name('public.strategy_hub');
 
 Route::middleware('storefront')->group(function () {
     Route::get('/', [\App\Http\Controllers\StorefrontController::class, 'home'])->name('store.home');
@@ -45,6 +40,7 @@ Route::middleware('storefront')->group(function () {
     Route::get('/register', [\App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\AuthController::class, 'register']);
 });
+
 Route::prefix('account')->middleware(['auth', 'storefront'])->group(function () {
     Route::get('/', [\App\Http\Controllers\AccountController::class, 'dashboard'])->name('account.dashboard');
     Route::get('/orders', [\App\Http\Controllers\AccountController::class, 'orders'])->name('account.orders');
@@ -55,6 +51,12 @@ Route::prefix('account')->middleware(['auth', 'storefront'])->group(function () 
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
     
+    Route::get('/strategy-hub', function () {
+        return response()->view('admin.strategy_hub')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    })->name('admin.strategy_hub');
+
     // Catalog Products, Categories, Brands
     Route::get('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('admin.catalog.products');
     Route::post('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('admin.catalog.products.store');
@@ -76,9 +78,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/reports/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
 
     // Settings
-    Route::get('/strategy-hub', function () {
-        return response()->view('admin.strategy_hub')->header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    })->name('admin.strategy_hub');
     Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
     
