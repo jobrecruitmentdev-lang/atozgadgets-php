@@ -4,151 +4,186 @@
 
 @section('content')
 <style>
-    .page-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); }
     
-    .stats-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 24px; margin-bottom: 32px; }
-    @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    .stats-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 20px; margin-bottom: 28px; }
+    @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (min-width: 1024px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
     
-    .stat-card { padding: 24px; display: flex; flex-direction: column; }
-    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-    .stat-title { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
-    .stat-value { font-size: 30px; font-weight: 700; }
-    .stat-icon-wrap { padding: 8px; background: rgba(128,128,128,0.1); border-radius: 8px; }
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .stat-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--text-primary); }
+    .stat-icon-wrap { width: 40px; height: 40px; border-radius: 10px; background: rgba(201, 169, 98, 0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; }
     
-    .trend { display: flex; align-items: center; font-size: 14px; }
-    .trend-up { color: #10b981; font-weight: 500; }
-    .trend-down { color: #ef4444; font-weight: 500; }
-    .trend-text { color: var(--text-secondary); margin-left: 8px; }
-
-    .chart-placeholder { height: 400px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-secondary); }
+    .trend { display: flex; align-items: center; font-size: 13px; margin-top: 6px; }
+    .trend-up { color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .trend-alert { color: #f59e0b; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    
+    .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px; }
+    @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    
+    .panel-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 24px;
+    }
+    .panel-title { font-size: 17px; font-weight: 700; margin-bottom: 18px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
+    
+    .table-modern { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table-modern th { text-align: left; padding: 12px 14px; background: rgba(128,128,128,0.05); color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color); }
+    .table-modern td { padding: 14px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    
+    .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .status-paid { background: rgba(16,185,129,0.15); color: #10b981; }
+    .status-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .status-processing { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    
+    .btn-quick { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-quick:hover { background: rgba(201,169,98,0.1); border-color: var(--accent); color: var(--accent); }
 </style>
 
-<h1 class="page-title">Dashboard Overview</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Live Dashboard Overview</h1>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Real-time metrics connected to your live database.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ route('admin.catalog.import') }}" class="btn-quick">
+            <i data-lucide="plus-circle" style="width:16px;"></i> Import CJ Products
+        </a>
+        <a href="{{ route('admin.reports') }}" class="btn-quick">
+            <i data-lucide="bar-chart-2" style="width:16px;"></i> View Full Reports
+        </a>
+    </div>
+</div>
 
 <div class="stats-grid">
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-header">
             <div>
                 <p class="stat-title">Total Revenue</p>
-                <h3 class="stat-value">$12,450.00</h3>
+                <h3 class="stat-value">${{ number_format($stats['totalRevenue'], 2) }}</h3>
             </div>
-            <div class="stat-icon-wrap"><i data-lucide="dollar-sign" style="color:var(--text-secondary);"></i></div>
+            <div class="stat-icon-wrap"><i data-lucide="dollar-sign"></i></div>
         </div>
         <div class="trend">
-            <i data-lucide="arrow-up-right" class="trend-up" style="width:16px;"></i>
-            <span class="trend-up">+20.1%</span>
-            <span class="trend-text">vs last month</span>
+            <span class="trend-up"><i data-lucide="trending-up" style="width:14px;"></i> Live Paid Sales</span>
         </div>
     </div>
 
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-header">
             <div>
-                <p class="stat-title">Orders</p>
-                <h3 class="stat-value">156</h3>
+                <p class="stat-title">Total Orders</p>
+                <h3 class="stat-value">{{ $stats['totalOrders'] }}</h3>
             </div>
-            <div class="stat-icon-wrap"><i data-lucide="shopping-cart" style="color:var(--text-secondary);"></i></div>
+            <div class="stat-icon-wrap"><i data-lucide="shopping-bag"></i></div>
         </div>
         <div class="trend">
-            <i data-lucide="arrow-up-right" class="trend-up" style="width:16px;"></i>
-            <span class="trend-up">+12.5%</span>
-            <span class="trend-text">vs last month</span>
+            <span class="trend-up">{{ $stats['processingOrders'] }} pending/processing</span>
         </div>
     </div>
 
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-header">
             <div>
                 <p class="stat-title">Active Customers</p>
-                <h3 class="stat-value">2,341</h3>
+                <h3 class="stat-value">{{ $stats['totalCustomers'] }}</h3>
             </div>
-            <div class="stat-icon-wrap"><i data-lucide="users" style="color:var(--text-secondary);"></i></div>
+            <div class="stat-icon-wrap"><i data-lucide="users"></i></div>
         </div>
         <div class="trend">
-            <i data-lucide="arrow-up-right" class="trend-up" style="width:16px;"></i>
-            <span class="trend-up">+5.4%</span>
-            <span class="trend-text">vs last month</span>
+            <span class="trend-up">Registered User Accounts</span>
         </div>
     </div>
 
-    <div class="card stat-card">
+    <div class="stat-card">
         <div class="stat-header">
             <div>
-                <p class="stat-title">Products in Stock</p>
-                <h3 class="stat-value">14,204</h3>
+                <p class="stat-title">Low Stock Alerts</p>
+                <h3 class="stat-value">{{ $stats['lowStockCount'] }}</h3>
             </div>
-            <div class="stat-icon-wrap"><i data-lucide="package" style="color:var(--text-secondary);"></i></div>
+            <div class="stat-icon-wrap"><i data-lucide="alert-triangle" style="color:var(--warning);"></i></div>
         </div>
         <div class="trend">
-            <i data-lucide="arrow-down-right" class="trend-down" style="width:16px;"></i>
-            <span class="trend-down">-1.2%</span>
-            <span class="trend-text">vs last month</span>
+            <span class="{{ $stats['lowStockCount'] > 0 ? 'trend-alert' : 'trend-up' }}">
+                {{ $stats['lowStockCount'] > 0 ? 'Items need restock (<5 units)' : 'All Inventory Healthy' }}
+            </span>
         </div>
     </div>
 </div>
 
-<div class="card" style="padding: 24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-        <div>
-            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Monthly Sales Overview</h3>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Gross revenue performance across recent months</p>
+<div class="dashboard-grid">
+    <!-- Recent Live Orders Table -->
+    <div class="panel-card">
+        <div class="panel-title">
+            <span>Recent Orders</span>
+            <a href="{{ route('admin.orders') }}" class="btn-quick" style="font-size:12px; padding:4px 10px;">View All</a>
         </div>
-        <span style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(37,99,235,0.1); color: var(--accent);">Year 2026</span>
+        <div style="overflow-x: auto;">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($recentOrders as $ord)
+                    <tr>
+                        <td><strong>{{ $ord->order_number }}</strong></td>
+                        <td>{{ $ord->user ? ($ord->user->first_name . ' ' . $ord->user->last_name) : 'Guest' }}</td>
+                        <td><strong>${{ number_format($ord->total_amount, 2) }}</strong></td>
+                        <td>
+                            <span class="badge-status {{ in_array($ord->payment_status, ['paid', 'completed', 'success']) ? 'status-paid' : 'status-pending' }}">
+                                {{ $ord->payment_status ?? 'pending' }}
+                            </span>
+                        </td>
+                        <td>{{ $ord->created_at->diffForHumans() }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 24px;">No orders found yet.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-    
-    <div style="height: 280px; width: 100%; position: relative;">
-        <svg viewBox="0 0 800 240" style="width: 100%; height: 100%; overflow: visible;">
-            <!-- Grid Lines -->
-            <line x1="40" y1="40" x2="780" y2="40" stroke="var(--border-color)" stroke-dasharray="4" opacity="0.5" />
-            <line x1="40" y1="100" x2="780" y2="100" stroke="var(--border-color)" stroke-dasharray="4" opacity="0.5" />
-            <line x1="40" y1="160" x2="780" y2="160" stroke="var(--border-color)" stroke-dasharray="4" opacity="0.5" />
-            <line x1="40" y1="220" x2="780" y2="220" stroke="var(--border-color)" opacity="0.8" />
-            
-            <!-- Y-Axis Labels -->
-            <text x="30" y="44" fill="var(--text-secondary)" font-size="11" text-anchor="end">$15k</text>
-            <text x="30" y="104" fill="var(--text-secondary)" font-size="11" text-anchor="end">$10k</text>
-            <text x="30" y="164" fill="var(--text-secondary)" font-size="11" text-anchor="end">$5k</text>
-            <text x="30" y="224" fill="var(--text-secondary)" font-size="11" text-anchor="end">$0</text>
-            
-            <!-- Bars -->
-            <!-- Jan -->
-            <rect x="70" y="130" width="36" height="90" rx="4" fill="var(--accent)" opacity="0.7" />
-            <text x="88" y="238" fill="var(--text-secondary)" font-size="11" text-anchor="middle">Jan</text>
 
-            <!-- Feb -->
-            <rect x="180" y="100" width="36" height="120" rx="4" fill="var(--accent)" opacity="0.7" />
-            <text x="198" y="238" fill="var(--text-secondary)" font-size="11" text-anchor="middle">Feb</text>
-
-            <!-- Mar -->
-            <rect x="290" y="80" width="36" height="140" rx="4" fill="var(--accent)" opacity="0.7" />
-            <text x="308" y="238" fill="var(--text-secondary)" font-size="11" text-anchor="middle">Mar</text>
-
-            <!-- Apr -->
-            <rect x="400" y="110" width="36" height="110" rx="4" fill="var(--accent)" opacity="0.7" />
-            <text x="418" y="238" fill="var(--text-secondary)" font-size="11" text-anchor="middle">Apr</text>
-
-            <!-- May -->
-            <rect x="510" y="60" width="36" height="160" rx="4" fill="var(--accent)" opacity="0.85" />
-            <text x="528" y="238" fill="var(--text-secondary)" font-size="11" text-anchor="middle">May</text>
-
-            <!-- Jun -->
-            <rect x="620" y="45" width="36" height="175" rx="4" fill="var(--accent)" opacity="1" />
-            <text x="638" y="238" fill="var(--text-secondary)" font-size="11" font-weight="700" text-anchor="middle">Jun</text>
-
-            <!-- Jul (Current) -->
-            <rect x="710" y="30" width="36" height="190" rx="4" fill="url(#barGradient)" />
-            <text x="728" y="238" fill="var(--accent)" font-size="11" font-weight="700" text-anchor="middle">Jul</text>
-
-            <!-- Gradient Definition -->
-            <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="var(--accent)" />
-                    <stop offset="100%" stop-color="#1d4ed8" />
-                </linearGradient>
-            </defs>
-        </svg>
+    <!-- Top Selling Products -->
+    <div class="panel-card">
+        <div class="panel-title">Top Products</div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            @forelse($stats['topProducts'] as $tp)
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+                <div>
+                    <p style="font-weight: 600; font-size: 14px;">{{ Str::limit($tp->name, 28) }}</p>
+                    <p style="font-size: 12px; color: var(--text-secondary);">${{ number_format($tp->price, 2) }} | Stock: {{ $tp->stock }}</p>
+                </div>
+                <span class="nav-status-badge status-live" style="font-size:11px; padding:3px 8px; background:rgba(201,169,98,0.15); color:var(--accent); border-radius:6px; font-weight:700;">
+                    {{ $tp->order_items_count ?? 0 }} sold
+                </span>
+            </div>
+            @empty
+            <p style="font-size: 13px; color: var(--text-secondary);">No sales history recorded.</p>
+            @endforelse
+        </div>
     </div>
 </div>
-
 @endsection

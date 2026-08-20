@@ -53,11 +53,9 @@ Route::prefix('account')->middleware(['auth', 'storefront'])->group(function () 
 });
 
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
     
-    // UI Stub Routes for sidebar navigation
+    // Catalog Products, Categories, Brands
     Route::get('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('admin.catalog.products');
     Route::post('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('admin.catalog.products.store');
     Route::put('/catalog/products/{id}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('admin.catalog.products.update');
@@ -73,17 +71,26 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::put('/catalog/brands/{id}', [\App\Http\Controllers\Admin\BrandController::class, 'update'])->name('admin.catalog.brands.update');
     Route::delete('/catalog/brands/{id}', [\App\Http\Controllers\Admin\BrandController::class, 'destroy'])->name('admin.catalog.brands.destroy');
 
-    Route::view('/reports', 'admin.reports')->name('admin.reports');
-    Route::view('/settings', 'admin.settings')->name('admin.settings');
+    // Reports & CSV Exports
+    Route::get('/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports');
+    Route::get('/reports/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
+
+    // Settings
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
+    Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
     
+    // Orders
     Route::get('/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('admin.orders');
+    Route::post('/orders/{id}/fulfill-cj', [\App\Http\Controllers\Admin\OrderController::class, 'fulfillWithCj'])->name('admin.orders.fulfill_cj');
     Route::put('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('admin.orders.update');
     Route::delete('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'destroy'])->name('admin.orders.destroy');
     
+    // Customers
     Route::get('/customers', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('admin.customers');
     Route::put('/customers/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update'])->name('admin.customers.update');
     Route::delete('/customers/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('admin.customers.destroy');
     
+    // CJ Import Gateway
     Route::get('/catalog/import', [\App\Http\Controllers\Admin\CatalogController::class, 'import'])->name('admin.catalog.import');
     Route::get('/api/catalog/search', [\App\Http\Controllers\Admin\CatalogController::class, 'searchCjApi']);
     Route::post('/api/catalog/import-item', [\App\Http\Controllers\Admin\CatalogController::class, 'importCjProduct']);
