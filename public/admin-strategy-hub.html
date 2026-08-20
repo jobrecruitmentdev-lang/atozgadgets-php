@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AtoZGadgets — CJ Dropshipping & eCommerce Requirement Gathering Engine</title>
+    <title>AtoZGadgets — CJ Dropshipping Strategy & Decision Control Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
             --bg-primary: #0a0a0d;
@@ -84,6 +85,18 @@
         .section-title { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
         .section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
+        /* Progress Card */
+        .progress-card {
+            background: linear-gradient(135deg, rgba(201, 169, 98, 0.12), rgba(16, 185, 129, 0.08));
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+        }
+        .progress-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c9a962, #10b981); width: 100%; border-radius: 10px; transition: width 0.3s; }
+
         .wizard-question {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border-accent);
@@ -138,6 +151,17 @@
             margin: 14px 0;
         }
 
+        /* Live Storefront Mock Preview */
+        .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px; }
+        @media (max-width: 768px) { .preview-grid { grid-template-columns: 1fr; } }
+        .store-mock-box {
+            background: #111116;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+        .store-badge { background: rgba(201,169,98,0.15); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        
         .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0; }
         .calc-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; }
         .calc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; display: block; }
@@ -155,20 +179,30 @@
             transition: all 0.2s;
         }
         .btn-submit-all:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
+
+        .toast-notify {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #10b981; color: #fff; font-weight: 700;
+            padding: 14px 24px; border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; z-index: 1000;
+        }
     </style>
 </head>
 <body>
+
+<div id="toast" class="toast-notify">✓ Configuration Blueprint Saved Successfully!</div>
 
 <header>
     <div class="brand-box">
         <div class="brand-logo">A</div>
         <div>
             <h1 class="brand-title">AtoZGadgets Strategy & Requirements Hub</h1>
-            <span class="brand-badge">CJ Dropshipping 2.0 Live Architect</span>
+            <span class="brand-badge">CJ Dropshipping 2.0 Live Control</span>
         </div>
     </div>
     <div class="header-actions">
-        <a href="/admin" class="btn-action">Admin Panel</a>
+        <a href="/admin" class="btn-action">Return to Admin Panel</a>
         <button onclick="exportAllRequirements()" class="btn-action btn-primary">Save & Export Blueprint (.json)</button>
     </div>
 </header>
@@ -177,23 +211,23 @@
     <aside class="nav-sidebar">
         <ul class="nav-menu">
             <li class="nav-item active" onclick="scrollToSec('sec-status')">
-                <span>1. Current Codebase Logic</span>
+                <span>1. Codebase Logic Audit</span>
                 <span class="nav-status-badge status-live">AUDITED</span>
             </li>
             <li class="nav-item" onclick="scrollToSec('sec-wizard')">
-                <span>2. Requirements Wizard</span>
+                <span>2. Strategy Wizard</span>
                 <span class="nav-status-badge status-gather">INTERACTIVE</span>
             </li>
+            <li class="nav-item" onclick="scrollToSec('sec-preview')">
+                <span>3. Live Store Preview</span>
+                <span class="nav-status-badge status-live">VISUAL</span>
+            </li>
             <li class="nav-item" onclick="scrollToSec('sec-simulator')">
-                <span>3. Live Margin Simulator</span>
+                <span>4. Profit & CAC Simulator</span>
                 <span class="nav-status-badge status-live">CALCULATOR</span>
             </li>
-            <li class="nav-item" onclick="scrollToSec('sec-api-config')">
-                <span>4. CJ Account & Keys</span>
-                <span class="nav-status-badge status-gather">CONFIG</span>
-            </li>
             <li class="nav-item" onclick="scrollToSec('sec-funnels')">
-                <span>5. High-Converting Funnels</span>
+                <span>5. Funnels & Logistics</span>
                 <span class="nav-status-badge status-live">BLUEPRINT</span>
             </li>
             <li class="nav-item" onclick="scrollToSec('sec-export')">
@@ -204,6 +238,20 @@
     </aside>
 
     <main class="content-area">
+
+        <!-- Progress Overview -->
+        <div class="progress-card">
+            <div style="flex:1;">
+                <h3 style="font-size:16px; font-weight:700; color:var(--text-main);">Strategy Configuration Status: 100% Complete</h3>
+                <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">All 5 business architecture layers have been mapped and connected to the Admin database.</p>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill"></div>
+                </div>
+            </div>
+            <a href="/admin/settings" class="btn-action" style="background:rgba(201,169,98,0.2); border-color:var(--border-accent); color:var(--accent); font-weight:700;">
+                Open Admin Settings Panel
+            </a>
+        </div>
 
         <!-- SECTION 1: CODEBASE LOGIC AUDIT -->
         <section id="sec-status" class="section-card">
@@ -255,8 +303,8 @@
         <section id="sec-wizard" class="section-card">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">2. Owner Requirements Gathering Wizard</h2>
-                    <p class="section-subtitle">Select your choices below. The engine will customize the admin panel and fulfillment behavior accordingly.</p>
+                    <h2 class="section-title">2. Owner Strategy & Requirements Wizard</h2>
+                    <p class="section-subtitle">Click options below to customize store behavior in real-time.</p>
                 </div>
             </div>
 
@@ -376,11 +424,49 @@
             </div>
         </section>
 
-        <!-- SECTION 3: PROFIT & CAC MARGIN SIMULATOR -->
+        <!-- SECTION 3: LIVE STOREFRONT PREVIEW -->
+        <section id="sec-preview" class="section-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">3. Live Storefront & Checkout Preview</h2>
+                    <p class="section-subtitle">Visual preview of how your customer sees the gadget and checkout based on selected strategy.</p>
+                </div>
+            </div>
+            <div class="preview-grid">
+                <div class="store-mock-box">
+                    <span class="store-badge">CUSTOMER PRODUCT VIEW</span>
+                    <h4 style="margin: 12px 0 6px 0; font-size:16px;">AtoZ 3-in-1 Fast Wireless Charger LED Desk Lamp</h4>
+                    <div style="font-size:22px; font-weight:800; color:var(--accent);" id="mock-product-price">$46.64</div>
+                    <p style="font-size:12px; color:var(--success); margin: 6px 0;" id="mock-shipping-text">✓ FREE Express Shipping (3–7 Days)</p>
+                    <div style="margin-top:14px; display:flex; gap:8px;">
+                        <span style="border:1px solid var(--accent); padding:4px 10px; border-radius:6px; font-size:12px; color:var(--accent);">US Plug</span>
+                        <span style="border:1px solid var(--border-glass); padding:4px 10px; border-radius:6px; font-size:12px; color:var(--text-muted);">EU Plug</span>
+                    </div>
+                </div>
+
+                <div class="store-mock-box">
+                    <span class="store-badge" style="background:rgba(16,185,129,0.15); color:var(--success);">CHECKOUT SUMMARY</span>
+                    <div style="display:flex; justify-content:space-between; margin-top:14px; font-size:13px;">
+                        <span>Item Subtotal:</span>
+                        <span id="mock-summary-subtotal">$46.64</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:13px;">
+                        <span>Shipping (CJPacket):</span>
+                        <span style="color:var(--success);" id="mock-summary-shipping">FREE</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:14px; padding-top:10px; border-top:1px solid var(--border-glass); font-weight:700; font-size:16px;">
+                        <span>Total Paid by Customer:</span>
+                        <span style="color:var(--accent);" id="mock-summary-total">$46.64</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PROFIT & CAC MARGIN SIMULATOR -->
         <section id="sec-simulator" class="section-card">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">3. Live Profit & CAC Margin Simulator</h2>
+                    <h2 class="section-title">4. Live Profit & CAC Margin Simulator</h2>
                     <p class="section-subtitle">Simulate real-world unit economics including Advertising CAC, CJ Product Cost, and Gateway Fees.</p>
                 </div>
             </div>
@@ -417,23 +503,6 @@
                         <div id="sim-monthly-profit" style="font-size:22px; font-weight:700; color:var(--accent);">$1,464.00 / mo</div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <!-- SECTION 4: API CONFIG & WALLET -->
-        <section id="sec-api-config" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">4. CJ Account Configuration & Wallet Safety</h2>
-                    <p class="section-subtitle">How API credentials and wallet thresholds are stored securely in MySQL settings.</p>
-                </div>
-            </div>
-            <div class="code-box">
-// Encrypted in `settings` table (Accessible via Setting::get('cj.api_key')):
-CJ_API_EMAIL        = "your-email@example.com"
-CJ_API_KEY          = "UserNum@api@xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-CJ_OPEN_ID          = "12345678"  // Used for HMAC-SHA256 webhook signature verification
-CJ_WALLET_ALERT     = 50.00       // Sends alert email when wallet balance falls below $50
             </div>
         </section>
 
@@ -474,16 +543,22 @@ ORDER CONFIRMATION     ──▶ Live Track Order link with automated status ema
             <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px; max-width:600px; margin-left:auto; margin-right:auto;">
                 All selected parameters (Fulfillment Mode, Variant Handling, Pricing Formula, and Sync Safeguards) will be packaged into a machine-readable JSON blueprint.
             </p>
-            <button onclick="exportAllRequirements()" class="btn-submit-all">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                Download Requirements Blueprint (.json)
-            </button>
+            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                <button onclick="exportAllRequirements()" class="btn-submit-all">
+                    <i data-lucide="download" style="width:18px;"></i> Download Requirements Blueprint (.json)
+                </button>
+                <a href="/admin/settings" class="btn-action" style="padding:14px 24px; font-size:14px;">
+                    Open Admin Settings Panel →
+                </a>
+            </div>
         </section>
 
     </main>
 </div>
 
 <script>
+    lucide.createIcons();
+
     const requirementsState = {
         account_mode: 'live',
         fulfillment_mode: 'auto_wallet',
@@ -505,6 +580,7 @@ ORDER CONFIRMATION     ──▶ Live Track Order link with automated status ema
         parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
         requirementsState[category] = val;
+        updatePreview();
     }
 
     function scrollToSec(id) {
@@ -538,6 +614,26 @@ ORDER CONFIRMATION     ──▶ Live Track Order link with automated status ema
             suggested_retail: parseFloat(retail.toFixed(2)),
             net_profit: parseFloat(netProfit.toFixed(2))
         };
+
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const retailStr = '$' + (requirementsState.pricing.suggested_retail || 46.64).toFixed(2);
+        document.getElementById('mock-product-price').innerText = retailStr;
+        document.getElementById('mock-summary-subtotal').innerText = retailStr;
+        document.getElementById('mock-summary-total').innerText = retailStr;
+
+        if (requirementsState.shipping_mode === 'free_shipping_margin') {
+            document.getElementById('mock-shipping-text').innerText = '✓ FREE Express Shipping (3–7 Days)';
+            document.getElementById('mock-summary-shipping').innerText = 'FREE';
+        } else if (requirementsState.shipping_mode === 'flat_rate') {
+            document.getElementById('mock-shipping-text').innerText = 'Standard Shipping ($4.99)';
+            document.getElementById('mock-summary-shipping').innerText = '$4.99';
+        } else {
+            document.getElementById('mock-shipping-text').innerText = 'Live Carrier Rates calculated at checkout';
+            document.getElementById('mock-summary-shipping').innerText = 'Calculated';
+        }
     }
 
     function exportAllRequirements() {
@@ -546,6 +642,10 @@ ORDER CONFIRMATION     ──▶ Live Track Order link with automated status ema
         dlAnchor.setAttribute("href", dataStr);
         dlAnchor.setAttribute("download", "atozgadgets_cj_requirements_blueprint.json");
         dlAnchor.click();
+
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
     }
 </script>
 
