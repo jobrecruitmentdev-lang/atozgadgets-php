@@ -17,12 +17,15 @@ To track user interactions, marketing conversions, and monitor search ranking/in
 
 ## Decision
 1. **Google Analytics 4 Script (`G-LS0E52WE2D`)**: Injected into `resources/views/layouts/store.blade.php` and `resources/views/layouts/auth.blade.php`.
-2. **Search Console Static Verification**: `google1c9d8b5c6dcf337b.html` is maintained in `public/` (and root) so requests to `https://atozgadgetz.com/google1c9d8b5c6dcf337b.html` respond with `200 OK`.
-3. **CI/CD Auto-Deployment**: GitHub Actions (`.github/workflows/deploy.yml`) is triggered on every push to `main` to build and deploy changes to Hostinger via Rsync.
+2. **Google Consent Mode v2 (`analytics_storage`, `ad_storage`, `ad_user_data`, `ad_personalization`)**: Defaulted before `gtag('config')` and dynamically synchronized with user preferences via `localStorage('atoz_consent_status')`.
+3. **Custom Consent Banner Component**: Created `resources/views/store/partials/consent_banner.blade.php` featuring responsive glassmorphism, GDPR options ("Accept All", "Essential Only"), and seamless `gtag('consent', 'update')` calls.
+4. **Search Console Static Verification**: `google1c9d8b5c6dcf337b.html` is maintained in `public/` (and root) so requests to `https://atozgadgetz.com/google1c9d8b5c6dcf337b.html` respond with `200 OK`.
+5. **CI/CD Auto-Deployment**: GitHub Actions (`.github/workflows/deploy.yml`) is triggered on every push to `main` to build and deploy changes to Hostinger via Rsync.
 
 ## Related
 - [[Architecture-MOC]]
 - [[DevOps-MOC]]
 - [[CI-CD-Pipeline]]
 - Layouts: `resources/views/layouts/store.blade.php`, `resources/views/layouts/auth.blade.php`
+- Consent Component: `resources/views/store/partials/consent_banner.blade.php`
 - Public static file: `public/google1c9d8b5c6dcf337b.html`
