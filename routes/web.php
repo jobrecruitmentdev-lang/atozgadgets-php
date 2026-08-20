@@ -76,6 +76,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/reports/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
 
     // Settings
+    Route::get('/strategy-hub', function () {
+        return response()->view('admin.strategy_hub')->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    })->name('admin.strategy_hub');
     Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
     
