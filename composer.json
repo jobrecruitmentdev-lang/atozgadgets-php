@@ -49,7 +49,11 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "facade/ignition",
+                "laravel/sail",
+                "nunomaduro/collision"
+            ]
         }
     },
     "config": {
