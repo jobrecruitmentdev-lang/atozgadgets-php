@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AtoZGadgets — CJ Dropshipping & eCommerce Architecture Strategy Hub</title>
+    <title>AtoZGadgets — CJ Dropshipping & eCommerce Requirement Gathering Engine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0c;
-            --bg-card: rgba(22, 22, 28, 0.85);
-            --bg-card-hover: rgba(30, 30, 38, 0.95);
+            --bg-primary: #0a0a0d;
+            --bg-card: rgba(20, 20, 26, 0.88);
+            --bg-card-hover: rgba(28, 28, 36, 0.98);
             --accent: #c9a962;
             --accent-glow: rgba(201, 169, 98, 0.25);
             --accent-bright: #e5c378;
@@ -30,27 +30,26 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-primary); color: var(--text-main); line-height: 1.6; min-height: 100vh; overflow-x: hidden; }
 
-        /* Background glow effect */
         body::before {
             content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at 10% 20%, rgba(201, 169, 98, 0.05), transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.04), transparent 40%);
+            background: radial-gradient(circle at 10% 20%, rgba(201, 169, 98, 0.06), transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05), transparent 40%);
             z-index: -1; pointer-events: none;
         }
 
         header {
             border-bottom: 1px solid var(--border-glass);
-            background: rgba(10, 10, 12, 0.85);
+            background: rgba(10, 10, 13, 0.92);
             backdrop-filter: blur(16px);
             position: sticky; top: 0; z-index: 100;
-            padding: 18px 32px;
+            padding: 16px 32px;
             display: flex; justify-content: space-between; align-items: center;
         }
 
         .brand-box { display: flex; align-items: center; gap: 14px; }
-        .brand-logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #c9a962, #b89851); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0a0a0c; font-size: 18px; }
+        .brand-logo { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #c9a962, #b89851); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0a0a0c; font-size: 19px; }
         .brand-title { font-size: 18px; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
-        .brand-badge { background: rgba(201, 169, 98, 0.15); color: var(--accent); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-accent); }
+        .brand-badge { background: rgba(201, 169, 98, 0.15); color: var(--accent); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border-accent); }
 
         .header-actions { display: flex; gap: 12px; }
         .btn-action { background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border-glass); padding: 8px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
@@ -58,100 +57,104 @@
         .btn-primary { background: linear-gradient(135deg, #c9a962, #b89851); color: #0a0a0c; border: none; }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 36px 32px; display: grid; grid-template-columns: 280px 1fr; gap: 36px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 32px 28px; display: grid; grid-template-columns: 300px 1fr; gap: 32px; }
         @media (max-width: 1024px) { .container { grid-template-columns: 1fr; } }
 
-        /* Sidebar Navigation */
-        .nav-sidebar { position: sticky; top: 90px; height: fit-content; }
-        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-        .nav-item { padding: 12px 16px; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-sidebar { position: sticky; top: 85px; height: fit-content; }
+        .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+        .nav-item { padding: 12px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; display: flex; align-items: center; justify-content: space-between; }
         .nav-item:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.03); }
         .nav-item.active { color: var(--accent); background: rgba(201, 169, 98, 0.08); border-left-color: var(--accent); font-weight: 600; }
+        .nav-status-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .status-live { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .status-gather { background: rgba(201, 169, 98, 0.15); color: var(--accent); }
 
-        /* Main Content */
-        .content-area { display: flex; flex-direction: column; gap: 40px; }
+        .content-area { display: flex; flex-direction: column; gap: 36px; }
 
         .section-card {
             background: var(--bg-card);
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-lg);
-            padding: 32px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-            backdrop-filter: blur(12px);
+            padding: 30px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(14px);
         }
 
-        .section-header { margin-bottom: 24px; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .section-title { font-size: 22px; font-weight: 700; color: var(--text-main); letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
-        .section-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+        .section-header { margin-bottom: 22px; border-bottom: 1px solid var(--border-glass); padding-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .section-title { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+        .section-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
-        /* Interactive Decision Cards */
-        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin: 20px 0; }
-        .option-card {
+        .wizard-question {
             background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .q-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .q-number { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: #0a0a0c; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .q-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .q-context { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .option-card {
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 18px;
             cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.25s ease;
             position: relative;
         }
         .option-card:hover { transform: translateY(-2px); border-color: rgba(201, 169, 98, 0.4); background: rgba(201, 169, 98, 0.03); }
         .option-card.selected {
             border-color: var(--accent);
-            background: rgba(201, 169, 98, 0.08);
+            background: rgba(201, 169, 98, 0.1);
             box-shadow: 0 0 20px var(--accent-glow);
         }
-        .option-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; }
-        .badge-recommended { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
-        .badge-caution { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
-        .option-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
-        .option-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        .option-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; margin-bottom: 8px; }
+        .badge-rec { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-alt { background: rgba(59, 130, 246, 0.2); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.4); }
+        .badge-warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+        
+        .opt-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
+        .opt-desc { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
 
-        /* Code & Diagrams */
+        .status-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+        .status-table th { text-align: left; padding: 12px 14px; background: rgba(255,255,255,0.03); color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--border-glass); }
+        .status-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-glass); color: var(--text-muted); }
+        .status-table tr:hover td { background: rgba(255,255,255,0.015); color: var(--text-main); }
+
         .code-box {
             background: #08080a;
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-md);
-            padding: 18px 20px;
+            padding: 16px 18px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
+            font-size: 12px;
             color: #d4d4d8;
             overflow-x: auto;
-            margin: 16px 0;
+            margin: 14px 0;
         }
 
-        .flow-step {
-            display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass);
-            border-radius: var(--radius-md); margin-bottom: 10px;
-        }
-        .flow-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #0a0a0c; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
-        .flow-text { font-size: 13px; color: var(--text-main); }
-        .flow-highlight { color: var(--accent); font-weight: 600; }
-
-        /* Owner vs Developer Control Matrix */
-        .table-custom { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
-        .table-custom th { text-align: left; padding: 12px 16px; background: rgba(255,255,255,0.03); color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--border-glass); }
-        .table-custom td { padding: 14px 16px; border-bottom: 1px solid var(--border-glass); color: var(--text-muted); }
-        .table-custom tr:hover td { background: rgba(255,255,255,0.01); color: var(--text-main); }
-        .tag-owner { color: var(--accent); font-weight: 600; }
-        .tag-dev { color: var(--info); font-weight: 600; }
-
-        /* Calculator Widget */
         .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 16px 0; }
-        .calc-input-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 14px; }
+        .calc-box { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; }
         .calc-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; display: block; }
-        .calc-input { width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 18px; font-weight: 700; outline: none; }
-        .calc-result-box { background: rgba(201, 169, 98, 0.1); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; justify-content: center; }
-        .calc-result-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+        .calc-input { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-glass); border-radius: 6px; padding: 8px 12px; color: var(--text-main); font-size: 16px; font-weight: 700; outline: none; }
+        .calc-input:focus { border-color: var(--accent); }
 
-        .btn-export {
+        .calc-result { background: rgba(201, 169, 98, 0.08); border: 1px solid var(--border-accent); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: center; }
+        .calc-profit-val { font-size: 26px; font-weight: 800; color: var(--accent); }
+
+        .btn-submit-all {
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff; font-weight: 700; padding: 12px 24px;
+            color: #fff; font-weight: 700; padding: 14px 28px;
             border-radius: var(--radius-md); border: none; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 10px; font-size: 14px;
+            font-size: 15px; display: inline-flex; align-items: center; gap: 10px;
+            transition: all 0.2s;
         }
-        .btn-export:hover { opacity: 0.95; transform: translateY(-1px); }
+        .btn-submit-all:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35); }
     </style>
 </head>
 <body>
@@ -160,310 +163,388 @@
     <div class="brand-box">
         <div class="brand-logo">A</div>
         <div>
-            <h1 class="brand-title">AtoZGadgets Strategy Hub</h1>
-            <span class="brand-badge">CJ Dropshipping 2.0 Engine</span>
+            <h1 class="brand-title">AtoZGadgets Strategy & Requirements Hub</h1>
+            <span class="brand-badge">CJ Dropshipping 2.0 Live Architect</span>
         </div>
     </div>
     <div class="header-actions">
-        <a href="/admin" class="btn-action">Return to Admin Panel</a>
-        <button onclick="exportDecisions()" class="btn-action btn-primary">Export Configuration</button>
+        <a href="/admin" class="btn-action">Admin Panel</a>
+        <button onclick="exportAllRequirements()" class="btn-action btn-primary">Save & Export Blueprint (.json)</button>
     </div>
 </header>
 
 <div class="container">
     <aside class="nav-sidebar">
         <ul class="nav-menu">
-            <li class="nav-item active" onclick="scrollToSection('sec-overview')">1. Custom Engine vs SaaS</li>
-            <li class="nav-item" onclick="scrollToSection('sec-points')">2. 2026 Points System (50k)</li>
-            <li class="nav-item" onclick="scrollToSection('sec-variants')">3. Multi-Variant Integrity</li>
-            <li class="nav-item" onclick="scrollToSection('sec-pricing')">4. Dynamic Pricing & CAC</li>
-            <li class="nav-item" onclick="scrollToSection('sec-usa')">5. USA Warehouse Strategy</li>
-            <li class="nav-item" onclick="scrollToSection('sec-funnel')">6. High-Converting Funnels</li>
-            <li class="nav-item" onclick="scrollToSection('sec-fulfillment')">7. Two-Phase Fulfillment</li>
-            <li class="nav-item" onclick="scrollToSection('sec-webhooks')">8. Webhook & Tracking</li>
-            <li class="nav-item" onclick="scrollToSection('sec-control')">9. Owner vs Developer Roles</li>
+            <li class="nav-item active" onclick="scrollToSec('sec-status')">
+                <span>1. Current Codebase Logic</span>
+                <span class="nav-status-badge status-live">AUDITED</span>
+            </li>
+            <li class="nav-item" onclick="scrollToSec('sec-wizard')">
+                <span>2. Requirements Wizard</span>
+                <span class="nav-status-badge status-gather">INTERACTIVE</span>
+            </li>
+            <li class="nav-item" onclick="scrollToSec('sec-simulator')">
+                <span>3. Live Margin Simulator</span>
+                <span class="nav-status-badge status-live">CALCULATOR</span>
+            </li>
+            <li class="nav-item" onclick="scrollToSec('sec-api-config')">
+                <span>4. CJ Account & Keys</span>
+                <span class="nav-status-badge status-gather">CONFIG</span>
+            </li>
+            <li class="nav-item" onclick="scrollToSec('sec-funnels')">
+                <span>5. High-Converting Funnels</span>
+                <span class="nav-status-badge status-live">BLUEPRINT</span>
+            </li>
+            <li class="nav-item" onclick="scrollToSec('sec-export')">
+                <span>6. Final Blueprint Export</span>
+                <span class="nav-status-badge status-live">SAVE</span>
+            </li>
         </ul>
     </aside>
 
     <main class="content-area">
 
-        <!-- Module 1 -->
-        <section id="sec-overview" class="section-card">
+        <!-- SECTION 1: CODEBASE LOGIC AUDIT -->
+        <section id="sec-status" class="section-card">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">1. Custom Engine Architecture vs Shopify / WooCommerce</h2>
-                    <p class="section-subtitle">Why custom PHP MVC + Database gives you 100% ownership over your brand, SEO, and margins.</p>
+                    <h2 class="section-title">1. Current Codebase Logic Audit (What is Already Implemented)</h2>
+                    <p class="section-subtitle">A transparent breakdown of existing PHP services vs what the store owner configures.</p>
                 </div>
             </div>
-            <p style="color:var(--text-muted); font-size:14px; margin-bottom:16px;">
-                CJ Dropshipping is designed as a <strong>supplier & fulfillment engine</strong>, not your website database. Your custom database owns customer records, SEO slugs, custom funnels, and order states, insulating your business from vendor lock-in.
-            </p>
-            <div class="code-box">
-CUSTOMER (USA/Global) ──▶ AtoZGadgets (PHP MVC + MySQL) ──▶ Order Saved (Status: PAID)
-                                       │
-                                       └──▶ Background Job ──▶ CJ API v2.0 (createOrderV2)
-                                                                     │
-                                                                     └──▶ CJ Warehouse Ships
-            </div>
-        </section>
-
-        <!-- Module 2 -->
-        <section id="sec-points" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">2. 2026 CJ API Points-Based Rate Limit Architecture</h2>
-                    <p class="section-subtitle">Protecting your 50,000 base daily points limit from exhaustion.</p>
-                </div>
-            </div>
-            <div class="options-grid">
-                <div class="option-card selected" onclick="selectOption(this, 'points', 'cache_first')">
-                    <span class="option-badge badge-recommended">Recommended Architecture</span>
-                    <h3 class="option-title">Scheduled Cache-First Ingestion</h3>
-                    <p class="option-desc">Storefront queries local MySQL. Cron synchronizes prices and stock every 12 hours. Zero points wasted on casual visitors.</p>
-                </div>
-                <div class="option-card" onclick="selectOption(this, 'points', 'live_on_view')">
-                    <span class="option-badge badge-caution">High Risk</span>
-                    <h3 class="option-title">Live API Call On Every Page View</h3>
-                    <p class="option-desc">Pings CJ on every product click. Consumes 10 points per click; 5,000 visitors will completely freeze your API access.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Module 3 -->
-        <section id="sec-variants" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">3. Multi-Variant Integrity (VID Mapping)</h2>
-                    <p class="section-subtitle">How variants (US vs EU Plug, Colors, Sizes) are saved and ordered.</p>
-                </div>
-            </div>
-            <div class="flow-step">
-                <div class="flow-num">1</div>
-                <div class="flow-text">CJ Product Import pulls parent <span class="flow-highlight">PID</span> + array of child <span class="flow-highlight">VIDs</span> (Variant IDs).</div>
-            </div>
-            <div class="flow-step">
-                <div class="flow-num">2</div>
-                <div class="flow-text">Saved in <span class="flow-highlight">product_variants</span> table with cost price, weight, and SKU.</div>
-            </div>
-            <div class="flow-step">
-                <div class="flow-num">3</div>
-                <div class="flow-text">Customer selects "Black / US Plug" on storefront; checkout transmits the exact <span class="flow-highlight">VID</span> to CJ <code>createOrderV2</code>.</div>
-            </div>
-        </section>
-
-        <!-- Module 4: Pricing Engine -->
-        <section id="sec-pricing" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">4. Real-Time Pricing & CAC Margin Engine</h2>
-                    <p class="section-subtitle">Never sell at a loss. Calculate true profitable selling prices.</p>
-                </div>
-            </div>
-            <div class="calc-grid">
-                <div class="calc-input-box">
-                    <label class="calc-label">CJ Product Cost ($)</label>
-                    <input type="number" id="calc-cost" class="calc-input" value="14.50" oninput="calculateMargin()">
-                </div>
-                <div class="calc-input-box">
-                    <label class="calc-label">Est. Shipping ($)</label>
-                    <input type="number" id="calc-shipping" class="calc-input" value="4.80" oninput="calculateMargin()">
-                </div>
-                <div class="calc-input-box">
-                    <label class="calc-label">Target Markup Multiplier</label>
-                    <input type="number" id="calc-markup" class="calc-input" value="2.5" step="0.1" oninput="calculateMargin()">
-                </div>
-                <div class="calc-result-box">
-                    <span class="calc-label" style="color:var(--text-main);">Suggested Retail Price</span>
-                    <div id="calc-retail" class="calc-result-val">$48.25</div>
-                    <span id="calc-profit" style="font-size:12px; color:var(--success); margin-top:4px;">Gross Profit: $28.95 (60%)</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Module 5: USA Strategy -->
-        <section id="sec-usa" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">5. USA Warehouse & Fast Shipping Strategy</h2>
-                    <p class="section-subtitle">Prioritizing CJ US Warehouses (CA & NJ) for 3–7 day delivery.</p>
-                </div>
-            </div>
-            <div class="options-grid">
-                <div class="option-card selected" onclick="selectOption(this, 'shipping', 'us_priority')">
-                    <span class="option-badge badge-recommended">Recommended</span>
-                    <h3 class="option-title">US Warehouse Priority Filter</h3>
-                    <p class="option-desc">Admin catalog import filters for items stocked in CJ USA Warehouses (2–5 days processing). Free shipping banner on orders > $50.</p>
-                </div>
-                <div class="option-card" onclick="selectOption(this, 'shipping', 'global_cjpacket')">
-                    <span class="option-badge badge-caution">Standard</span>
-                    <h3 class="option-title">Global CJPacket Fast Line</h3>
-                    <p class="option-desc">Ships from CJ China Central Hub directly to USA/EU (8–14 days delivery) with end-to-end tracking.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Module 6: Funnel Strategy -->
-        <section id="sec-funnel" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">6. High-Converting Landing Page & Funnel Structure</h2>
-                    <p class="section-subtitle">Optimized for TikTok / Meta Ads direct-response conversions.</p>
-                </div>
-            </div>
-            <div class="code-box">
-TikTok/Meta Ad ──▶ Product Hook Landing Page ──▶ Problem / Solution Demo ──▶ Social Proof Reviews
-                                                            │
-                                                            ▼
-Thank You & Tracking ◀── 1-Click Upsell ◀── 1-Page Sticky Checkout ◀── Quantity Bundle (Buy 2 Get 1)
-            </div>
-        </section>
-
-        <!-- Module 7: Two Phase Fulfillment -->
-        <section id="sec-fulfillment" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">7. Two-Phase Payment & Non-Blocking Fulfillment</h2>
-                    <p class="section-subtitle">Separating Customer Payment from CJ Supplier Payment.</p>
-                </div>
-            </div>
-            <div class="options-grid">
-                <div class="option-card selected" onclick="selectOption(this, 'fulfillment', 'auto_wallet')">
-                    <span class="option-badge badge-recommended">Hands-Free Automation</span>
-                    <h3 class="option-title">CJ Account Balance (payType: 2)</h3>
-                    <p class="option-desc">Pre-fund CJ Wallet. Paid orders automatically deduct from balance in a background queue without checkout timeouts.</p>
-                </div>
-                <div class="option-card" onclick="selectOption(this, 'fulfillment', 'admin_review')">
-                    <span class="option-badge badge-caution">Manual Control</span>
-                    <h3 class="option-title">Admin 1-Click Approval</h3>
-                    <p class="option-desc">Paid orders sit in Admin "Ready to Dispatch" queue until the store owner clicks "Approve & Dispatch".</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Module 8: Webhook & Tracking -->
-        <section id="sec-webhooks" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">8. Webhook & Tracking Automation</h2>
-                    <p class="section-subtitle">Secure HMAC-SHA256 receiver for automated shipment notifications.</p>
-                </div>
-            </div>
-            <p style="color:var(--text-muted); font-size:14px; margin-bottom:14px;">
-                CJ pushes status updates to <code>https://atozgadgetz.com/api/webhooks/cj</code> signed with your secret <code>openId</code>.
-            </p>
-            <div class="code-box">
-1. CJ Dispatches Package ──▶ Webhook receives tracking number (e.g. 9400100000000000000000)
-2. Backend verifies HMAC-SHA256 signature in < 3s (HTTP 200 OK)
-3. Shipment record updated (status: 'in_transit')
-4. Automated email/SMS sent to customer with live 17Track / USPS tracking link
-            </div>
-        </section>
-
-        <!-- Module 9: Owner vs Developer Roles -->
-        <section id="sec-control" class="section-card">
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">9. How the Owner Controls Everything (No Code Needed)</h2>
-                    <p class="section-subtitle">As the developer, you build the engine. The store owner controls the business knobs in the Admin Panel.</p>
-                </div>
-            </div>
-            <table class="table-custom">
+            <table class="status-table">
                 <thead>
                     <tr>
-                        <th>Feature / Decision</th>
-                        <th>Who Controls It</th>
-                        <th>Where It Is Managed</th>
+                        <th>Service / File</th>
+                        <th>Existing Code Implementation</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Pricing & Markup Multipliers</strong></td>
-                        <td><span class="tag-owner">Store Owner</span></td>
-                        <td>Admin Panel <code>/admin/settings</code> (Live Slider/Input)</td>
+                        <td><strong>CjAuthService.php</strong></td>
+                        <td>Authenticates with CJ API v2.0; caches access token for 14 days with 1.1s rate limiter throttle.</td>
+                        <td><span class="nav-status-badge status-live">PRODUCTION READY</span></td>
                     </tr>
                     <tr>
-                        <td><strong>Product Selection & Publishing</strong></td>
-                        <td><span class="tag-owner">Store Owner</span></td>
-                        <td>Catalog Importer <code>/admin/catalog/import</code></td>
+                        <td><strong>CjProductService.php</strong></td>
+                        <td>Searches products via <code>/product/listV2</code>, filters categories/prices, normalizes response schema.</td>
+                        <td><span class="nav-status-badge status-live">IMPLEMENTED</span></td>
                     </tr>
                     <tr>
-                        <td><strong>Fulfillment Automation Switch</strong></td>
-                        <td><span class="tag-owner">Store Owner</span></td>
-                        <td>Admin Settings (Toggle: 100% Auto vs Manual Review)</td>
+                        <td><strong>CjOrderService.php</strong></td>
+                        <td>Creates orders using <code>createOrderV2</code>, queries live freight rates (<code>freightCalculate</code>), handles cancellation.</td>
+                        <td><span class="nav-status-badge status-live">IMPLEMENTED</span></td>
                     </tr>
                     <tr>
-                        <td><strong>CJ API Keys & Wallet Alerts</strong></td>
-                        <td><span class="tag-owner">Store Owner</span></td>
-                        <td>Admin Integrations Panel (Encrypted DB storage)</td>
+                        <td><strong>CjShipmentService.php</strong></td>
+                        <td>Queries real-time carrier tracking (<code>/logistic/trackingInfo</code>) and maps to shipment records.</td>
+                        <td><span class="nav-status-badge status-live">IMPLEMENTED</span></td>
                     </tr>
                     <tr>
-                        <td><strong>API Rate Limit Safeguards & Caching</strong></td>
-                        <td><span class="tag-dev">Developer</span></td>
-                        <td>Backend Architecture (PHP Cron & Queue Workers)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SEO, Core Web Vitals & Fast Rendering</strong></td>
-                        <td><span class="tag-dev">Developer</span></td>
-                        <td>Blade MVC Engine & LiteSpeed Optimization</td>
+                        <td><strong>CatalogController.php</strong></td>
+                        <td>Admin import gateway (<code>/admin/catalog/import</code>) with dynamic markup multipliers and idempotency guards.</td>
+                        <td><span class="nav-status-badge status-live">IMPLEMENTED</span></td>
                     </tr>
                 </tbody>
             </table>
+        </section>
 
-            <div style="margin-top: 24px; text-align: center;">
-                <button onclick="exportDecisions()" class="btn-export">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Download Architecture Blueprint (.json)
-                </button>
+        <!-- SECTION 2: INTERACTIVE REQUIREMENTS WIZARD -->
+        <section id="sec-wizard" class="section-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">2. Owner Requirements Gathering Wizard</h2>
+                    <p class="section-subtitle">Select your choices below. The engine will customize the admin panel and fulfillment behavior accordingly.</p>
+                </div>
             </div>
+
+            <!-- Q1: Account Mode -->
+            <div class="wizard-question">
+                <div class="q-header">
+                    <div class="q-number">1</div>
+                    <div class="q-title">CJ Account Mode & API Credentials</div>
+                </div>
+                <p class="q-context">Choose how your store authenticates with CJ Dropshipping. In Live Production mode, live catalog and real wallet deductions take effect.</p>
+                <div class="options-grid">
+                    <div class="option-card selected" onclick="pick('account_mode', 'live', this)">
+                        <span class="option-badge badge-rec">Recommended</span>
+                        <div class="opt-title">Live Production API</div>
+                        <div class="opt-desc">Uses your real CJ API Key (<code>UserNum@api@...</code>). Pulls 500k+ live gadgets, calculates live freight, and fulfills real customer orders.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('account_mode', 'sandbox', this)">
+                        <span class="option-badge badge-alt">Testing</span>
+                        <div class="opt-title">Sandbox Demo Simulation</div>
+                        <div class="opt-desc">Uses mock demo catalog. Orders generate mock tracking numbers for UI testing without charging real money.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q2: Order Fulfillment -->
+            <div class="wizard-question">
+                <div class="q-header">
+                    <div class="q-number">2</div>
+                    <div class="q-title">Order Dispatch & CJ Payment Method</div>
+                </div>
+                <p class="q-context">When a customer pays on your site, how should the order be submitted and paid for on CJ Dropshipping?</p>
+                <div class="options-grid">
+                    <div class="option-card selected" onclick="pick('fulfillment_mode', 'auto_wallet', this)">
+                        <span class="option-badge badge-rec">Recommended</span>
+                        <div class="opt-title">Automatic CJ Wallet (payType: 2)</div>
+                        <div class="opt-desc">Pre-fund your CJ account balance. Paid orders are automatically created and fulfilled in background queues with zero delay.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('fulfillment_mode', 'manual_review', this)">
+                        <span class="option-badge badge-alt">Controlled</span>
+                        <div class="opt-title">Admin 1-Click Approval</div>
+                        <div class="opt-desc">Orders wait in Admin "Pending Dispatch" queue. Admin reviews order and clicks "Fulfill with CJ" button to dispatch.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('fulfillment_mode', 'pay_per_order', this)">
+                        <span class="option-badge badge-warn">Manual</span>
+                        <div class="opt-title">Pay-Per-Order Link (payType: 1)</div>
+                        <div class="opt-desc">Generates a direct CJ credit card/PayPal payment link for each individual order.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q3: Product Variants -->
+            <div class="wizard-question">
+                <div class="q-header">
+                    <div class="q-number">3</div>
+                    <div class="q-title">Product Variant Selection & VID Mapping</div>
+                </div>
+                <p class="q-context">How should product options (US vs EU Plug, Colors, Sizes) appear to customers on your storefront?</p>
+                <div class="options-grid">
+                    <div class="option-card selected" onclick="pick('variant_mode', 'full_multivariant', this)">
+                        <span class="option-badge badge-rec">Recommended</span>
+                        <div class="opt-title">Full Multi-Variant Matrix</div>
+                        <div class="opt-desc">Customers select color, size, and plug type on product pages. The system maps the exact Variant ID (VID) to CJ for 100% accurate fulfillment.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('variant_mode', 'primary_only', this)">
+                        <span class="option-badge badge-alt">Simplified</span>
+                        <div class="opt-title">Primary Variant Only</div>
+                        <div class="opt-desc">Imports only the cheapest/default variant per gadget to keep product pages simple without selector dropdowns.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q4: Shipping Strategy -->
+            <div class="wizard-question">
+                <div class="q-header">
+                    <div class="q-number">4</div>
+                    <div class="q-title">Shipping Pricing & US Warehouse Filter</div>
+                </div>
+                <p class="q-context">How should shipping fees be presented to customers and which fulfillment hubs should be prioritized?</p>
+                <div class="options-grid">
+                    <div class="option-card selected" onclick="pick('shipping_mode', 'free_shipping_margin', this)">
+                        <span class="option-badge badge-rec">Recommended</span>
+                        <div class="opt-title">Free Worldwide Shipping (Margin Built-in)</div>
+                        <div class="opt-desc">Shipping cost is built into the product markup. Advertised as "Free Shipping" to dramatically increase conversion rates.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('shipping_mode', 'live_freight', this)">
+                        <span class="option-badge badge-alt">Dynamic</span>
+                        <div class="opt-title">Live Real-time CJ Carrier Rates</div>
+                        <div class="opt-desc">Queries CJ's freight API during checkout to display exact shipping carrier prices (e.g. CJPacket $6.50, DHL $24.00).</div>
+                    </div>
+                    <div class="option-card" onclick="pick('shipping_mode', 'flat_rate', this)">
+                        <span class="option-badge badge-warn">Standard</span>
+                        <div class="opt-title">Flat Rate Shipping ($4.99)</div>
+                        <div class="opt-desc">Charges a fixed shipping rate across all orders worldwide regardless of package weight.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q5: Stock & Price Spikes -->
+            <div class="wizard-question">
+                <div class="q-header">
+                    <div class="q-number">5</div>
+                    <div class="q-title">Stock Outage & Supplier Price Change Safeguard</div>
+                </div>
+                <p class="q-context">If a CJ supplier increases their wholesale cost or runs out of stock, how should your store respond automatically?</p>
+                <div class="options-grid">
+                    <div class="option-card selected" onclick="pick('sync_policy', 'auto_adjust_margin', this)">
+                        <span class="option-badge badge-rec">Recommended</span>
+                        <div class="opt-title">Dynamic Price Adjustment + Out-of-Stock Guard</div>
+                        <div class="opt-desc">Automatically recalculates customer selling price to protect profit margin; marks item as "Sold Out" if CJ stock drops below 5 units.</div>
+                    </div>
+                    <div class="option-card" onclick="pick('sync_policy', 'pause_on_change', this)">
+                        <span class="option-badge badge-alt">Strict</span>
+                        <div class="opt-title">Auto-Pause Product on Cost Change</div>
+                        <div class="opt-desc">Instantly hides product from storefront if supplier raises price, requiring manual admin review before republishing.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: PROFIT & CAC MARGIN SIMULATOR -->
+        <section id="sec-simulator" class="section-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">3. Live Profit & CAC Margin Simulator</h2>
+                    <p class="section-subtitle">Simulate real-world unit economics including Advertising CAC, CJ Product Cost, and Gateway Fees.</p>
+                </div>
+            </div>
+            <div class="calc-grid">
+                <div class="calc-box">
+                    <label class="calc-label">Wholesale CJ Cost ($)</label>
+                    <input type="number" id="sim-cost" class="calc-input" value="14.80" oninput="runSimulation()">
+                </div>
+                <div class="calc-box">
+                    <label class="calc-label">Est. CJ Shipping Fee ($)</label>
+                    <input type="number" id="sim-shipping" class="calc-input" value="5.20" oninput="runSimulation()">
+                </div>
+                <div class="calc-box">
+                    <label class="calc-label">Est. Ad Spend CAC per Order ($)</label>
+                    <input type="number" id="sim-cac" class="calc-input" value="12.00" oninput="runSimulation()">
+                </div>
+                <div class="calc-box">
+                    <label class="calc-label">Markup Multiplier</label>
+                    <input type="number" id="sim-markup" class="calc-input" value="2.8" step="0.1" oninput="runSimulation()">
+                </div>
+            </div>
+            <div class="calc-result" style="margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <span class="calc-label" style="color:var(--text-main); font-size:13px;">Customer Selling Price</span>
+                        <div id="sim-retail" class="calc-profit-val">$46.64</div>
+                    </div>
+                    <div>
+                        <span class="calc-label" style="color:var(--text-main); font-size:13px;">Net Profit per Unit (After Ads & CJ)</span>
+                        <div id="sim-net-profit" style="font-size:24px; font-weight:800; color:var(--success);">$14.64 (31.4% Net Margin)</div>
+                    </div>
+                    <div>
+                        <span class="calc-label" style="color:var(--text-main); font-size:13px;">Monthly Projected Profit (100 orders)</span>
+                        <div id="sim-monthly-profit" style="font-size:22px; font-weight:700; color:var(--accent);">$1,464.00 / mo</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: API CONFIG & WALLET -->
+        <section id="sec-api-config" class="section-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">4. CJ Account Configuration & Wallet Safety</h2>
+                    <p class="section-subtitle">How API credentials and wallet thresholds are stored securely in MySQL settings.</p>
+                </div>
+            </div>
+            <div class="code-box">
+// Encrypted in `settings` table (Accessible via Setting::get('cj.api_key')):
+CJ_API_EMAIL        = "your-email@example.com"
+CJ_API_KEY          = "UserNum@api@xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+CJ_OPEN_ID          = "12345678"  // Used for HMAC-SHA256 webhook signature verification
+CJ_WALLET_ALERT     = 50.00       // Sends alert email when wallet balance falls below $50
+            </div>
+        </section>
+
+        <!-- SECTION 5: HIGH CONVERTING FUNNELS -->
+        <section id="sec-funnels" class="section-card">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">5. High-Converting Landing Page & Funnel Structure</h2>
+                    <p class="section-subtitle">Engineered specifically for USA & Global dropshipping traffic.</p>
+                </div>
+            </div>
+            <div class="code-box">
+AD CREATIVE (TikTok/FB)
+        │
+        ▼
+PRODUCT LANDING PAGE ──▶ Problem Hook ("Tired of messy cables?")
+        │            ──▶ High-Definition GIF / Video Demo
+        │            ──▶ Social Proof Reviews (Photo + Verified Buyer)
+        ▼
+STICKY 1-PAGE CHECKOUT ──▶ Quantity Selector (Buy 2 Get 1 Free, Buy 3 Get 20% Off)
+        │              ──▶ Express Pay (PayPal / Payoneer / Credit Card)
+        ▼
+POST-PURCHASE UPSELL   ──▶ "Add Extended 2-Year Warranty for $7.99"
+        │
+        ▼
+ORDER CONFIRMATION     ──▶ Live Track Order link with automated status emails
+            </div>
+        </section>
+
+        <!-- SECTION 6: EXPORT & SYNC -->
+        <section id="sec-export" class="section-card" style="text-align:center;">
+            <div class="section-header" style="justify-content:center;">
+                <div>
+                    <h2 class="section-title">6. Finalize & Save Requirements Blueprint</h2>
+                    <p class="section-subtitle">Download your customized strategy specification to sync with the Admin Panel.</p>
+                </div>
+            </div>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:24px; max-width:600px; margin-left:auto; margin-right:auto;">
+                All selected parameters (Fulfillment Mode, Variant Handling, Pricing Formula, and Sync Safeguards) will be packaged into a machine-readable JSON blueprint.
+            </p>
+            <button onclick="exportAllRequirements()" class="btn-submit-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download Requirements Blueprint (.json)
+            </button>
         </section>
 
     </main>
 </div>
 
 <script>
-    const userChoices = {
-        points_strategy: 'cache_first',
-        shipping_strategy: 'us_priority',
+    const requirementsState = {
+        account_mode: 'live',
         fulfillment_mode: 'auto_wallet',
-        markup_multiplier: 2.5
+        variant_mode: 'full_multivariant',
+        shipping_mode: 'free_shipping_margin',
+        sync_policy: 'auto_adjust_margin',
+        pricing: {
+            sample_cost: 14.80,
+            sample_shipping: 5.20,
+            sample_cac: 12.00,
+            markup_multiplier: 2.8,
+            suggested_retail: 46.64,
+            net_profit: 14.64
+        }
     };
 
-    function selectOption(el, category, value) {
+    function pick(category, val, el) {
         const parent = el.parentElement;
-        parent.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+        parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
         el.classList.add('selected');
-        userChoices[category] = value;
+        requirementsState[category] = val;
     }
 
-    function scrollToSection(id) {
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        event.target.classList.add('active');
-        const element = document.getElementById(id);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+    function scrollToSec(id) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        if (event && event.currentTarget) event.currentTarget.classList.add('active');
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    function calculateMargin() {
-        const cost = parseFloat(document.getElementById('calc-cost').value) || 0;
-        const shipping = parseFloat(document.getElementById('calc-shipping').value) || 0;
-        const markup = parseFloat(document.getElementById('calc-markup').value) || 1;
+    function runSimulation() {
+        const cost = parseFloat(document.getElementById('sim-cost').value) || 0;
+        const shipping = parseFloat(document.getElementById('sim-shipping').value) || 0;
+        const cac = parseFloat(document.getElementById('sim-cac').value) || 0;
+        const markup = parseFloat(document.getElementById('sim-markup').value) || 1;
 
-        const totalCost = cost + shipping;
         const retail = (cost * markup) + shipping;
-        const profit = retail - totalCost;
-        const marginPct = retail > 0 ? Math.round((profit / retail) * 100) : 0;
+        const totalExpenses = cost + shipping + cac;
+        const netProfit = retail - totalExpenses;
+        const marginPct = retail > 0 ? ((netProfit / retail) * 100).toFixed(1) : 0;
+        const monthlyProfit = netProfit * 100;
 
-        document.getElementById('calc-retail').innerText = '$' + retail.toFixed(2);
-        document.getElementById('calc-profit').innerText = `Gross Profit: $${profit.toFixed(2)} (${marginPct}%)`;
-        userChoices.markup_multiplier = markup;
+        document.getElementById('sim-retail').innerText = '$' + retail.toFixed(2);
+        document.getElementById('sim-net-profit').innerText = `$${netProfit.toFixed(2)} (${marginPct}% Net Margin)`;
+        document.getElementById('sim-monthly-profit').innerText = `$${monthlyProfit.toFixed(2)} / mo`;
+
+        requirementsState.pricing = {
+            sample_cost: cost,
+            sample_shipping: shipping,
+            sample_cac: cac,
+            markup_multiplier: markup,
+            suggested_retail: parseFloat(retail.toFixed(2)),
+            net_profit: parseFloat(netProfit.toFixed(2))
+        };
     }
 
-    function exportDecisions() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userChoices, null, 2));
+    function exportAllRequirements() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(requirementsState, null, 2));
         const dlAnchor = document.createElement('a');
         dlAnchor.setAttribute("href", dataStr);
-        dlAnchor.setAttribute("download", "atozgadgets_cj_strategy.json");
+        dlAnchor.setAttribute("download", "atozgadgets_cj_requirements_blueprint.json");
         dlAnchor.click();
     }
 </script>
