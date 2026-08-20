@@ -6,38 +6,8 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-
-      // Initialize Google Consent Mode v2 defaults
-      var storedConsent = null;
-      try {
-          storedConsent = localStorage.getItem('atoz_consent_status');
-      } catch (e) {}
-
-      if (storedConsent === 'granted') {
-          gtag('consent', 'default', {
-              'analytics_storage': 'granted',
-              'ad_storage': 'granted',
-              'ad_user_data': 'granted',
-              'ad_personalization': 'granted'
-          });
-      } else if (storedConsent === 'essential') {
-          gtag('consent', 'default', {
-              'analytics_storage': 'denied',
-              'ad_storage': 'denied',
-              'ad_user_data': 'denied',
-              'ad_personalization': 'denied'
-          });
-      } else {
-          gtag('consent', 'default', {
-              'analytics_storage': 'denied',
-              'ad_storage': 'denied',
-              'ad_user_data': 'denied',
-              'ad_personalization': 'denied',
-              'wait_for_update': 500
-          });
-      }
-
       gtag('js', new Date());
+
       gtag('config', 'G-LS0E52WE2D');
     </script>
     <meta charset="UTF-8">
