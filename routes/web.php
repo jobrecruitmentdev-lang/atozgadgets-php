@@ -18,6 +18,8 @@ Route::middleware('storefront')->group(function () {
     Route::view('/terms-conditions', 'store.terms')->name('store.terms');
     Route::view('/return-and-refund-policy', 'store.returns')->name('store.returns');
     Route::view('/shipping-payment-policy-2', 'store.shipping')->name('store.shipping');
+    Route::view('/shipping-payment-policy', 'store.shipping');
+    Route::view('/shipping-policy', 'store.shipping');
     Route::get('/cart', [\App\Http\Controllers\CartController::class, 'viewCart'])->name('store.cart');
     Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'addToCart'])->name('store.cart.add');
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('store.checkout');
