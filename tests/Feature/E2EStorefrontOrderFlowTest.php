@@ -144,12 +144,15 @@ class E2EStorefrontOrderFlowTest extends TestCase
             ['email' => 'admin_e2e_suite@example.com'],
             ['first_name' => 'Admin', 'last_name' => 'User', 'mobile' => '9999999999', 'password' => bcrypt('secret123'), 'role_id' => 1]
         );
+        $admin->role_id = 1;
+        $admin->save();
 
+        $mockLiveCjId = 'CJ-LIVE-ORDER-' . uniqid();
         Http::fake([
             '*/shopping/order/createOrderV2*' => Http::response([
                 'code' => 200,
                 'result' => true,
-                'data' => ['orderId' => 'CJ-LIVE-ORDER-777']
+                'data' => ['orderId' => $mockLiveCjId]
             ], 200),
             '*/shopping/order/submitOrder*' => Http::response([
                 'code' => 200,
@@ -168,7 +171,7 @@ class E2EStorefrontOrderFlowTest extends TestCase
 
         // Verify CjOrder mapping
         $this->assertNotNull($order->fresh()->cjOrder);
-        $this->assertEquals('CJ-LIVE-ORDER-777', $order->fresh()->cjOrder->cj_order_id);
+        $this->assertEquals($mockLiveCjId, $order->fresh()->cjOrder->cj_order_id);
         $this->assertEquals($order->id, $order->fresh()->cjOrder->order->id);
 
         // 8. Test CJ Webhook Tracking Sync

@@ -17,8 +17,10 @@ class CjDropshippingE2ETest extends TestCase
         // 1. Setup Admin
         $admin = User::firstOrCreate(
             ['email' => 'admin_test_cj@test.com'], 
-            ['name' => 'Admin', 'password' => bcrypt('password'), 'role' => 'admin']
+            ['first_name' => 'Admin', 'last_name' => 'Test', 'password' => bcrypt('password'), 'role_id' => 1]
         );
+        $admin->role_id = 1;
+        $admin->save();
         
         $category = Category::firstOrCreate(['slug' => 'test-cat'], ['name' => 'Test Category']);
 
@@ -54,6 +56,7 @@ class CjDropshippingE2ETest extends TestCase
                            
             // 4. Test Place Order with valid model relations
             $order = \App\Models\Order::create([
+                'order_number' => 'ORD-CJ-' . uniqid(),
                 'user_id' => $admin->id,
                 'total_amount' => 20.00,
                 'status' => 'pending',
@@ -80,11 +83,12 @@ class CjDropshippingE2ETest extends TestCase
                 ]);
             }
             
+            $mockCjId = 'CJ-ORD-MOCK-' . uniqid();
             \Illuminate\Support\Facades\Http::fake([
                 '*/shopping/order/createOrderV2*' => \Illuminate\Support\Facades\Http::response([
                     'code' => 200,
                     'result' => true,
-                    'data' => ['orderId' => 'CJ-ORD-MOCK-999']
+                    'data' => ['orderId' => $mockCjId]
                 ], 200),
                 '*/shopping/order/submitOrder*' => \Illuminate\Support\Facades\Http::response([
                     'code' => 200,
@@ -98,7 +102,7 @@ class CjDropshippingE2ETest extends TestCase
 
             $orderResponse = $this->actingAs($admin, 'sanctum')
                                   ->postJson("/api/admin/cj/orders/{$order->id}/place");
-                                  
+            
             $orderResponse->assertStatus(200)
                           ->assertJson(['success' => true]);
         }

@@ -75,11 +75,13 @@ class CjOrderService
             throw new \Exception('CJ order creation failed. No orderId returned. ' . json_encode($responseData));
         }
 
-        CjOrder::create([
-            'internal_order_id' => $orderId,
-            'cj_order_id' => $cjOrderId,
-            'status' => 'created',
-        ]);
+        $cjOrder = CjOrder::updateOrCreate(
+            ['internal_order_id' => $orderId],
+            [
+                'cj_order_id' => $cjOrderId,
+                'status' => 'created',
+            ]
+        );
 
         self::submitOrder($cjOrderId, $headers);
 
