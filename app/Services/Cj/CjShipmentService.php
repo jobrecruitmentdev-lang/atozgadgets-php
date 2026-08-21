@@ -66,7 +66,7 @@ class CjShipmentService
         
         foreach ($cjOrders as $co) {
             try {
-                $results[] = self::syncShipment($co->order_id);
+                $results[] = self::syncShipment($co->internal_order_id);
             } catch (\Exception $e) {
                 // Log error or continue
             }

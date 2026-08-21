@@ -125,26 +125,41 @@ class CartController extends Controller
         }
 
         $paymentMethod = $request->input('payment_method', 'paypal');
-
-        // Create Order
         $shipping = session('checkout_shipping', []);
-        
-        $order = \App\Models\Order::create([
-            'order_number' => 'ORD-' . strtoupper(uniqid()),
-            'user_id' => auth()->id(), // Nullable if guest checkout allowed
-            'total_amount' => $total,
-            'status' => 'processing',
-            'shipping_address' => json_encode($shipping),
-            'contact_email' => $shipping['email'] ?? null,
-            'contact_phone' => $shipping['phone'] ?? null
-        ]);
 
-        \App\Models\Payment::create([
-            'order_id' => $order->id,
-            'amount' => $total,
-            'payment_method' => $paymentMethod,
-            'status' => 'completed'
-        ]);
+        // Create Order and Items in DB transaction
+        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($total, $shipping, $cart, $paymentMethod) {
+            $order = \App\Models\Order::create([
+                'order_number' => 'ORD-' . strtoupper(uniqid()),
+                'user_id' => auth()->id(),
+                'total_amount' => $total,
+                'status' => 'processing',
+                'payment_status' => 'paid',
+                'shipping_address' => json_encode($shipping),
+                'contact_email' => $shipping['email'] ?? null,
+                'contact_phone' => $shipping['phone'] ?? null
+            ]);
+
+            foreach ($cart as $productId => $item) {
+                \App\Models\OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => is_numeric($productId) ? (int)$productId : null,
+                    'quantity' => $item['quantity'] ?? 1,
+                    'unit_price' => $item['price'] ?? 0,
+                    'total_price' => ($item['price'] ?? 0) * ($item['quantity'] ?? 1),
+                    'status' => 'active'
+                ]);
+            }
+
+            \App\Models\Payment::create([
+                'order_id' => $order->id,
+                'amount' => $total,
+                'payment_method' => $paymentMethod,
+                'status' => 'completed'
+            ]);
+
+            return $order;
+        });
 
         // ponytail: Sync to CJ inline. Move to Queue job if CJ API latency hurts UX.
         \App\Services\CjDropshippingService::syncOrder($order, $cart);

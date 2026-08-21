@@ -52,46 +52,55 @@ class CjDropshippingE2ETest extends TestCase
             $importResponse->assertStatus(200)
                            ->assertJson(['success' => true]);
                            
-            // 4. Test Place Order
+            // 4. Test Place Order with valid model relations
             $order = \App\Models\Order::create([
                 'user_id' => $admin->id,
                 'total_amount' => 20.00,
-                'order_status' => 'pending',
-                'address_id' => 1,
+                'status' => 'pending',
+                'shipping_address' => json_encode([
+                    'first_name' => 'John',
+                    'last_name' => 'Doe',
+                    'address1' => '123 Fake St',
+                    'city' => 'New York',
+                    'state' => 'NY',
+                    'postal_code' => '10001',
+                    'country' => 'US',
+                    'phone' => '+1234567890'
+                ])
             ]);
             
-            // Need a valid CjProduct attached to avoid 500 error
             $dbProduct = \App\Models\Product::where('fulfillment_type', 'cj')->latest()->first();
             if ($dbProduct) {
                 \App\Models\OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $dbProduct->id,
-                    'product_name' => $dbProduct->name,
                     'quantity' => 1,
-                    'price' => 10.0,
-                    'subtotal' => 10.0,
+                    'unit_price' => 10.0,
+                    'total_price' => 10.0,
                 ]);
             }
             
-            // Add address
-            \App\Models\Address::firstOrCreate(['id' => 1], [
-                'user_id' => $admin->id,
-                'address_line1' => '123 Fake St',
-                'city' => 'Mumbai',
-                'state' => 'MH',
-                'postal_code' => '400001',
-                'country' => 'India'
+            \Illuminate\Support\Facades\Http::fake([
+                '*/shopping/order/createOrderV2*' => \Illuminate\Support\Facades\Http::response([
+                    'code' => 200,
+                    'result' => true,
+                    'data' => ['orderId' => 'CJ-ORD-MOCK-999']
+                ], 200),
+                '*/shopping/order/submitOrder*' => \Illuminate\Support\Facades\Http::response([
+                    'code' => 200,
+                    'result' => true
+                ], 200),
+                '*/logistic/freightCalculate*' => \Illuminate\Support\Facades\Http::response([
+                    'code' => 200,
+                    'data' => [['logisticName' => 'CJPacket Fast Line']]
+                ], 200)
             ]);
-            
+
             $orderResponse = $this->actingAs($admin, 'sanctum')
                                   ->postJson("/api/admin/cj/orders/{$order->id}/place");
                                   
-            // Might fail if CJ API sandbox isn't fully mocked for order creation, but should return 200/500 cleanly
-            // $orderResponse->assertStatus(200); 
-            
-            echo "E2E Complete: Search Code: " . $response->status() . " | Import Code: " . $importResponse->status() . " | Place Order Code: " . $orderResponse->status() . "\n";
-        } else {
-            echo "E2E Complete: Search Code: " . $response->status() . " (No products found to import)\n";
+            $orderResponse->assertStatus(200)
+                          ->assertJson(['success' => true]);
         }
     }
 }

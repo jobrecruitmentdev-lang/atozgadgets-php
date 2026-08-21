@@ -15,13 +15,13 @@ class CjOrderService
 
     public static function placeOrder($orderId)
     {
-        $order = Order::with(['items.product.cjProduct', 'user', 'address'])->findOrFail($orderId);
+        $order = Order::with(['items.product.cjProduct', 'user'])->findOrFail($orderId);
 
         $headers = CjAuthService::getAuthHeaders();
 
         $products = [];
         foreach ($order->items as $item) {
-            if ($item->product->fulfillment_type === 'cj' && $item->product->cjProduct) {
+            if ($item->product && $item->product->fulfillment_type === 'cj' && $item->product->cjProduct) {
                 $products[] = [
                     'vid' => $item->product->cjProduct->cj_product_id, // Default to product ID
                     'quantity' => $item->quantity,
@@ -33,23 +33,30 @@ class CjOrderService
             throw new \Exception('No CJ-fulfillable items in this order.');
         }
 
-        $countryCode = stripos($order->address->country, 'india') !== false ? 'IN' : 'US';
+        $address = $order->address;
+        $countryCode = 'US';
+        if ($address && !empty($address->country)) {
+            $countryCode = stripos($address->country, 'india') !== false ? 'IN' : 'US';
+        }
 
         // Fetch best logistics method
         $logisticName = self::getBestLogistic($countryCode, $products, $headers);
+
+        $customerName = trim(($address->first_name ?? ($order->user->first_name ?? 'Customer')) . ' ' . ($address->last_name ?? ($order->user->last_name ?? '')));
+        $customerPhone = $address->phone ?? ($order->user->mobile ?? ($order->contact_phone ?? '1234567890'));
 
         $payload = [
             'orderNumber' => $order->order_number,
             'fromCountryCode' => 'CN', // Defaulting to China warehouse
             'logisticName' => $logisticName,
             'shippingCountryCode' => $countryCode,
-            'shippingAddress' => $order->address->address_line1,
-            'shippingAddress2' => $order->address->address_line2 ?? '',
-            'shippingZip' => $order->address->postal_code,
-            'shippingPhone' => $order->user->mobile,
-            'shippingCustomerName' => trim($order->user->first_name . ' ' . $order->user->last_name),
-            'shippingCity' => $order->address->city,
-            'shippingProvince' => $order->address->state,
+            'shippingAddress' => $address->address_line1 ?? 'Address',
+            'shippingAddress2' => $address->address_line2 ?? '',
+            'shippingZip' => $address->postal_code ?? '10001',
+            'shippingPhone' => $customerPhone ?: '1234567890',
+            'shippingCustomerName' => $customerName ?: 'Customer',
+            'shippingCity' => $address->city ?? 'City',
+            'shippingProvince' => $address->state ?? 'State',
             'products' => $products,
         ];
 

@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -15,24 +19,96 @@ class Order extends Model
     {
         static::creating(function ($order) {
             if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . strtoupper(\Illuminate\Support\Str::random(10));
+                $order->order_number = 'ORD-' . strtoupper(Str::random(10));
             }
         });
     }
 
     /**
-     * Get the user that placed the order.
+     * Get the customer that placed the order.
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
-     * Get the items for the order.
+     * Get the line items associated with this order.
      */
-    public function items()
+    public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'order_id');
+    }
+
+    /**
+     * Get the CJ Dropshipping order mapping record.
+     */
+    public function cjOrder(): HasOne
+    {
+        return $this->hasOne(CjOrder::class, 'internal_order_id');
+    }
+
+    /**
+     * Get all payment transactions for this order.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'order_id');
+    }
+
+    /**
+     * Get the latest payment for this order.
+     */
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class, 'order_id')->latestOfMany();
+    }
+
+    /**
+     * Get the shipment tracking record for this order.
+     */
+    public function shipment(): HasOne
+    {
+        return $this->hasOne(Shipment::class, 'order_id');
+    }
+
+    /**
+     * Dynamic structured address accessor from shipping_address payload or user address relation.
+     */
+    public function getAddressAttribute(): ?object
+    {
+        if (!empty($this->shipping_address)) {
+            $decoded = is_array($this->shipping_address) ? $this->shipping_address : json_decode($this->shipping_address, true);
+            if (is_array($decoded)) {
+                return (object) [
+                    'country' => $decoded['country'] ?? 'US',
+                    'address_line1' => $decoded['address1'] ?? ($decoded['address_line_1'] ?? ''),
+                    'address_line2' => $decoded['address2'] ?? ($decoded['address_line_2'] ?? ''),
+                    'postal_code' => $decoded['postal_code'] ?? ($decoded['zip'] ?? ''),
+                    'city' => $decoded['city'] ?? '',
+                    'state' => $decoded['state'] ?? ($decoded['province'] ?? ''),
+                    'first_name' => $decoded['first_name'] ?? '',
+                    'last_name' => $decoded['last_name'] ?? '',
+                    'phone' => $decoded['phone'] ?? ($this->contact_phone ?? ''),
+                ];
+            }
+        }
+
+        if ($this->user && $this->user->addresses()->exists()) {
+            $addr = $this->user->addresses()->where('is_default', true)->first() ?? $this->user->addresses()->first();
+            return (object) [
+                'country' => $addr->country,
+                'address_line1' => $addr->address_line_1,
+                'address_line2' => '',
+                'postal_code' => $addr->postal_code,
+                'city' => $addr->city,
+                'state' => $addr->state,
+                'first_name' => $this->user->first_name,
+                'last_name' => $this->user->last_name,
+                'phone' => $this->user->mobile,
+            ];
+        }
+
+        return null;
     }
 }

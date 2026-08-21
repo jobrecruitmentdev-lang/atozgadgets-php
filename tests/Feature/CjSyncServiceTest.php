@@ -31,25 +31,28 @@ class CjSyncServiceTest extends TestCase
             ]
         );
 
-        // Mock the CjProductService static method
-        Mockery::mock('alias:'.CjProductService::class)
-            ->shouldReceive('searchProducts')
-            ->andReturn([
-                'list' => [
-                    [
-                        'id' => 'cj-123',
-                        'nameEn' => 'Test Gadget 1',
-                        'bigImage' => 'http://example.com/1.jpg',
-                        'sellPrice' => 10.99,
-                    ],
-                    [
-                        'id' => 'cj-456',
-                        'nameEn' => 'Test Gadget 2',
-                        'bigImage' => 'http://example.com/2.jpg',
-                        'sellPrice' => 15.50,
+        \Illuminate\Support\Facades\Http::fake([
+            '*/product/listV2*' => \Illuminate\Support\Facades\Http::response([
+                'code' => 200,
+                'result' => true,
+                'data' => [
+                    'list' => [
+                        [
+                            'pid' => 'cj-123',
+                            'productNameEn' => 'Test Gadget 1',
+                            'productImage' => 'http://example.com/1.jpg',
+                            'sellPrice' => 10.99,
+                        ],
+                        [
+                            'pid' => 'cj-456',
+                            'productNameEn' => 'Test Gadget 2',
+                            'productImage' => 'http://example.com/2.jpg',
+                            'sellPrice' => 15.50,
+                        ]
                     ]
                 ]
-            ]);
+            ], 200)
+        ]);
 
         // Create a fake Category
         $category = Category::firstOrCreate(

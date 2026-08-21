@@ -6,11 +6,6 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
 
-Route::get('/strategy-hub', function () {
-    return response()->view('admin.strategy_hub')
-        ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
-        ->header('Pragma', 'no-cache');
-})->name('public.strategy_hub');
 
 Route::middleware('storefront')->group(function () {
     Route::get('/', [\App\Http\Controllers\StorefrontController::class, 'home'])->name('store.home');

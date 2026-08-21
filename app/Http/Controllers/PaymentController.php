@@ -20,15 +20,15 @@ class PaymentController extends Controller
     {
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            $total = 35.98; // Fallback total for direct checkout testing
-        } else {
-            $total = collect($cart)->sum(function($item) {
-                return $item['price'] * $item['quantity'];
-            });
+            return response()->json(['error' => 'Cart is empty'], 400);
+        }
 
-            if ($total < 30) {
-                $total += 5.99; // Shipping
-            }
+        $total = collect($cart)->sum(function($item) {
+            return $item['price'] * $item['quantity'];
+        });
+
+        if ($total < 30) {
+            $total += 5.99; // Shipping
         }
 
         try {
@@ -55,13 +55,25 @@ class PaymentController extends Controller
                 });
                 if ($total < 30) { $total += 5.99; }
 
-                // Create Order and Process Payment atomically
-                \Illuminate\Support\Facades\DB::transaction(function () use ($total, $capture) {
+                // Create Order, Items, and Process Payment atomically
+                \Illuminate\Support\Facades\DB::transaction(function () use ($total, $capture, $cart) {
                     $order = Order::create([
-                        'user_id' => auth()->id() ?? 1,
+                        'user_id' => auth()->id(),
                         'total_amount' => $total,
-                        'status' => 'processing'
+                        'status' => 'processing',
+                        'payment_status' => 'paid',
                     ]);
+
+                    foreach ($cart as $productId => $item) {
+                        \App\Models\OrderItem::create([
+                            'order_id' => $order->id,
+                            'product_id' => is_numeric($productId) ? (int)$productId : null,
+                            'quantity' => $item['quantity'] ?? 1,
+                            'unit_price' => $item['price'] ?? 0,
+                            'total_price' => ($item['price'] ?? 0) * ($item['quantity'] ?? 1),
+                            'status' => 'active'
+                        ]);
+                    }
 
                     $amount = $capture['purchase_units'][0]['payments']['captures'][0]['amount']['value'] ?? 0;
                     PaymentService::processPayment($order->id, 'paypal', $capture['id'], $amount);

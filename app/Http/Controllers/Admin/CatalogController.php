@@ -102,19 +102,6 @@ class CatalogController extends Controller
         ]);
     }
 
-    public function testCjApiDump(Request $request)
-    {
-        $keyword = 'watch';
-        $params = [
-            'keyWord' => $keyword,
-            'page' => 1,
-            'size' => 2,
-        ];
-        $response = Http::withHeaders(\App\Services\Cj\CjAuthService::getAuthHeaders())
-            ->get(\App\Services\Cj\CjAuthService::getApiBaseUrl() . '/product/listV2', $params);
-            
-        return response()->json($response->json());
-    }
 
     public function importCjProduct(Request $request)
     {
