@@ -27,8 +27,13 @@ else
 fi
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "1/2 🚀 Syncing files via rsync..."
     rsync -avz -e "ssh -p $REMOTE_PORT -o StrictHostKeyChecking=no -o BatchMode=yes" --exclude-from="$ROOT_DIR/.rsyncignore" "$ROOT_DIR/" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_PATH"
-    echo "Deploy complete!"
+    
+    echo "2/2 🔄 Running remote migrations & optimizing cache..."
+    ssh -p $REMOTE_PORT -o StrictHostKeyChecking=no -o BatchMode=yes "$REMOTE_USER@$REMOTE_HOST" "cd $REMOTE_PATH && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+    
+    echo "✅ Deploy & Migration complete!"
 else
     echo "Deploy cancelled."
 fi
