@@ -294,6 +294,55 @@ class CjProductService
         ];
     }
 
+    /**
+     * Parse and extract all valid image URLs from any input format:
+     * - JSON string array (e.g. '["https://...1.jpg", "https://...2.jpg"]')
+     * - Comma or whitespace separated string
+     * - Native PHP array
+     */
+    public static function extractImageList(mixed $rawImages): array
+    {
+        if (empty($rawImages)) {
+            return [];
+        }
+
+        $list = [];
+
+        if (is_array($rawImages)) {
+            $list = $rawImages;
+        } elseif (is_string($rawImages)) {
+            $trimmed = trim($rawImages);
+            // 1. Check if it's a JSON array string
+            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
+                $decoded = json_decode($trimmed, true);
+                if (is_array($decoded)) {
+                    $list = $decoded;
+                }
+            }
+
+            // 2. If not JSON, check comma/newline separated
+            if (empty($list)) {
+                $parts = preg_split('/[\r\n,]+/', $trimmed);
+                $list = array_filter(array_map('trim', $parts));
+            }
+        }
+
+        // Clean, validate and deduplicate URLs
+        $clean = [];
+        foreach ($list as $item) {
+            if (is_string($item)) {
+                $url = trim($item, " \t\n\r\0\x0B\"'\\");
+                if (!empty($url) && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '/storage/'))) {
+                    if (!in_array($url, $clean)) {
+                        $clean[] = $url;
+                    }
+                }
+            }
+        }
+
+        return $clean;
+    }
+
     public static function getProductDetails($pid): array
     {
         $token = CjAuthService::getAccessToken();
@@ -332,13 +381,23 @@ class CjProductService
                     ];
                 }
 
+                // Extract all gallery images using robust extractor
+                $rawImgField = $item['productImages'] ?? ($item['productImageSet'] ?? ($item['images'] ?? $item['productImage'] ?? ''));
+                $extractedImages = self::extractImageList($rawImgField);
+                
+                // Ensure primary image is always included
+                $mainImg = $item['productImage'] ?? ($item['bigImage'] ?? ($extractedImages[0] ?? ''));
+                if (!empty($mainImg) && !in_array($mainImg, $extractedImages)) {
+                    array_unshift($extractedImages, $mainImg);
+                }
+
                 return [
                     'pid' => $item['pid'] ?? $pid,
                     'nameEn' => $item['productNameEn'] ?? ($item['productName'] ?? 'CJ Gadget Item'),
                     'sku' => $item['productSku'] ?? ('CJ-SKU-' . strtoupper(substr(md5($pid), 0, 8))),
                     'sellPrice' => (float)($item['sellPrice'] ?? 15.00),
-                    'mainImage' => $item['productImage'] ?? '',
-                    'images' => $item['productImages'] ?? [$item['productImage'] ?? ''],
+                    'mainImage' => $mainImg,
+                    'images' => $extractedImages,
                     'description' => $item['description'] ?? ($item['productNameEn'] ?? ''),
                     'categoryName' => $item['categoryName'] ?? 'Consumer Electronics',
                     'variants' => $variants,
