@@ -179,4 +179,33 @@ class ProductContentService
             'warnings' => $warnings,
         ];
     }
+
+    /**
+     * Download a remote image and store it to public storage to eliminate runtime proxy latency.
+     * Returns the local storage public URL or the remote URL fallback.
+     */
+    public static function downloadAndStoreMedia(?string $remoteUrl, string $folder = 'products'): string
+    {
+        if (empty($remoteUrl) || !filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
+            return $remoteUrl ?: '';
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($remoteUrl);
+            if ($response->successful() && !empty($response->body())) {
+                $ext = pathinfo(parse_url($remoteUrl, PHP_URL_PATH), PATHINFO_EXTENSION);
+                $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? strtolower($ext) : 'jpg';
+                $filename = md5($remoteUrl) . '.' . $ext;
+                $storagePath = "{$folder}/{$filename}";
+
+                \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $response->body());
+                return '/storage/' . $storagePath;
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Media download failed for {$remoteUrl}: " . $e->getMessage());
+        }
+
+        // Non-blocking fallback
+        return $remoteUrl;
+    }
 }

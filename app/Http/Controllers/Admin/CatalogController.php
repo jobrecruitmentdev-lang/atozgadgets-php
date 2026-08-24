@@ -131,8 +131,11 @@ class CatalogController extends Controller
             $status = ($targetPublish && $validation['can_publish']) ? 'active' : 'draft';
             $isActive = ($status === 'active');
 
+            // Eagerly download media to local disk to avoid runtime proxy latency & cache stampedes
+            $localThumbnail = ProductContentService::downloadAndStoreMedia($data['image']);
+
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
-            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier) {
+            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $localThumbnail) {
                 $product = Product::create([
                     'category_id' => $categoryId,
                     'name' => $cleanTitle,
@@ -141,7 +144,7 @@ class CatalogController extends Controller
                     'price' => $pricing['selling_price'],
                     'discount_price' => round($pricing['selling_price'] * 0.85, 2),
                     'description' => $cleanDescription,
-                    'thumbnail_image' => $data['image'],
+                    'thumbnail_image' => $localThumbnail,
                     'stock_quantity' => 100,
                     'status' => $status,
                     'is_active' => $isActive,
@@ -166,7 +169,7 @@ class CatalogController extends Controller
                 \App\Models\ProductMedia::create([
                     'product_id' => $product->id,
                     'type' => 'image',
-                    'url' => $data['image'],
+                    'url' => $localThumbnail,
                     'alt_text' => $cleanTitle,
                     'sort_order' => 0,
                     'is_primary' => true,
@@ -175,10 +178,11 @@ class CatalogController extends Controller
                 if (!empty($cjDetails['images']) && is_array($cjDetails['images'])) {
                     foreach (array_slice($cjDetails['images'], 0, 6) as $idx => $imgUrl) {
                         if ($imgUrl !== $data['image']) {
+                            $localGalleryImg = ProductContentService::downloadAndStoreMedia($imgUrl);
                             \App\Models\ProductMedia::create([
                                 'product_id' => $product->id,
                                 'type' => 'image',
-                                'url' => $imgUrl,
+                                'url' => $localGalleryImg,
                                 'alt_text' => "{$cleanTitle} - View " . ($idx + 2),
                                 'sort_order' => $idx + 1,
                                 'is_primary' => false,
