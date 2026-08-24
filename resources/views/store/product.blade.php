@@ -253,12 +253,16 @@
             @if($product->variants && $product->variants->count() > 0)
                 <div class="variant-section">
                     <div class="variant-label">Select Option / Variant</div>
-                    <div class="variant-options">
+                    <div class="variant-options" role="radiogroup" aria-label="Product Options">
                         @foreach($product->variants as $idx => $variant)
-                            <div class="variant-option {{ $idx === 0 ? 'active' : '' }}" 
-                                 onclick="selectVariant({{ $variant->id }}, '{{ number_format($variant->selling_price ?? $product->price, 2) }}', this, '{{ $variant->image_url ?? '' }}')">
-                                {{ $variant->name }}
-                            </div>
+                            <button type="button" 
+                                    class="variant-option {{ $idx === 0 ? 'active' : '' }}" 
+                                    data-variant-id="{{ $variant->id }}"
+                                    data-price="{{ number_format($variant->selling_price ?? $product->price, 2) }}"
+                                    data-image="{{ $variant->image_url ?? '' }}"
+                                    onclick="selectVariant(this)">
+                                {{ $variant->display_name }}
+                            </button>
                         @endforeach
                     </div>
                 </div>
@@ -448,12 +452,22 @@
         if (btn) btn.classList.add('active');
     }
 
-    function selectVariant(variantId, price, elem, imageUrl) {
-        document.getElementById('selectedVariantId').value = variantId;
-        document.getElementById('displayPrice').innerText = '$' + price;
+    function selectVariant(elem) {
+        if (!elem) return;
+        const variantId = elem.getAttribute('data-variant-id');
+        const price = elem.getAttribute('data-price');
+        const imageUrl = elem.getAttribute('data-image');
+
+        if (variantId) {
+            document.getElementById('selectedVariantId').value = variantId;
+        }
+        if (price) {
+            document.getElementById('displayPrice').innerText = '$' + price;
+        }
         document.querySelectorAll('.variant-option').forEach(el => el.classList.remove('active'));
         elem.classList.add('active');
-        if (imageUrl) {
+
+        if (imageUrl && imageUrl.trim() !== '') {
             document.getElementById('mainProductImg').src = imageUrl;
         }
     }

@@ -367,17 +367,25 @@ class CjProductService
                 $variants = [];
                 $rawVariants = $item['variants'] ?? ($item['variantList'] ?? []);
                 foreach ($rawVariants as $v) {
+                    $rawName = $v['variantNameEn'] ?? ($v['variantName'] ?? ($v['variantKey'] ?? ($v['variantStandard'] ?? '')));
+                    if (empty(trim($rawName))) {
+                        $values = array_filter([$v['variantValue1'] ?? null, $v['variantValue2'] ?? null, $v['variantValue3'] ?? null]);
+                        $rawName = !empty($values) ? implode(' · ', $values) : '';
+                    }
+
                     $variants[] = [
                         'vid' => $v['vid'] ?? ($v['variantId'] ?? ('VID-' . uniqid())),
                         'variantSku' => $v['variantSku'] ?? ($v['sku'] ?? ''),
-                        'variantName' => $v['variantNameEn'] ?? ($v['variantName'] ?? ($v['variantKey'] ?? 'Default Variant')),
+                        'variantName' => !empty(trim($rawName)) ? trim($rawName) : 'Standard Variant',
+                        'variantKey' => $v['variantKey'] ?? null,
+                        'variantStandard' => $v['variantStandard'] ?? null,
                         'costPrice' => (float)($v['variantSellPrice'] ?? ($v['price'] ?? ($item['sellPrice'] ?? 10.00))),
                         'image' => $v['variantImage'] ?? ($item['productImage'] ?? ''),
-                        'inventory' => (int)($v['variantStandard'] ?? ($v['inventory'] ?? 100)),
-                        'option1_name' => $v['option1Name'] ?? null,
-                        'option1_value' => $v['option1Value'] ?? null,
-                        'option2_name' => $v['option2Name'] ?? null,
-                        'option2_value' => $v['option2Value'] ?? null,
+                        'inventory' => (int)($v['inventory'] ?? 100),
+                        'option1_name' => $v['option1Name'] ?? ($v['option1_name'] ?? null),
+                        'option1_value' => $v['option1Value'] ?? ($v['option1_value'] ?? null),
+                        'option2_name' => $v['option2Name'] ?? ($v['option2_name'] ?? null),
+                        'option2_value' => $v['option2Value'] ?? ($v['option2_value'] ?? null),
                     ];
                 }
 
