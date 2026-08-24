@@ -169,12 +169,14 @@
         @if($product->media && $product->media->count() > 0)
             <div class="thumbnails-strip">
                 <button type="button" class="thumb-btn active" onclick="switchMainImage('{{ $product->customer_thumbnail }}', this)">
-                    <img src="{{ $product->customer_thumbnail }}" alt="Primary View">
+                    <img src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }} - Main View">
                 </button>
-                @foreach($product->media as $m)
-                    <button type="button" class="thumb-btn" onclick="switchMainImage('{{ $m->public_url }}', this)">
-                        <img src="{{ $m->public_url }}" alt="{{ $m->alt_text ?? 'Product view' }}">
-                    </button>
+                @foreach($product->media as $idx => $m)
+                    @if($m->public_url !== $product->customer_thumbnail && $m->url !== $product->thumbnail_image)
+                        <button type="button" class="thumb-btn" onclick="switchMainImage('{{ $m->public_url }}', this)">
+                            <img src="{{ $m->public_url }}" alt="{{ $product->name }} - View {{ $idx + 1 }}">
+                        </button>
+                    @endif
                 @endforeach
             </div>
         @endif
@@ -297,7 +299,7 @@
     <!-- Tab 1: Description (Pillar 2 Clean Content) -->
     <div id="tab-desc" class="tab-pane active">
         @if(!empty($product->description))
-            {!! nl2br(e($product->description)) !!}
+            {!! strip_tags($product->description, '<p><br><b><strong><ul><ol><li><span><em><i><div><h1><h2><h3><h4><h5><h6>') !!}
         @else
             <p>{{ $product->name }} is designed for premium performance, durability, and daily convenience. Sourced from certified manufacturers with rigorous quality assurance checks before fulfillment.</p>
         @endif
