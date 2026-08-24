@@ -15,7 +15,8 @@ class CjAuthService
 
     public static function isSandboxMode(): bool
     {
-        return \App\Models\Setting::get('cj_sandbox_mode', '0') === '1';
+        $default = app()->environment('testing') ? '1' : '0';
+        return \App\Models\Setting::get('cj_sandbox_mode', $default) === '1';
     }
 
     public static function getAccessToken()
