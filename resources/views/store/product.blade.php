@@ -147,13 +147,15 @@
     .form-control:focus { border-color: var(--accent); }
 
     /* Interactive 5-Star Rating Widget */
-    .star-rating-widget { display: inline-flex; flex-direction: row-reverse; gap: 6px; font-size: 26px; line-height: 1; padding: 4px 0; }
-    .star-rating-widget input[type="radio"] { display: none; }
-    .star-rating-widget label { color: #4b5563; cursor: pointer; transition: color 0.2s, transform 0.2s; margin-bottom: 0 !important; }
+    .rating-row-container { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+    .star-rating-widget { display: inline-flex !important; flex-direction: row-reverse !important; gap: 6px; font-size: 28px; line-height: 1; user-select: none; }
+    .star-rating-widget input[type="radio"] { display: none !important; }
+    .star-rating-widget label { display: inline-block !important; color: #4b5563; cursor: pointer; transition: color 0.15s ease, transform 0.15s ease; margin: 0 !important; padding: 2px; }
     .star-rating-widget label:hover,
     .star-rating-widget label:hover ~ label,
-    .star-rating-widget input[type="radio"]:checked ~ label { color: #f59e0b; }
-    .star-rating-widget label:hover { transform: scale(1.15); }
+    .star-rating-widget input[type="radio"]:checked ~ label { color: #f59e0b !important; }
+    .star-rating-widget label:hover { transform: scale(1.2); }
+    .rating-score-hint { font-size: 13px; font-weight: 600; color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.2); }
 </style>
 
 <div class="breadcrumb" data-aos="fade-right">
@@ -404,21 +406,24 @@
                     @csrf
                     <div class="form-group">
                         <label>Rating</label>
-                        <div class="star-rating-widget" role="radiogroup" aria-label="Product rating">
-                            <input type="radio" id="star5" name="rating" value="5" checked>
-                            <label for="star5" title="5 Stars - Excellent">★</label>
+                        <div class="rating-row-container">
+                            <div class="star-rating-widget" role="radiogroup" aria-label="Product rating">
+                                <input type="radio" id="star5" name="rating" value="5" checked onchange="document.getElementById('ratingHint').innerText = '5 Stars (Excellent)'">
+                                <label for="star5" title="5 Stars - Excellent">★</label>
 
-                            <input type="radio" id="star4" name="rating" value="4">
-                            <label for="star4" title="4 Stars - Very Good">★</label>
+                                <input type="radio" id="star4" name="rating" value="4" onchange="document.getElementById('ratingHint').innerText = '4 Stars (Very Good)'">
+                                <label for="star4" title="4 Stars - Very Good">★</label>
 
-                            <input type="radio" id="star3" name="rating" value="3">
-                            <label for="star3" title="3 Stars - Average">★</label>
+                                <input type="radio" id="star3" name="rating" value="3" onchange="document.getElementById('ratingHint').innerText = '3 Stars (Average)'">
+                                <label for="star3" title="3 Stars - Average">★</label>
 
-                            <input type="radio" id="star2" name="rating" value="2">
-                            <label for="star2" title="2 Stars - Below Average">★</label>
+                                <input type="radio" id="star2" name="rating" value="2" onchange="document.getElementById('ratingHint').innerText = '2 Stars (Below Average)'">
+                                <label for="star2" title="2 Stars - Below Average">★</label>
 
-                            <input type="radio" id="star1" name="rating" value="1">
-                            <label for="star1" title="1 Star - Poor">★</label>
+                                <input type="radio" id="star1" name="rating" value="1" onchange="document.getElementById('ratingHint').innerText = '1 Star (Poor)'">
+                                <label for="star1" title="1 Star - Poor">★</label>
+                            </div>
+                            <span class="rating-score-hint" id="ratingHint">5 Stars (Excellent)</span>
                         </div>
                     </div>
                     <div class="form-group">
