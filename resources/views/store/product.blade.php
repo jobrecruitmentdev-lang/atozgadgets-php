@@ -100,8 +100,16 @@
 
     /* Trust Strip */
     .trust-badges-box { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .tb-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
+    .tb-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); min-width: 0; word-break: break-word; }
     .tb-item i { color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+
+    @media (max-width: 480px) {
+        .trust-badges-box { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+        .action-row { flex-direction: column; gap: 12px; }
+        .qty-picker { width: 100%; justify-content: center; }
+        .qty-btn { width: 50px; }
+        .variant-option { padding: 8px 12px; font-size: 13px; }
+    }
 
     /* Payment Gateways Strip */
     .payment-methods-strip { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 12px 16px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); font-size: 13px; color: var(--text-secondary); flex-wrap: wrap; }

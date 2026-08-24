@@ -14,16 +14,23 @@
 
     .sort-select { padding: 8px 14px; border-radius: 8px; background: #111; border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 13px; cursor: pointer; }
     
+    .mobile-filter-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: rgba(201, 169, 98, 0.1); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
+    @media (min-width: 768px) { .mobile-filter-btn { display: none; } }
+
     .shop-layout { display: flex; flex-direction: column; gap: 32px; }
     @media (min-width: 768px) { .shop-layout { flex-direction: row; gap: 40px; } }
     
     .sidebar { width: 100%; flex-shrink: 0; }
+    @media (max-width: 767px) {
+        .sidebar { display: none; }
+        .sidebar.active { display: block; animation: fadeIn 0.2s ease; }
+    }
     @media (min-width: 768px) { .sidebar { width: 260px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; } }
     
     .sidebar-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
     .sidebar h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.3px; color: var(--text-primary); }
     .cat-list { display: flex; flex-direction: column; gap: 6px; }
-    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; }
+    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; min-height: 40px; }
     .cat-list a:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
     .cat-list a.active { background: rgba(201, 169, 98, 0.1); color: var(--accent); font-weight: 600; }
 
@@ -40,7 +47,8 @@
     .price-main { font-size: 20px; font-weight: 800; color: var(--accent); }
     .price-old { font-size: 14px; text-decoration: line-through; color: var(--text-secondary); }
     
-    .main-content { flex-grow: 1; }
+    .main-content { flex-grow: 1; min-width: 0; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div class="shop-header" data-aos="fade-up">
@@ -85,18 +93,24 @@
         <a href="{{ route('store.shop', array_merge(request()->query(), ['min_price' => 50])) }}" class="filter-pill {{ request('min_price') == 50 ? 'active' : '' }}">$50+</a>
     </div>
 
-    <form method="GET" action="{{ route('store.shop') }}" id="sortForm">
-        @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
-        @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
-        @if(request('min_price')) <input type="hidden" name="min_price" value="{{ request('min_price') }}"> @endif
-        @if(request('max_price')) <input type="hidden" name="max_price" value="{{ request('max_price') }}"> @endif
-        
-        <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()">
-            <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Sort by: Latest</option>
-            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
-            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
-        </select>
-    </form>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" class="mobile-filter-btn" id="mobileFilterToggle" onclick="document.querySelector('.sidebar').classList.toggle('active'); this.innerText = document.querySelector('.sidebar').classList.contains('active') ? 'Hide Filters ✕' : 'Filter Categories ☰';">
+            Filter Categories ☰
+        </button>
+
+        <form method="GET" action="{{ route('store.shop') }}" id="sortForm">
+            @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
+            @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
+            @if(request('min_price')) <input type="hidden" name="min_price" value="{{ request('min_price') }}"> @endif
+            @if(request('max_price')) <input type="hidden" name="max_price" value="{{ request('max_price') }}"> @endif
+            
+            <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()">
+                <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Sort by: Latest</option>
+                <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
+                <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+            </select>
+        </form>
+    </div>
 </div>
 
 <div class="shop-layout">

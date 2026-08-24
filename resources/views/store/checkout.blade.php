@@ -14,13 +14,13 @@
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
     
-    .checkout-form { flex-grow: 1; }
-    .order-summary { width: 100%; flex-shrink: 0; }
+    .checkout-form { flex-grow: 1; min-width: 0; }
+    .order-summary { width: 100%; flex-shrink: 0; min-width: 0; }
     @media (min-width: 1024px) { .order-summary { width: 380px; position: sticky; top: 100px; height: max-content; } }
 
     /* Steps */
-    .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; font-size: 14px; }
-    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; }
+    .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; font-size: 14px; flex-wrap: wrap; }
+    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; min-height: 36px; }
     .step-btn.active { color: var(--accent); font-weight: 700; }
 
     /* Forms */
@@ -28,9 +28,17 @@
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
     @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
     
+    .input-group { min-width: 0; }
     .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
-    .input-group input, .input-group select { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(15, 15, 20, 0.85); color: var(--text-primary); font-size: 14px; outline: none; transition: all 0.2s; }
+    .input-group input, .input-group select { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(15, 15, 20, 0.85); color: var(--text-primary); font-size: 16px; outline: none; transition: all 0.2s; box-sizing: border-box; }
     .input-group input:focus, .input-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201, 169, 98, 0.2); }
+
+    @media (max-width: 480px) {
+        .checkout-layout { gap: 28px; margin-top: 20px; }
+        .summary-card { padding: 16px; }
+        .payment-option { padding: 16px; }
+        .step-indicator { gap: 8px; font-size: 13px; margin-bottom: 24px; }
+    }
 
     /* Payment Methods */
     .payment-option { border: 1px solid rgba(201, 169, 98, 0.35); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(201, 169, 98, 0.06); margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }

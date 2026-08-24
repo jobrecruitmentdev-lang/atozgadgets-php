@@ -5,15 +5,31 @@
 @section('content')
 <style>
     .cart-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-top: 20px; }
-    .cart-items { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; }
-    .cart-summary { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; height: fit-content; }
-    .cart-item { display: flex; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px; }
+    .cart-items { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; min-width: 0; }
+    .cart-summary { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 30px; height: fit-content; min-width: 0; }
+    .cart-item { display: flex; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px; min-width: 0; align-items: center; }
     .cart-item:last-child { border: none; margin: 0; padding: 0; }
-    .cart-item img { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; }
-    .item-details h3 { font-size: 18px; margin-bottom: 8px; }
+    .cart-item img { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+    .item-details { min-width: 0; flex: 1; }
+    .item-details h3 { font-size: 18px; margin-bottom: 8px; word-break: break-word; overflow-wrap: break-word; }
     .item-price { font-weight: 700; color: #34d399; font-size: 16px; }
-    .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-secondary); }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-secondary); font-size: 15px; }
     .summary-total { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border); font-size: 24px; font-weight: 700; color: #fff; }
+
+    @media (max-width: 768px) {
+        .cart-layout { grid-template-columns: 1fr; gap: 24px; }
+        .cart-items, .cart-summary { padding: 20px; border-radius: 16px; }
+        .cart-item { gap: 14px; }
+        .cart-item img { width: 75px; height: 75px; }
+        .item-details h3 { font-size: 15px; }
+    }
+
+    @media (max-width: 380px) {
+        .cart-items, .cart-summary { padding: 14px; }
+        .cart-item img { width: 60px; height: 60px; }
+        .item-details h3 { font-size: 14px; }
+        .summary-total { font-size: 20px; }
+    }
 </style>
 
 <h1 style="font-size: 36px; margin-bottom: 30px;">Shopping Cart</h1>

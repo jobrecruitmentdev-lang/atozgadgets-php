@@ -75,9 +75,11 @@
         .icon-btn:hover { color: var(--text-primary); }
         .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
 
-        .content { padding: 32px; flex-grow: 1; }
+        .content { padding: 32px; flex-grow: 1; min-width: 0; }
         
-        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); min-width: 0; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+        .table-responsive table { min-width: 720px; }
         
         @media (max-width: 768px) {
             .sidebar { position: fixed; transform: translateX(-100%); }
