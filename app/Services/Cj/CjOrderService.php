@@ -75,6 +75,32 @@ class CjOrderService
             'products' => $products,
         ];
 
+        // 2. Pre-flight External CJ Query: Check if CJ already processed this orderNumber (Network Dropout Recovery)
+        try {
+            $existingQuery = Http::withHeaders($headers)
+                ->timeout(8)
+                ->get(self::getApiUrl('/shopping/order/list'), [
+                    'orderNum' => $order->order_number,
+                    'pageNum' => 1,
+                    'pageSize' => 1
+                ]);
+            $queryData = $existingQuery->json();
+            $existingList = $queryData['data']['list'] ?? ($queryData['result']['list'] ?? []);
+            if (!empty($existingList) && isset($existingList[0]['orderId'])) {
+                $externalCjId = $existingList[0]['orderId'];
+                $cjOrder = CjOrder::updateOrCreate(
+                    ['internal_order_id' => $order->id],
+                    [
+                        'cj_order_id' => $externalCjId,
+                        'status' => 'submitted',
+                    ]
+                );
+                return ['cjOrderId' => $externalCjId, 'cjOrder' => $cjOrder];
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::info("Pre-flight CJ order query skipped: " . $e->getMessage());
+        }
+
         if (CjAuthService::isSandboxMode() || ($headers['CJ-Access-Token'] ?? '') === 'SANDBOX_DEMO_TOKEN') {
             $cjOrderId = 'CJ-SANDBOX-' . strtoupper(uniqid());
             $cjOrder = CjOrder::updateOrCreate(
@@ -92,6 +118,7 @@ class CjOrderService
         }
 
         $response = Http::withHeaders($headers)
+            ->timeout(12)
             ->post(self::getApiUrl('/shopping/order/createOrderV2'), $payload);
 
         $responseData = $response->json();
