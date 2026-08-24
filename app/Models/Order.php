@@ -56,6 +56,11 @@ class Order extends Model
         return $this->hasMany(Payment::class, 'order_id');
     }
 
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class, 'order_id');
+    }
+
     /**
      * Get the latest payment for this order.
      */
@@ -73,10 +78,42 @@ class Order extends Model
     }
 
     /**
-     * Dynamic structured address accessor from shipping_address payload or user address relation.
+     * Get the immutable frozen address snapshot for this order.
+     */
+    public function orderAddress(): HasOne
+    {
+        return $this->hasOne(OrderAddress::class, 'order_id');
+    }
+
+    /**
+     * Get the supplier fulfillment order mappings for this order.
+     */
+    public function supplierOrders(): HasMany
+    {
+        return $this->hasMany(SupplierOrder::class, 'order_id');
+    }
+
+    /**
+     * Dynamic structured address accessor prioritizing immutable order_addresses snapshot.
      */
     public function getAddressAttribute(): ?object
     {
+        if ($this->orderAddress()->exists()) {
+            $addr = $this->orderAddress;
+            return (object) [
+                'country' => $addr->country,
+                'address_line1' => $addr->address_line1,
+                'address_line2' => $addr->address_line2 ?? '',
+                'postal_code' => $addr->postal_code,
+                'city' => $addr->city,
+                'state' => $addr->state,
+                'first_name' => $addr->first_name,
+                'last_name' => $addr->last_name,
+                'phone' => $addr->phone,
+                'email' => $addr->email,
+            ];
+        }
+
         if (!empty($this->shipping_address)) {
             $decoded = is_array($this->shipping_address) ? $this->shipping_address : json_decode($this->shipping_address, true);
             if (is_array($decoded)) {

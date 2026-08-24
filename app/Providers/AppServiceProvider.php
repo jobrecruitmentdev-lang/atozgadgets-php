@@ -31,13 +31,25 @@ class AppServiceProvider extends ServiceProvider
             if (!isset($view->globalCategories)) {
                 try {
                     $categories = \App\Models\Category::whereNull('parent_id')
-                        ->where('status', 'active')
+                        ->where(function($q) {
+                            $q->where('status', 'active')->orWhereNull('status');
+                        })
                         ->with(['children' => function($q) {
-                            $q->where('status', 'active')->with(['children' => function($q2) {
-                                $q2->where('status', 'active');
+                            $q->where(function($cq) {
+                                $cq->where('status', 'active')->orWhereNull('status');
+                            })->orderBy('name', 'asc')->with(['children' => function($cq2) {
+                                $cq2->where(function($cq3) {
+                                    $cq3->where('status', 'active')->orWhereNull('status');
+                                })->orderBy('name', 'asc');
                             }]);
                         }])
-                        ->get();
+                        ->orderBy('name', 'asc')
+                        ->get()
+                        ->unique(function ($cat) {
+                            return strtolower(trim($cat->name ?? ''));
+                        })
+                        ->values();
+
                     $view->with('globalCategories', $categories);
                 } catch (\Exception $e) {
                     $view->with('globalCategories', collect([]));

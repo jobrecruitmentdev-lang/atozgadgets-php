@@ -280,27 +280,18 @@
 
     <div class="grid">
         @forelse($featuredProducts as $index => $product)
-            @if($index < 4)
-                <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ $index * 100 }}">
-                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? 'https://loremflickr.com/400/400/gadgets' }}" alt="{{ $product->name }}">
-                    <div class="card-title">{{ $product->name }}</div>
-                    <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
-                    <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
-                </a>
-            @endif
+            <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 100 }}">
+                <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? asset('favicon.png') }}" alt="{{ $product->name }}">
+                <div class="card-title">{{ $product->name }}</div>
+                <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
+                <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
+            </a>
         @empty
-            <a href="/product/mock-watch" class="card" data-aos="fade-up" data-aos-delay="100">
-                <img loading="lazy" decoding="async" src="https://loremflickr.com/400/400/smartwatch" alt="Smart Watch">
-                <div class="card-title">Ultra Smart Watch Series 9</div>
-                <div class="card-price">$29.99</div>
-                <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
-            </a>
-            <a href="/product/mock-earbuds" class="card" data-aos="fade-up" data-aos-delay="200">
-                <img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=400&q=80" alt="Earbuds">
-                <div class="card-title">TWS Pro Wireless Earbuds</div>
-                <div class="card-price">$19.99</div>
-                <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
-            </a>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 48px 24px; color: var(--text-secondary); background: rgba(128,128,128,0.03); border: 1px dashed var(--border-color); border-radius: 16px;">
+                <p style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">New trending gadgets are on the way!</p>
+                <p style="font-size: 14px;">Browse our full catalog to explore available tech.</p>
+                <a href="{{ route('store.shop') }}" class="btn btn-primary" style="display:inline-block; margin-top: 16px; padding: 10px 24px;">Explore Catalog</a>
+            </div>
         @endforelse
     </div>
 </section>
@@ -321,17 +312,17 @@
         <div class="trust-card green" data-aos="fade-up" data-aos-delay="100">
             <div class="trust-icon"><i data-lucide="shield-check"></i></div>
             <h3>Secure Checkout</h3>
-            <p>SSL encrypted payments. Razorpay, Visa, Mastercard, Amex & more accepted.</p>
+            <p>256-Bit SSL encrypted payments. PayPal, Visa, Mastercard, Amex & Payoneer accepted.</p>
         </div>
         <div class="trust-card purple" data-aos="fade-up" data-aos-delay="200">
             <div class="trust-icon"><i data-lucide="rotate-ccw"></i></div>
-            <h3>7-Day Exchange</h3>
-            <p>Received a defective item? Contact us within 7 days for an easy exchange.</p>
+            <h3>7-Day Returns</h3>
+            <p>Received a defective item? Contact us within 7 days for an easy replacement.</p>
         </div>
         <div class="trust-card amber" data-aos="fade-up" data-aos-delay="300">
-            <div class="trust-icon"><i data-lucide="star"></i></div>
-            <h3>100% Trusted</h3>
-            <p>Verified seller with thousands of happy customers across 50+ countries.</p>
+            <div class="trust-icon"><i data-lucide="headphones"></i></div>
+            <h3>Verified Support</h3>
+            <p>Dedicated customer assistance and 24/7 online shipment tracking.</p>
         </div>
     </div>
 </section>
@@ -344,7 +335,7 @@
     </div>
     <h2>Get all the trending gadgets under one Roof</h2>
     <p>
-        From cutting-edge <strong>smartwatches</strong> and high-fidelity <strong>audio gear</strong> to essential <strong>mobile accessories</strong> and smart home gadgets — AtoZ Gadgetz is your one-stop destination. We source directly from 50+ global warehouses so you get the best prices, fast dispatch, and delivery worldwide.
+        From cutting-edge <strong>smartwatches</strong> and high-fidelity <strong>audio gear</strong> to essential <strong>mobile accessories</strong> and smart home gadgets — AtoZ Gadgetz is your one-stop destination. Worldwide delivery available on eligible products with fast dispatch and online tracking.
     </p>
     <div class="about-links">
         <a href="{{ route('store.about') }}">About Us &rarr;</a>

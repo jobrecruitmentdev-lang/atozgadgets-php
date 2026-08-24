@@ -8,14 +8,14 @@ use App\Models\Product;
 
 class CartController extends ApiController
 {
-    public function getCart(Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
         
         $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
         
         $total = $cartItems->sum(function($item) {
-            return $item->quantity * ($item->product->discount_price ?? $item->product->price);
+            return $item->quantity * ($item->product->discount_price ?? $item->product->price ?? 0);
         });
 
         return $this->successResponse([
@@ -27,7 +27,7 @@ class CartController extends ApiController
         ], 'Cart retrieved successfully');
     }
 
-    public function addToCart(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
@@ -52,10 +52,28 @@ class CartController extends ApiController
             ]);
         }
 
-        return $this->successResponse($cartItem, 'Product added to cart');
+        return $this->successResponse($cartItem, 'Product added to cart', 201);
     }
 
-    public function removeFromCart(Request $request, $id)
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $user = $request->user();
+        $cartItem = Cart::where('user_id', $user->id)->where('id', $id)->first();
+
+        if (!$cartItem) {
+            return $this->errorResponse('Cart item not found', 404);
+        }
+
+        $cartItem->update(['quantity' => $validated['quantity']]);
+
+        return $this->successResponse($cartItem, 'Cart item updated successfully');
+    }
+
+    public function destroy(Request $request, $id)
     {
         $user = $request->user();
         $cartItem = Cart::where('user_id', $user->id)->where('id', $id)->first();

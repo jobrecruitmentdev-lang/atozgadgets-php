@@ -67,8 +67,8 @@
                     <td>#{{ $customer->id }}</td>
                     <td style="font-weight: 600;">{{ $customer->first_name }} {{ $customer->last_name }}</td>
                     <td>{{ $customer->email }}</td>
-                    <td>{{ $customer->orders()->count() ?? 0 }}</td>
-                    <td style="font-weight: 700; color: var(--accent);">${{ number_format($customer->orders()->sum('total_amount') ?? 0, 2) }}</td>
+                    <td>{{ $customer->orders()->whereIn('payment_status', ['paid', 'completed', 'success'])->count() }}</td>
+                    <td style="font-weight: 700; color: var(--accent);">${{ number_format($customer->orders()->whereIn('payment_status', ['paid', 'completed', 'success'])->sum('total_amount'), 2) }}</td>
                     <td>
                         @if($customer->is_active)
                             <span style="padding: 4px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #059669; font-size: 12px; font-weight: 600;">Active</span>

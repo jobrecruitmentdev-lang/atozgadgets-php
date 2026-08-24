@@ -28,7 +28,7 @@ class DashboardController extends Controller
             $completedOrders = Order::whereIn('status', ['delivered', 'completed'])->count();
             $totalCustomers = User::where('role_id', '!=', 1)->count();
             $totalProducts = Product::count();
-            $lowStockCount = Product::where('stock', '<=', 5)->count();
+            $lowStockCount = Product::where('stock_quantity', '<=', 5)->count();
 
             // 30 days daily sales history
             $thirtyDaysAgo = now()->subDays(30);

@@ -29,9 +29,18 @@ class CustomerController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'mobile' => 'nullable|string|max:20',
-            'role_id' => 'required|integer',
+            'role_id' => 'nullable|integer',
             'is_active' => 'required|boolean'
         ]);
+
+        // Security Guard: Only SuperAdmin (role_id === 1) can modify role assignments
+        if (isset($validated['role_id']) && (int)$validated['role_id'] !== (int)$user->role_id) {
+            if ((int)\Illuminate\Support\Facades\Auth::user()->role_id !== 1) {
+                return redirect()->route('admin.customers')->with('error', 'Unauthorized: Only SuperAdmin can modify user roles.');
+            }
+        } else {
+            unset($validated['role_id']);
+        }
 
         $user->update($validated);
 

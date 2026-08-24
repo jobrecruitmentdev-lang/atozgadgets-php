@@ -86,7 +86,7 @@ class ReportController extends Controller
                             $prod->id,
                             $prod->sku,
                             $prod->name,
-                            $prod->stock,
+                            $prod->stock_quantity,
                             number_format($prod->price, 2),
                             $prod->fulfillment_type ?? 'cj',
                             $prod->created_at->format('Y-m-d H:i:s'),

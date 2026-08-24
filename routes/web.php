@@ -6,11 +6,20 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok', 'timestamp' => now()->toIso8601String()]);
 });
 
+Route::get('/admin-strategy-hub.html', function () {
+    return redirect()->route('admin.strategy_hub');
+});
+
 
 Route::middleware('storefront')->group(function () {
     Route::get('/', [\App\Http\Controllers\StorefrontController::class, 'home'])->name('store.home');
     Route::get('/shop', [\App\Http\Controllers\StorefrontController::class, 'shop'])->name('store.shop');
     Route::get('/product/{slug}', [\App\Http\Controllers\StorefrontController::class, 'product'])->name('store.product');
+    Route::post('/product/{slug}/review', [\App\Http\Controllers\StorefrontController::class, 'submitReview'])->name('store.product.review');
+
+    // Secure Media Proxy Routes (White-labels external supplier CDNs)
+    Route::get('/media/products/{product}/thumbnail', [\App\Http\Controllers\MediaController::class, 'thumbnail'])->name('media.product.thumbnail');
+    Route::get('/media/products/{product}/image/{mediaId}', [\App\Http\Controllers\MediaController::class, 'image'])->name('media.product.image');
 
     Route::view('/about-us', 'store.about')->name('store.about');
     Route::view('/contact', 'store.contact')->name('store.contact');
@@ -28,9 +37,11 @@ Route::middleware('storefront')->group(function () {
     Route::post('/checkout/verify-otp', [\App\Http\Controllers\CartController::class, 'verifyOtp'])->name('store.checkout.verify-otp');
     
     // Payments
+    Route::post('/payment/card', [\App\Http\Controllers\PaymentController::class, 'payWithCard'])->name('payment.card');
     Route::post('/payment/payoneer', [\App\Http\Controllers\PaymentController::class, 'payWithPayoneer'])->name('payment.payoneer');
     Route::post('/payment/paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder'])->name('payment.paypal.create');
     Route::post('/payment/paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder'])->name('payment.paypal.capture');
+    Route::post('/payment/sandbox/instant-pay', [\App\Http\Controllers\PaymentController::class, 'sandboxInstantPay'])->name('payment.sandbox.instant');
 
     Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
@@ -53,6 +64,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache');
     })->name('admin.strategy_hub');
+
+    Route::get('/admin-strategy-hub.html', function () {
+        return redirect()->route('admin.strategy_hub');
+    });
 
     // Catalog Products, Categories, Brands
     Route::get('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('admin.catalog.products');
@@ -77,10 +92,15 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Settings
     Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
     Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
+    Route::post('/settings/toggle-cj-sandbox', [\App\Http\Controllers\Admin\SettingController::class, 'toggleCjSandbox'])->name('admin.settings.toggle_cj_sandbox');
+    Route::post('/settings/test-cj-connection', [\App\Http\Controllers\Admin\SettingController::class, 'testCjConnection'])->name('admin.settings.test_cj_connection');
     
     // Orders
     Route::get('/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('admin.orders');
+    Route::get('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('admin.orders.show');
     Route::post('/orders/{id}/fulfill-cj', [\App\Http\Controllers\Admin\OrderController::class, 'fulfillWithCj'])->name('admin.orders.fulfill_cj');
+    Route::post('/orders/{id}/sync-cj', [\App\Http\Controllers\Admin\OrderController::class, 'syncCjStatus'])->name('admin.orders.sync_cj');
+    Route::post('/orders/{id}/refund', [\App\Http\Controllers\Admin\OrderController::class, 'processRefund'])->name('admin.orders.refund');
     Route::put('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('admin.orders.update');
     Route::delete('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'destroy'])->name('admin.orders.destroy');
     
@@ -91,7 +111,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     
     // CJ Import Gateway
     Route::get('/catalog/import', [\App\Http\Controllers\Admin\CatalogController::class, 'import'])->name('admin.catalog.import');
+    Route::patch('/catalog/products/{id}/toggle-status', [\App\Http\Controllers\Admin\CatalogController::class, 'toggleProductStatus'])->name('admin.catalog.products.toggle_status');
     Route::get('/api/catalog/search', [\App\Http\Controllers\Admin\CatalogController::class, 'searchCjApi']);
+    Route::get('/api/catalog/cj-categories', [\App\Http\Controllers\Admin\CatalogController::class, 'getCjCategories']);
     Route::post('/api/catalog/import-item', [\App\Http\Controllers\Admin\CatalogController::class, 'importCjProduct']);
 });
 

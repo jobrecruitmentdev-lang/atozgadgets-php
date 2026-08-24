@@ -14,10 +14,13 @@ class CjSyncService
      * Processes a single page of CJ API results using O(1) Bulk Upserts.
      * This eliminates the N+1 query problem by doing exactly 3 queries per 20 items.
      */
-    public static function processCategoryPage($category, $page)
+    public static function processCategoryPage($category, $subCategoryIdOrPage = 1, $page = 1)
     {
+        $targetPage = func_num_args() >= 3 ? $page : (is_numeric($subCategoryIdOrPage) ? $subCategoryIdOrPage : 1);
+        $targetCategoryId = (func_num_args() >= 3 && is_numeric($subCategoryIdOrPage)) ? $subCategoryIdOrPage : $category->id;
+
         try {
-            $result = CjProductService::searchProducts($category->cj_keyword, $page, 20);
+            $result = CjProductService::searchProducts($category->cj_keyword, $targetPage, 20);
             $list = $result['list'] ?? [];
 
             if (empty($list)) {
@@ -36,12 +39,12 @@ class CjSyncService
                 $markupPercentage = 2.0; 
                 $finalPrice = $supplierPrice * $markupPercentage;
                 
-                $name = substr((string)($item['nameEn'] ?? ($item['name'] ?? '')), 0, 200);
+                $name = substr((string)($item['nameEn'] ?? ($item['productNameEn'] ?? ($item['name'] ?? ''))), 0, 200);
                 $imageUrl = $item['bigImage'] ?? ($item['imageUrl'] ?? ($item['productImage'] ?? ''));
                 $sku = (string)$pid;
 
                 $productUpserts[] = [
-                    'category_id' => $category->id,
+                    'category_id' => $targetCategoryId,
                     'name' => $name,
                     'slug' => Str::slug(substr($name, 0, 40)) . '-' . substr(md5($sku), 0, 6),
                     'sku' => $sku,

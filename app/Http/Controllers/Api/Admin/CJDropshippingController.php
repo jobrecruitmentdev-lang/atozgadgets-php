@@ -54,10 +54,22 @@ class CJDropshippingController extends Controller
     public function placeOrder(Request $request, $orderId)
     {
         try {
-            $order = \App\Services\Cj\CjOrderService::placeOrder($orderId);
+            $order = Order::findOrFail($orderId);
+
+            if (!in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot fulfill order: Payment is not verified as paid.'
+                ], 422);
+            }
+
+            $result = \App\Services\Order\FulfillmentService::fulfill($order);
+            $order->update(['status' => 'processing']);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Order placed with CJ Dropshipping successfully.'
+                'message' => 'Order placed with fulfillment provider successfully.',
+                'data' => $result
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -70,10 +82,10 @@ class CJDropshippingController extends Controller
     public function cancelOrder(Request $request, $cjOrderId)
     {
         try {
-            \App\Services\Cj\CjOrderService::cancelOrder($cjOrderId);
+            \App\Services\Order\FulfillmentService::cancel($cjOrderId);
             return response()->json([
                 'success' => true,
-                'message' => "CJ Order {$cjOrderId} cancelled successfully."
+                'message' => "Supplier Order {$cjOrderId} cancelled successfully."
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);

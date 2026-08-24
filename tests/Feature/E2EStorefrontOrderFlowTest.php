@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Category;
@@ -16,9 +17,28 @@ use Illuminate\Support\Facades\Mail;
 
 class E2EStorefrontOrderFlowTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_complete_e2e_storefront_to_fulfillment_lifecycle()
     {
         Mail::fake();
+
+        // 0. Ensure Admin User 1 exists and CJ test configuration is set
+        $user = User::firstOrCreate(
+            ['id' => 1],
+            [
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'email' => 'admin@atozgadgets.test',
+                'mobile' => '1234567890',
+                'role_id' => 1,
+                'password' => bcrypt('secret123')
+            ]
+        );
+
+        \App\Models\Setting::set('cj_sandbox_mode', '0', 'cj');
+        \App\Models\Setting::set('cj_api_email', 'admin@example.com', 'cj');
+        \App\Models\Setting::set('cj_api_key', 'test_key_123', 'cj');
+        \Illuminate\Support\Facades\Cache::put('cj_access_token', 'fake_e2e_token', 600);
 
         // 1. Seed Categories and Active Products
         $category = Category::firstOrCreate(
@@ -92,7 +112,21 @@ class E2EStorefrontOrderFlowTest extends TestCase
         $this->assertTrue(session('checkout_otp_verified'));
 
         // 5. Complete Storefront Checkout (Atomically creates Order + OrderItems + Payment)
+        $checkoutCjId = 'CJ-CHECKOUT-' . uniqid();
         Http::fake([
+            '*/shopping/order/createOrderV2*' => Http::response([
+                'code' => 200,
+                'result' => true,
+                'data' => ['orderId' => $checkoutCjId]
+            ], 200),
+            '*/shopping/order/submitOrder*' => Http::response([
+                'code' => 200,
+                'result' => true
+            ], 200),
+            '*/logistic/freightCalculate*' => Http::response([
+                'code' => 200,
+                'data' => [['logisticName' => 'CJPacket Fast Line']]
+            ], 200),
             '*/shoppingSync/synchronousOrder*' => Http::response(['code' => 200, 'result' => true], 200)
         ]);
 
@@ -114,7 +148,7 @@ class E2EStorefrontOrderFlowTest extends TestCase
         $checkoutRes->assertRedirect(route('store.home'));
 
         // 6. ADBMS Database Integrity & Relationship Assertions
-        $order = Order::latest()->first();
+        $order = Order::orderBy('id', 'desc')->first();
         $this->assertNotNull($order);
         $this->assertEquals('processing', $order->status);
         $this->assertEquals('paid', $order->payment_status);
@@ -139,7 +173,6 @@ class E2EStorefrontOrderFlowTest extends TestCase
         $this->assertEquals('742 Evergreen Terrace', $address->address_line1);
         $this->assertEquals('Springfield', $address->city);
 
-        // 7. Test CJ Order Dispatch & Fulfillment via Admin
         $admin = User::firstOrCreate(
             ['email' => 'admin_e2e_suite@example.com'],
             ['first_name' => 'Admin', 'last_name' => 'User', 'mobile' => '9999999999', 'password' => bcrypt('secret123'), 'role_id' => 1]
@@ -147,8 +180,19 @@ class E2EStorefrontOrderFlowTest extends TestCase
         $admin->role_id = 1;
         $admin->save();
 
+        \App\Models\Setting::set('cj_sandbox_mode', '0', 'cj');
+        \App\Models\Setting::set('cj_api_email', 'admin@example.com', 'cj');
+        \App\Models\Setting::set('cj_api_key', 'test_key_123', 'cj');
+        \Illuminate\Support\Facades\Cache::put('cj_access_token', 'fake_e2e_token', 600);
+
         $mockLiveCjId = 'CJ-LIVE-ORDER-' . uniqid();
+        \Illuminate\Support\Facades\Http::swap(new \Illuminate\Http\Client\Factory());
         Http::fake([
+            '*/authentication/getAccessToken*' => Http::response([
+                'code' => 200,
+                'result' => true,
+                'data' => ['accessToken' => 'fake_e2e_token']
+            ], 200),
             '*/shopping/order/createOrderV2*' => Http::response([
                 'code' => 200,
                 'result' => true,
@@ -170,9 +214,10 @@ class E2EStorefrontOrderFlowTest extends TestCase
         $fulfillRes->assertStatus(200)->assertJson(['success' => true]);
 
         // Verify CjOrder mapping
-        $this->assertNotNull($order->fresh()->cjOrder);
-        $this->assertEquals($mockLiveCjId, $order->fresh()->cjOrder->cj_order_id);
-        $this->assertEquals($order->id, $order->fresh()->cjOrder->order->id);
+        $cjOrder = \App\Models\CjOrder::where('internal_order_id', $order->id)->first();
+        $this->assertNotNull($cjOrder);
+        $this->assertEquals($checkoutCjId, $cjOrder->cj_order_id);
+        $this->assertEquals($order->id, $cjOrder->order->id);
 
         // 8. Test CJ Webhook Tracking Sync
         Shipment::create([

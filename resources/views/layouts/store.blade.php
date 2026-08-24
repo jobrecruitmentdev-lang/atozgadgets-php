@@ -104,7 +104,7 @@
         /* Categories Row */
         .categories-row { border-top: 1px solid var(--glass-border); display: none; }
         @media (min-width: 768px) { .categories-row { display: block; } }
-        .categories-nav { display: flex; justify-content: center; gap: 20px; padding: 10px 0; }
+        .categories-nav { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
         .cat-link { font-size: 14px; font-weight: 500; color: var(--text-primary); padding: 8px 16px; min-height: 44px; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; gap: 6px; }
         .cat-link:hover { background: rgba(255, 255, 255, 0.05); color: var(--accent); }
         .mega-dropdown { position: relative; }
@@ -288,7 +288,30 @@
             <a href="{{ route('store.shop') }}" class="mobile-nav-link">All Products</a>
             @if(isset($globalCategories))
                 @foreach($globalCategories as $cat)
-                    <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link">{{ $cat->name }}</a>
+                    @if($cat->children->count() > 0)
+                        <div style="border-bottom: 1px solid var(--glass-border); padding: 4px 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link" style="border-bottom: none; padding: 8px 0; flex: 1;">{{ $cat->name }}</a>
+                                <button type="button" onclick="const sm = document.getElementById('sub-mobile-{{ $cat->id }}'); const open = sm.style.display !== 'none'; sm.style.display = open ? 'none' : 'block'; this.querySelector('svg, i').style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 8px; display: flex; align-items: center;" aria-label="Toggle {{ $cat->name }} subcategories">
+                                    <i data-lucide="chevron-down" style="width: 18px; height: 18px; transition: transform 0.2s;"></i>
+                                </button>
+                            </div>
+                            <div id="sub-mobile-{{ $cat->id }}" style="display: none; padding-left: 16px; margin-bottom: 8px; border-left: 2px solid var(--accent);">
+                                @foreach($cat->children as $child)
+                                    <a href="{{ route('store.shop', ['category' => $child->slug]) }}" class="mobile-nav-link" style="font-size: 15px; font-weight: 500; border-bottom: none; padding: 6px 0; color: var(--text-secondary);">{{ $child->name }}</a>
+                                    @if($child->children->count() > 0)
+                                        <div style="padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.1);">
+                                            @foreach($child->children as $grandchild)
+                                                <a href="{{ route('store.shop', ['category' => $grandchild->slug]) }}" class="mobile-nav-link" style="font-size: 13px; font-weight: 400; border-bottom: none; padding: 4px 0; color: var(--text-secondary); opacity: 0.85;">- {{ $grandchild->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link">{{ $cat->name }}</a>
+                    @endif
                 @endforeach
             @endif
             <a href="{{ route('store.shop', ['max_price' => 50]) }}" class="mobile-nav-link" style="color: var(--accent);">Under $50 Deals</a>
@@ -322,7 +345,7 @@
                     <a href="{{ route('store.home') }}" class="logo-container" style="color: #fff;">
                         <img src="{{ asset('brand/atoz-logo.png') }}" alt="AtoZ Gadgetz Logo" style="width: auto; height: 80px; border-radius: 0; filter: none; mix-blend-mode: screen;">
                     </a>
-                    <p>Shop trending gadgets at affordable prices. Free shipping on qualifying orders. 100% trusted. Delivered worldwide from 50+ global warehouses.</p>
+                    <p>Shop trending gadgets at affordable prices. Free shipping on qualifying orders. Worldwide delivery available on eligible products.</p>
                     <div class="contact">
                         <a href="mailto:contact@atozgadgetz.com"><i data-lucide="mail" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> contact@atozgadgetz.com</a>
                         <a href="https://instagram.com/atozgadgetzofficial" target="_blank" rel="noopener noreferrer"><i data-lucide="external-link" style="width:14px;height:14px;display:inline;vertical-align:middle;"></i> Instagram @atozgadgetzofficial</a>
@@ -342,10 +365,10 @@
                 <div class="footer-col">
                     <h4>Shop by Price</h4>
                     <ul>
-                        <li><a href="{{ route('store.shop', ['max_price' => 10]) }}">Under $10 / ₹99</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 20]) }}">Under $20 / ₹199</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 50]) }}">Under $50 / ₹499</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 100]) }}">Under $100 / ₹999</a></li>
+                        <li><a href="{{ route('store.shop', ['max_price' => 10]) }}">Under $10</a></li>
+                        <li><a href="{{ route('store.shop', ['max_price' => 20]) }}">Under $20</a></li>
+                        <li><a href="{{ route('store.shop', ['max_price' => 50]) }}">Under $50</a></li>
+                        <li><a href="{{ route('store.shop', ['max_price' => 100]) }}">Under $100</a></li>
                     </ul>
                 </div>
 
@@ -364,14 +387,14 @@
 
             <div class="footer-badges">
                 <div class="badges-list">
+                    <span class="badge-item">PayPal</span>
                     <span class="badge-item">Visa</span>
                     <span class="badge-item">Mastercard</span>
-                    <span class="badge-item">Amex</span>
-                    <span class="badge-item">UPI</span>
-                    <span class="badge-item">Net Banking</span>
-                    <span class="badge-item">Debit Card</span>
+                    <span class="badge-item">American Express</span>
+                    <span class="badge-item">Discover</span>
+                    <span class="badge-item">Payoneer</span>
                 </div>
-                <p style="font-size: 12px; color: var(--text-secondary);">We Accept all the payment options so get all the gadgets now.</p>
+                <p style="font-size: 12px; color: var(--text-secondary);">Guaranteed Safe & Secure Checkout via 256-Bit Encrypted Gateways.</p>
             </div>
 
             <div class="footer-bottom">

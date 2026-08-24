@@ -75,19 +75,17 @@
         <div class="grid">
             @forelse($products as $index => $product)
                 <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 6) * 100 }}">
-                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? 'https://loremflickr.com/400/400/gadgets' }}" alt="{{ $product->name }}">
+                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? asset('favicon.png') }}" alt="{{ $product->name }}">
                     <div class="card-title">{{ $product->name }}</div>
                     <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
                     <button class="btn btn-primary" style="width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</button>
                 </a>
             @empty
-                <!-- Fallback mock -->
-                <a href="/product/mock" class="card" data-aos="fade-up">
-                    <img loading="lazy" decoding="async" src="https://loremflickr.com/400/400/gadget" alt="Placeholder">
-                    <div class="card-title">Premium Gadget Placeholder</div>
-                    <div class="card-price">$0.00</div>
-                    <button class="btn btn-primary" style="width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</button>
-                </a>
+                <div style="grid-column: 1 / -1; text-align: center; padding: 64px 24px; color: var(--text-secondary); background: rgba(128,128,128,0.03); border: 1px dashed var(--border-color); border-radius: 16px;">
+                    <i data-lucide="package-search" style="width:48px; height:48px; stroke-width:1.5; color: var(--text-secondary); margin-bottom: 12px; display:inline-block;"></i>
+                    <p style="font-size: 16px; font-weight: 600; margin-bottom: 6px;">No products found</p>
+                    <p style="font-size: 14px;">Try selecting a different category or search term.</p>
+                </div>
             @endforelse
         </div>
         

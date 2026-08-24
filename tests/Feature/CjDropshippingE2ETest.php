@@ -10,17 +10,20 @@ use Illuminate\Support\Facades\Http;
 
 class CjDropshippingE2ETest extends TestCase
 {
-    // use RefreshDatabase; // Removed to not wipe dev DB for this quick test
+    use RefreshDatabase;
 
     public function test_full_cj_dropshipping_flow()
     {
         // 1. Setup Admin
-        $admin = User::firstOrCreate(
-            ['email' => 'admin_test_cj@test.com'], 
-            ['first_name' => 'Admin', 'last_name' => 'Test', 'password' => bcrypt('password'), 'role_id' => 1]
-        );
-        $admin->role_id = 1;
-        $admin->save();
+        $admin = User::create([
+            'email' => 'admin_cj_' . uniqid() . '@test.com',
+            'mobile' => '99' . mt_rand(10000000, 99999999),
+            'first_name' => 'Admin',
+            'last_name' => 'Test',
+            'password' => bcrypt('password'),
+            'role_id' => 1,
+            'is_active' => true,
+        ]);
         
         $category = Category::firstOrCreate(['slug' => 'test-cat'], ['name' => 'Test Category']);
 
@@ -39,11 +42,12 @@ class CjDropshippingE2ETest extends TestCase
         $products = $response->json('data.list') ?? [];
         if (count($products) > 0) {
             $productToImport = $products[0];
+            $pid = !empty($productToImport['pid']) ? $productToImport['pid'] : (!empty($productToImport['id']) ? $productToImport['id'] : 'TEST-PID-' . uniqid());
             
             // 3. Test Import Product (from Search Results)
             $importResponse = $this->actingAs($admin, 'sanctum')
-                                   ->postJson('/admin/api/catalog/import-item', [
-                                       'pid' => $productToImport['pid'] ?? 'TEST-PID-123',
+                                   ->postJson('/api/admin/cj/import', [
+                                       'pid' => $pid,
                                        'title' => 'E2E Test Drone',
                                        'price' => 10.00,
                                        'image' => 'http://example.com/image.jpg',
@@ -54,12 +58,21 @@ class CjDropshippingE2ETest extends TestCase
             $importResponse->assertStatus(200)
                            ->assertJson(['success' => true]);
                            
-            // 4. Test Place Order with valid model relations
+            $orderUser = \App\Models\User::find($admin->id) ?: (\App\Models\User::first() ?: \App\Models\User::create([
+                'email' => 'admin_order_' . uniqid() . '@test.com',
+                'first_name' => 'Admin',
+                'last_name' => 'Order',
+                'password' => bcrypt('password'),
+                'role_id' => 1,
+                'is_active' => true,
+            ]));
+
             $order = \App\Models\Order::create([
                 'order_number' => 'ORD-CJ-' . uniqid(),
-                'user_id' => $admin->id,
+                'user_id' => $orderUser->id,
                 'total_amount' => 20.00,
                 'status' => 'pending',
+                'payment_status' => 'paid',
                 'shipping_address' => json_encode([
                     'first_name' => 'John',
                     'last_name' => 'Doe',
@@ -72,11 +85,11 @@ class CjDropshippingE2ETest extends TestCase
                 ])
             ]);
             
-            $dbProduct = \App\Models\Product::where('fulfillment_type', 'cj')->latest()->first();
-            if ($dbProduct) {
+            $importedProductId = $importResponse->json('internal_id') ?? (\App\Models\Product::where('fulfillment_type', 'cj')->latest()->value('id'));
+            if ($importedProductId) {
                 \App\Models\OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => $dbProduct->id,
+                    'product_id' => $importedProductId,
                     'quantity' => 1,
                     'unit_price' => 10.0,
                     'total_price' => 10.0,
@@ -84,6 +97,7 @@ class CjDropshippingE2ETest extends TestCase
             }
             
             $mockCjId = 'CJ-ORD-MOCK-' . uniqid();
+            \App\Models\Setting::set('cj_sandbox_mode', '0');
             \Illuminate\Support\Facades\Http::fake([
                 '*/shopping/order/createOrderV2*' => \Illuminate\Support\Facades\Http::response([
                     'code' => 200,

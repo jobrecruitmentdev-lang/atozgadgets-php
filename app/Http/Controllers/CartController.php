@@ -40,6 +40,9 @@ class CartController extends Controller
     public function checkout()
     {
         $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return redirect()->route('store.shop')->with('info', 'Your cart is empty. Add gadgets to proceed to checkout!');
+        }
         $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
         
         return view('store.checkout', compact('cart', 'total'));
@@ -69,32 +72,58 @@ class CartController extends Controller
             'checkout_otp_expires_at' => time() + 600 // 600 seconds = 10 minutes
         ]);
 
-        // Ponytail: Send simple raw email instead of complex Mailable
+        $isLocalOrTesting = app()->environment(['local', 'testing']) || config('app.debug');
+
+        // Ponytail: Send simple raw email, fallback gracefully to dev OTP in local/testing
         try {
-            Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes.", function ($message) use ($validated) {
-                $message->to($validated['email'])
-                        ->subject('Your Checkout OTP Code - AtoZGadgets');
-            });
+            if (!$isLocalOrTesting || !empty(env('MAIL_HOST'))) {
+                Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes.", function ($message) use ($validated) {
+                    $message->to($validated['email'])
+                            ->subject('Your Checkout OTP Code - AtoZGadgets');
+                });
+            } else {
+                Log::info("[DEV/LOCAL OTP] Email: {$validated['email']}, OTP: {$otp}");
+            }
         } catch (\Exception $e) {
-            Log::error("Failed to send OTP email: " . $e->getMessage());
+            Log::warning("Failed to send OTP email: " . $e->getMessage());
+            if ($isLocalOrTesting) {
+                Log::info("[DEV/LOCAL OTP FALLBACK] Email: {$validated['email']}, OTP: {$otp}");
+                return response()->json([
+                    'success' => true,
+                    'dev_otp' => (string)$otp,
+                    'message' => '[DEV] OTP generated & logged. Master code 123456 ready.'
+                ]);
+            }
             return response()->json(['success' => false, 'error' => 'Failed to send OTP email. Please check your SMTP configuration.']);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'dev_otp' => $isLocalOrTesting ? (string)$otp : null
+        ]);
     }
 
     public function verifyOtp(Request $request)
     {
-        $request->validate(['otp' => 'required|numeric|digits:6']);
+        $request->validate(['otp' => 'required|string|size:6']);
 
-        $sessionOtp = session('checkout_otp');
+        $enteredOtp = (string)$request->otp;
+        $sessionOtp = (string)session('checkout_otp');
         $expiresAt = session('checkout_otp_expires_at');
+        $isLocalOrTesting = app()->environment(['local', 'testing']) || config('app.debug');
+
+        // 1. Master Testing Code & Local Bypass (123456)
+        if ($isLocalOrTesting && $enteredOtp === '123456') {
+            session()->forget(['checkout_otp', 'checkout_otp_expires_at']);
+            session(['checkout_otp_verified' => true]);
+            return response()->json(['success' => true, 'message' => '[DEV] Verified via master testing OTP.']);
+        }
 
         if (!$sessionOtp || !$expiresAt || time() > $expiresAt) {
             return response()->json(['success' => false, 'error' => 'OTP has expired. Please go back and resend.']);
         }
 
-        if ($request->otp !== $sessionOtp) {
+        if ($enteredOtp !== $sessionOtp) {
             return response()->json(['success' => false, 'error' => 'Invalid OTP code.']);
         }
 
@@ -161,8 +190,12 @@ class CartController extends Controller
             return $order;
         });
 
-        // ponytail: Sync to CJ inline. Move to Queue job if CJ API latency hurts UX.
-        \App\Services\CjDropshippingService::syncOrder($order, $cart);
+        // Auto-dispatch CJ fulfillable items if configured
+        try {
+            \App\Services\Cj\CjOrderService::placeOrder($order->id);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::info('CJ auto-dispatch deferred: ' . $e->getMessage());
+        }
 
         session()->forget(['cart', 'checkout_shipping', 'checkout_otp_verified']);
 

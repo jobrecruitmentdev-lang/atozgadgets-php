@@ -32,56 +32,176 @@ class CjProductService
                     'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=800&auto=format&fit=crop',
                 ],
                 'categoryName' => 'Electronics & Gadgets',
+                'countryCode' => 'US',
             ],
-            // Only adding one demo product to keep this file concise for the migration.
-            // In production, the live credentials will pull thousands of items.
+            [
+                'pid' => 'CJ-WIRELESS-LAMP-02',
+                'productNameEn' => 'AtoZ 3-in-1 Fast Wireless Charging Station LED Desk Lamp',
+                'productSku' => 'CJ-LAMP-3IN1',
+                'sellPrice' => 14.80,
+                'productImage' => 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Smart Home',
+                'countryCode' => 'US',
+            ],
+            [
+                'pid' => 'CJ-RGB-ORB-SPEAKER-03',
+                'productNameEn' => 'AtoZ Magnetic Levitation Floating Bluetooth Speaker RGB',
+                'productSku' => 'CJ-FLOAT-SPK',
+                'sellPrice' => 34.20,
+                'productImage' => 'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Audio & Sound',
+                'countryCode' => 'CN',
+            ],
+            [
+                'pid' => 'CJ-4K-MINI-DRONE-04',
+                'productNameEn' => 'AtoZ 4K Ultra HD Foldable Mini Drone with Obstacle Avoidance',
+                'productSku' => 'CJ-DRONE-4K',
+                'sellPrice' => 42.00,
+                'productImage' => 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Drones & Toys',
+                'countryCode' => 'US',
+            ],
+            [
+                'pid' => 'CJ-SWEATSHIRT-COUPLE-05',
+                'productNameEn' => 'AtoZ Couple & Parent-Child Matching Premium Cotton Sweatshirt',
+                'productSku' => 'CJ-SWEAT-SET',
+                'sellPrice' => 19.90,
+                'productImage' => 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Couple & Parent-Child Sweatshirts',
+                'countryCode' => 'US',
+            ],
+            [
+                'pid' => 'CJ-SMART-BOTTLE-06',
+                'productNameEn' => 'AtoZ Digital Temperature Display Smart Vacuum Flask 500ml',
+                'productSku' => 'CJ-BOTTLE-LED',
+                'sellPrice' => 8.90,
+                'productImage' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Home & Kitchen',
+                'countryCode' => 'US',
+            ],
+            [
+                'pid' => 'CJ-PORTABLE-BLENDER-07',
+                'productNameEn' => 'AtoZ USB Rechargeable Personal Smoothie Juicer Blender 6 Blades',
+                'productSku' => 'CJ-BLENDER-USB',
+                'sellPrice' => 11.50,
+                'productImage' => 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1570222094114-d054a817e56b?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Home & Kitchen',
+                'countryCode' => 'CN',
+            ],
+            [
+                'pid' => 'CJ-FITNESS-WATCH-08',
+                'productNameEn' => 'AtoZ Waterproof AMOLED Smart Fitness Watch with Heart Rate & GPS',
+                'productSku' => 'CJ-WATCH-AMOLED',
+                'sellPrice' => 24.99,
+                'productImage' => 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=800&auto=format&fit=crop',
+                'productImages' => [
+                    'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?q=80&w=800&auto=format&fit=crop',
+                ],
+                'categoryName' => 'Wearable Tech',
+                'countryCode' => 'US',
+            ],
         ];
     }
 
-    public static function searchProducts($keyword, $pageNum = 1, $pageSize = 20, $filters = [])
+    public static function searchProducts($keyword = '', $pageNum = 1, $pageSize = 20, $filters = [])
     {
         $token = CjAuthService::getAccessToken();
         
         if ($token === 'SANDBOX_DEMO_TOKEN') {
-            $list = self::getDemoCatalog();
+            $catalog = self::getDemoCatalog();
+            $filtered = array_filter($catalog, function($item) use ($keyword, $filters) {
+                // Keyword match
+                if (!empty($keyword)) {
+                    $kw = strtolower($keyword);
+                    $nameMatch = str_contains(strtolower($item['productNameEn'] ?? ''), $kw);
+                    $catMatch = str_contains(strtolower($item['categoryName'] ?? ''), $kw);
+                    if (!$nameMatch && !$catMatch) {
+                        return false;
+                    }
+                }
+                // Price match
+                $price = (float)($item['sellPrice'] ?? 0);
+                if (isset($filters['minPrice']) && $filters['minPrice'] !== '' && $price < (float)$filters['minPrice']) {
+                    return false;
+                }
+                if (isset($filters['maxPrice']) && $filters['maxPrice'] !== '' && $price > (float)$filters['maxPrice']) {
+                    return false;
+                }
+                return true;
+            });
+
+            $list = array_values(!empty($filtered) ? $filtered : $catalog);
             return ['list' => $list, 'total' => count($list)];
         }
 
         try {
-            usleep(1100000); // 1.1s throttle
+            if (!app()->environment('testing')) {
+                usleep(1100000); // 1.1s throttle for CJ rate limits
+            }
             
             $params = [
-                'keyWord' => $keyword,
-                'page' => $pageNum,
-                'size' => $pageSize,
+                'pageNum' => $pageNum,
+                'pageSize' => $pageSize,
             ];
 
-            if (isset($filters['minPrice'])) $params['minPrice'] = $filters['minPrice'];
-            if (isset($filters['maxPrice'])) $params['maxPrice'] = $filters['maxPrice'];
-            if (isset($filters['categoryId'])) $params['categoryId'] = $filters['categoryId'];
-            if (isset($filters['countryCode'])) $params['countryCode'] = $filters['countryCode'];
+            if (!empty($keyword)) {
+                $params['productName'] = $keyword;
+            }
+            if (!empty($filters['categoryId']) && strpos($filters['categoryId'], 'cj_cat_') === false) {
+                $params['categoryId'] = $filters['categoryId'];
+            }
+            // If neither keyword nor category is provided, default to 'gadget'
+            if (empty($params['productName']) && empty($params['categoryId'])) {
+                $params['productName'] = 'gadget';
+            }
+            if (!empty($filters['countryCode'])) {
+                $params['countryCode'] = $filters['countryCode'];
+            }
+            if (isset($filters['minPrice']) && $filters['minPrice'] !== '') {
+                $params['startSellPrice'] = (float)$filters['minPrice'];
+            }
+            if (isset($filters['maxPrice']) && $filters['maxPrice'] !== '') {
+                $params['endSellPrice'] = (float)$filters['maxPrice'];
+            }
 
             $response = Http::withHeaders(CjAuthService::getAuthHeaders())
-                ->timeout(10)->retry(3, 100)
-                ->get(self::getApiBaseUrl() . '/product/listV2', $params);
+                ->timeout(12)->retry(2, 200)
+                ->get(self::getApiBaseUrl() . '/product/list', $params);
 
             $data = $response->json();
-            // In listV2, it might be in $data['data']['list'] or $data['result']['list']
             $rawData = $data['data'] ?? ($data['result'] ?? []);
-            
-            $list = $rawData['list'] ?? ($rawData['content'][0]['productList'] ?? ($rawData['content'] ?? []));
-            $total = $rawData['totalRecords'] ?? ($rawData['total'] ?? (is_array($list) ? count($list) : 0));
+            $list = $rawData['list'] ?? [];
+            $total = $rawData['total'] ?? (is_array($list) ? count($list) : 0);
 
             if (is_array($list) && count($list) > 0) {
                 // Normalize keys for frontend
                 $normalizedList = array_map(function($item) {
                     return [
-                        'pid' => $item['pid'] ?? ($item['productId'] ?? ''),
-                        'productNameEn' => $item['productNameEn'] ?? ($item['productName'] ?? ($item['title'] ?? '')),
+                        'pid' => $item['pid'] ?? ($item['id'] ?? ($item['productId'] ?? '')),
+                        'productNameEn' => $item['productNameEn'] ?? ($item['productName'] ?? ($item['nameEn'] ?? '')),
                         'productSku' => $item['productSku'] ?? ($item['sku'] ?? ''),
-                        'sellPrice' => $item['sellPrice'] ?? ($item['price'] ?? 0),
-                        'productImage' => $item['productImage'] ?? ($item['image'] ?? ''),
-                        'categoryName' => $item['categoryName'] ?? ($item['category'] ?? 'Uncategorized'),
+                        'sellPrice' => (float)($item['sellPrice'] ?? ($item['price'] ?? 0)),
+                        'productImage' => $item['productImage'] ?? ($item['bigImage'] ?? ($item['image'] ?? '')),
+                        'categoryName' => $item['categoryName'] ?? 'Uncategorized',
+                        'productWeight' => $item['productWeight'] ?? null,
                     ];
                 }, $list);
 
@@ -95,5 +215,182 @@ class CjProductService
             Log::warning('CJ Live Search Warning, returning fallback demo catalog: ' . $e->getMessage());
             return ['list' => self::getDemoCatalog(), 'total' => count(self::getDemoCatalog())];
         }
+    }
+
+    public static function getCategories(): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('cj_api_categories_v2', 86400, function () {
+            $token = CjAuthService::getAccessToken();
+            if ($token === 'SANDBOX_DEMO_TOKEN') {
+                return self::getDemoCategories();
+            }
+
+            try {
+                $response = Http::withHeaders(CjAuthService::getAuthHeaders())
+                    ->timeout(12)->retry(2, 200)
+                    ->get(self::getApiBaseUrl() . '/product/getCategory');
+
+                $data = $response->json();
+                $list = $data['data'] ?? ($data['result'] ?? []);
+
+                if (is_array($list) && !empty($list)) {
+                    $categories = [];
+                    foreach ($list as $first) {
+                        $firstName = $first['categoryFirstName'] ?? ($first['categoryName'] ?? '');
+                        $firstId = $first['categoryFirstId'] ?? ($first['categoryId'] ?? '');
+                        if (!empty($firstName) && !empty($firstId)) {
+                            $categories[] = [
+                                'id' => $firstId,
+                                'name' => $firstName,
+                                'level' => 1
+                            ];
+                        }
+                        foreach ($first['categoryFirstList'] ?? [] as $second) {
+                            $secondName = $second['categorySecondName'] ?? '';
+                            $secondId = $second['categorySecondId'] ?? '';
+                            if (!empty($secondName) && !empty($secondId)) {
+                                $categories[] = [
+                                    'id' => $secondId,
+                                    'name' => " — {$secondName}",
+                                    'level' => 2
+                                ];
+                            }
+                            foreach ($second['categorySecondList'] ?? [] as $third) {
+                                $thirdName = $third['categoryName'] ?? '';
+                                $thirdId = $third['categoryId'] ?? '';
+                                if (!empty($thirdName) && !empty($thirdId)) {
+                                    $categories[] = [
+                                        'id' => $thirdId,
+                                        'name' => "   ↳ {$thirdName}",
+                                        'level' => 3
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                    if (!empty($categories)) {
+                        return $categories;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('CJ Live Category Fetch Warning: ' . $e->getMessage());
+            }
+
+            return self::getDemoCategories();
+        });
+    }
+
+    private static function getDemoCategories(): array
+    {
+        return [
+            ['id' => 'cj_cat_electronics', 'name' => 'Consumer Electronics'],
+            ['id' => 'cj_cat_smarthome', 'name' => 'Smart Home & Wearables'],
+            ['id' => 'cj_cat_audio', 'name' => 'Audio, Sound & Headsets'],
+            ['id' => 'cj_cat_drones', 'name' => 'Cameras, Drones & Optics'],
+            ['id' => 'cj_cat_gaming', 'name' => 'Computer & Gaming Accessories'],
+            ['id' => 'cj_cat_phones', 'name' => 'Mobile Phones & Tablets'],
+            ['id' => 'cj_cat_appliances', 'name' => 'Smart Living & Kitchen Appliances'],
+            ['id' => 'cj_cat_fitness', 'name' => 'Sports, Fitness & Outdoor Gadgets'],
+        ];
+    }
+
+    public static function getProductDetails($pid): array
+    {
+        $token = CjAuthService::getAccessToken();
+
+        if ($token === 'SANDBOX_DEMO_TOKEN') {
+            return self::getDemoProductDetails($pid);
+        }
+
+        try {
+            if (!app()->environment('testing')) {
+                usleep(1100000); // 1.1s throttle
+            }
+
+            $response = Http::withHeaders(CjAuthService::getAuthHeaders())
+                ->timeout(12)->retry(2, 200)
+                ->get(self::getApiBaseUrl() . '/product/query', ['pid' => $pid]);
+
+            $data = $response->json();
+            $item = $data['data'] ?? ($data['result'] ?? []);
+
+            if (!empty($item)) {
+                $variants = [];
+                $rawVariants = $item['variants'] ?? ($item['variantList'] ?? []);
+                foreach ($rawVariants as $v) {
+                    $variants[] = [
+                        'vid' => $v['vid'] ?? ($v['variantId'] ?? ('VID-' . uniqid())),
+                        'variantSku' => $v['variantSku'] ?? ($v['sku'] ?? ''),
+                        'variantName' => $v['variantNameEn'] ?? ($v['variantName'] ?? ($v['variantKey'] ?? 'Default Variant')),
+                        'costPrice' => (float)($v['variantSellPrice'] ?? ($v['price'] ?? ($item['sellPrice'] ?? 10.00))),
+                        'image' => $v['variantImage'] ?? ($item['productImage'] ?? ''),
+                        'inventory' => (int)($v['variantStandard'] ?? ($v['inventory'] ?? 100)),
+                        'option1_name' => $v['option1Name'] ?? null,
+                        'option1_value' => $v['option1Value'] ?? null,
+                        'option2_name' => $v['option2Name'] ?? null,
+                        'option2_value' => $v['option2Value'] ?? null,
+                    ];
+                }
+
+                return [
+                    'pid' => $item['pid'] ?? $pid,
+                    'nameEn' => $item['productNameEn'] ?? ($item['productName'] ?? 'CJ Gadget Item'),
+                    'sku' => $item['productSku'] ?? ('CJ-SKU-' . strtoupper(substr(md5($pid), 0, 8))),
+                    'sellPrice' => (float)($item['sellPrice'] ?? 15.00),
+                    'mainImage' => $item['productImage'] ?? '',
+                    'images' => $item['productImages'] ?? [$item['productImage'] ?? ''],
+                    'description' => $item['description'] ?? ($item['productNameEn'] ?? ''),
+                    'categoryName' => $item['categoryName'] ?? 'Consumer Electronics',
+                    'variants' => $variants,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::warning("CJ Live Details Fetch Warning for PID {$pid}: " . $e->getMessage());
+        }
+
+        return self::getDemoProductDetails($pid);
+    }
+
+    private static function getDemoProductDetails($pid): array
+    {
+        return [
+            'pid' => $pid,
+            'nameEn' => 'AtoZ Smart Gadget Pro Edition',
+            'sku' => 'CJ-GADGET-' . strtoupper(substr(md5($pid), 0, 6)),
+            'sellPrice' => 19.50,
+            'mainImage' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+            'images' => [
+                'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+            ],
+            'description' => 'Premium high-performance smart gadget designed for modern lifestyle and maximum convenience.',
+            'categoryName' => 'Consumer Electronics',
+            'variants' => [
+                [
+                    'vid' => 'CJ-VID-BLK-64G-' . substr(md5($pid), 0, 8),
+                    'variantSku' => 'CJ-VAR-BLK',
+                    'variantName' => 'Midnight Black / Standard',
+                    'costPrice' => 19.50,
+                    'image' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+                    'inventory' => 250,
+                    'option1_name' => 'Color',
+                    'option1_value' => 'Midnight Black',
+                    'option2_name' => 'Edition',
+                    'option2_value' => 'Standard',
+                ],
+                [
+                    'vid' => 'CJ-VID-SLV-128G-' . substr(md5($pid), 0, 8),
+                    'variantSku' => 'CJ-VAR-SLV',
+                    'variantName' => 'Titanium Silver / Pro',
+                    'costPrice' => 24.50,
+                    'image' => 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+                    'inventory' => 180,
+                    'option1_name' => 'Color',
+                    'option1_value' => 'Titanium Silver',
+                    'option2_name' => 'Edition',
+                    'option2_value' => 'Pro',
+                ]
+            ]
+        ];
     }
 }

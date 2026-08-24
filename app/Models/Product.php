@@ -35,6 +35,11 @@ class Product extends Model
         return $this->hasOne(CjProduct::class, 'internal_product_id');
     }
 
+    public function variants(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id');
+    }
+
     public function orderItems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(OrderItem::class, 'product_id');
@@ -43,6 +48,46 @@ class Product extends Model
     public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProductReview::class, 'product_id');
+    }
+
+    public function approvedReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductReview::class, 'product_id')->where('status', 'approved');
+    }
+
+    public function media(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductMedia::class, 'product_id')->orderBy('sort_order', 'asc');
+    }
+
+    public function specifications(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductSpecification::class, 'product_id')->orderBy('sort_order', 'asc');
+    }
+
+    /**
+     * White-label customer thumbnail URL (proxied if external supplier URL)
+     */
+    public function getCustomerThumbnailAttribute(): string
+    {
+        if (!empty($this->thumbnail_image)) {
+            if (str_starts_with($this->thumbnail_image, 'http')) {
+                return route('media.product.thumbnail', ['product' => $this->id]);
+            }
+            return asset($this->thumbnail_image);
+        }
+        return asset('favicon.png');
+    }
+
+    public function getAverageRatingAttribute(): float
+    {
+        $avg = $this->reviews()->where('status', 'approved')->avg('rating');
+        return $avg ? round((float)$avg, 1) : 5.0;
+    }
+
+    public function getReviewCountAttribute(): int
+    {
+        return $this->reviews()->where('status', 'approved')->count();
     }
 
     protected static function booted()

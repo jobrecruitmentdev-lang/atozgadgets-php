@@ -18,37 +18,125 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'items.product', 'cjOrder']);
+        $query = Order::with(['user', 'orderAddress', 'items.product', 'cjOrder']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('order_number', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function($q) use ($search) {
-                      $q->where('first_name', 'LIKE', "%{$search}%")
-                        ->orWhere('last_name', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'LIKE', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('first_name', 'LIKE', "%{$search}%")
+                         ->orWhere('last_name', 'LIKE', "%{$search}%")
+                         ->orWhere('email', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('orderAddress', function($aq) use ($search) {
+                      $aq->where('first_name', 'LIKE', "%{$search}%")
+                         ->orWhere('last_name', 'LIKE', "%{$search}%")
+                         ->orWhere('email', 'LIKE', "%{$search}%");
                   });
+            });
+        }
+
+        $tab = $request->input('tab', 'all');
+        if ($tab === 'paid') {
+            $query->whereIn('payment_status', ['paid', 'completed', 'success']);
+        } elseif ($tab === 'pending') {
+            $query->where('payment_status', 'pending');
+        } elseif ($tab === 'cancelled') {
+            $query->where('status', 'cancelled');
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
 
+        $counts = [
+            'all' => Order::count(),
+            'paid' => Order::whereIn('payment_status', ['paid', 'completed', 'success'])->count(),
+            'pending' => Order::where('payment_status', 'pending')->count(),
+            'cancelled' => Order::where('status', 'cancelled')->count(),
+        ];
+
         $orders = $query->latest()->paginate(20)->withQueryString();
 
-        return view('admin.orders', compact('orders'));
+        return view('admin.orders', compact('orders', 'counts', 'tab'));
+    }
+
+    public function show($id)
+    {
+        $order = Order::with([
+            'user',
+            'items.product.cjProduct',
+            'items.variant',
+            'orderAddress',
+            'payments',
+            'paymentTransactions',
+            'cjOrder',
+            'supplierOrders',
+        ])->findOrFail($id);
+
+        return view('admin.orders.show', compact('order'));
     }
 
     public function fulfillWithCj($id)
     {
         try {
-            $result = CjOrderService::placeOrder($id);
             $order = Order::findOrFail($id);
+
+            // Guard: Never fulfill unpaid orders to prevent balance loss
+            if (!in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success'])) {
+                return redirect()->back()->with('error', 'Cannot fulfill order: Payment status is "' . ($order->payment_status ?? 'pending') . '". Orders must be paid before dispatching.');
+            }
+
+            $result = CjOrderService::placeOrder($id);
             $order->update(['status' => 'processing']);
 
             return redirect()->back()->with('success', 'Order dispatched to CJ Dropshipping successfully! CJ Order ID: ' . ($result['cjOrderId'] ?? ''));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'CJ Fulfillment Error: ' . $e->getMessage());
+        }
+    }
+
+    public function syncCjStatus($id)
+    {
+        try {
+            $order = Order::with('cjOrder')->findOrFail($id);
+            if (!$order->cjOrder || empty($order->cjOrder->cj_order_id)) {
+                return redirect()->back()->with('error', 'No CJ Order ID linked to sync.');
+            }
+
+            $detail = CjOrderService::getOrderDetail($order->cjOrder->cj_order_id);
+            if ($detail) {
+                $order->cjOrder->update([
+                    'status' => $detail['orderStatus'] ?? $order->cjOrder->status,
+                    'tracking_number' => $detail['trackNumber'] ?? $order->cjOrder->tracking_number,
+                    'logistic_name' => $detail['logisticName'] ?? $order->cjOrder->logistic_name,
+                ]);
+                return redirect()->back()->with('success', 'CJ Order status synced successfully.');
+            }
+
+            return redirect()->back()->with('info', 'CJ Order status check completed.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'CJ Sync Error: ' . $e->getMessage());
+        }
+    }
+
+    public function processRefund(Request $request, $id)
+    {
+        try {
+            $order = Order::findOrFail($id);
+            $amount = $request->input('amount') ? (float)$request->input('amount') : null;
+            $reason = $request->input('reason', 'Admin initiated refund');
+
+            $result = \App\Services\Payment\PaymentService::processRefund($order, $amount, $reason);
+
+            if ($result['success']) {
+                return redirect()->back()->with('success', 'Refund processed successfully! Refund Ref: ' . ($result['refund_id'] ?? ''));
+            }
+
+            return redirect()->back()->with('error', 'Refund failed: ' . ($result['error'] ?? 'Unknown error'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Refund Error: ' . $e->getMessage());
         }
     }
 
@@ -61,7 +149,8 @@ class OrderController extends Controller
 
     public function destroy($id)
     {
-        Order::destroy($id);
-        return redirect()->back()->with('success', 'Order deleted successfully!');
+        $order = Order::findOrFail($id);
+        $order->update(['status' => 'cancelled']);
+        return redirect()->back()->with('success', 'Order marked as cancelled successfully.');
     }
 }

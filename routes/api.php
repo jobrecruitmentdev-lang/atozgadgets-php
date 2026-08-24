@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 // STOREFRONT APIs (Matches old Node.js routes)
 // ==========================================
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->middleware('throttle:15,1')->group(function () {
     Route::post('login', [\App\Http\Controllers\Api\AuthController::class, 'login']);
     Route::post('register', [\App\Http\Controllers\Api\AuthController::class, 'register']);
 });
@@ -59,8 +59,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Unauthenticated CJ Webhook
+// Unauthenticated CJ & PayPal Webhooks
 Route::post('cj/webhook', [\App\Http\Controllers\Api\Admin\CJDropshippingController::class, 'webhook']);
+Route::post('webhooks/paypal', [\App\Http\Controllers\Webhooks\PayPalWebhookController::class, 'handle'])->name('webhooks.paypal');
 
 // ==========================================
 // ADMIN APIs (Matches old Node.js internal APIs)
@@ -91,7 +92,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 // ==========================================
 // PAYMENT APIs
 // ==========================================
-Route::prefix('payment')->group(function () {
+Route::prefix('payment')->middleware('throttle:20,1')->group(function () {
     Route::post('paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder']);
     Route::post('paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder']);
 });

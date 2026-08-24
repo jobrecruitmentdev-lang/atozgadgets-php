@@ -31,8 +31,11 @@ class CjSyncServiceTest extends TestCase
             ]
         );
 
+        \App\Models\Setting::set('cj_sandbox_mode', '0');
+        \Illuminate\Support\Facades\Cache::put('cj_access_token', 'valid_test_token', 3600);
+
         \Illuminate\Support\Facades\Http::fake([
-            '*/product/listV2*' => \Illuminate\Support\Facades\Http::response([
+            '*/product/list*' => \Illuminate\Support\Facades\Http::response([
                 'code' => 200,
                 'result' => true,
                 'data' => [

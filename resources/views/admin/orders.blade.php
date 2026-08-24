@@ -35,17 +35,32 @@
 
 <div class="page-header">
     <h1 class="page-title">Orders</h1>
-    <button class="btn-outline">
-        <i data-lucide="filter" style="width:16px;"></i> Advanced Filters
-    </button>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <a href="{{ route('admin.orders', ['tab' => 'all']) }}" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; {{ ($tab ?? 'all') === 'all' ? 'background: var(--accent); color: #0a0a0c;' : 'background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);' }}">
+            All ({{ $counts['all'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.orders', ['tab' => 'paid']) }}" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; {{ ($tab ?? 'all') === 'paid' ? 'background: #10b981; color: #0a0a0c;' : 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.3);' }}">
+            ● Paid ({{ $counts['paid'] ?? 0 }})
+        </a>
+        <a href="{{ route('admin.orders', ['tab' => 'pending']) }}" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; {{ ($tab ?? 'all') === 'pending' ? 'background: #f59e0b; color: #0a0a0c;' : 'background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3);' }}">
+            ● Pending / Abandoned ({{ $counts['pending'] ?? 0 }})
+        </a>
+    </div>
 </div>
 
 <div class="data-card">
     <div class="filter-bar">
-        <div class="search-wrapper">
-            <i data-lucide="search"></i>
-            <input type="text" placeholder="Search orders...">
-        </div>
+        <form method="GET" action="{{ route('admin.orders') }}" style="display:flex; gap:12px; width:100%;">
+            <input type="hidden" name="tab" value="{{ $tab ?? 'all' }}">
+            <div class="search-wrapper" style="flex-grow:1;">
+                <i data-lucide="search"></i>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search orders, customers, or emails...">
+            </div>
+            <button type="submit" class="btn-outline" style="padding: 10px 18px; background: rgba(201, 169, 98, 0.1); border-color: var(--accent); color: var(--accent);">Search</button>
+            @if(request('search'))
+                <a href="{{ route('admin.orders', ['tab' => $tab ?? 'all']) }}" class="btn-outline" style="color:var(--text-secondary); text-decoration:none;">Clear</a>
+            @endif
+        </form>
     </div>
     
     <table>
@@ -53,24 +68,39 @@
             <tr>
                 <th>Order ID</th>
                 <th>Date</th>
-                <th>User ID</th>
+                <th>Customer</th>
                 <th>Items</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th>Payment</th>
+                <th>CJ Dropshipping</th>
                 <th style="text-align: right;">Actions</th>
             </tr>
         </thead>
         <tbody>
             @forelse($orders as $order)
                 <tr>
-                    <td>#{{ $order->id }}</td>
+                    <td style="font-weight: 700;">#{{ $order->id }}</td>
                     <td>{{ $order->created_at->format('M d, Y') }}</td>
-                    <td style="font-weight: 600;">{{ $order->user ? $order->user->first_name . ' ' . $order->user->last_name : 'Guest' }}</td>
+                    @php
+                        $custName = 'Guest Customer';
+                        if ($order->user) {
+                            $custName = $order->user->first_name . ' ' . $order->user->last_name;
+                        } elseif ($order->orderAddress && !empty($order->orderAddress->first_name)) {
+                            $custName = $order->orderAddress->first_name . ' ' . ($order->orderAddress->last_name ?? '');
+                        } elseif ($order->shipping_address) {
+                            $sa = is_array($order->shipping_address) ? $order->shipping_address : json_decode($order->shipping_address, true);
+                            if (!empty($sa['first_name'])) {
+                                $custName = $sa['first_name'] . ' ' . ($sa['last_name'] ?? '');
+                            }
+                        }
+                    @endphp
+                    <td style="font-weight: 600;">{{ $custName }}</td>
                     <td>{{ $order->items->count() }} items</td>
                     <td style="font-weight: 700; color: var(--accent);">${{ number_format($order->total_amount, 2) }}</td>
                     <td>
                         @php
-                            $status = strtolower($order->order_status ?? 'pending');
+                            $status = strtolower($order->status ?? 'pending');
                             $bgColor = 'rgba(128,128,128,0.1)';
                             $fgColor = 'var(--text-primary)';
                             if ($status == 'completed' || $status == 'delivered') {
@@ -84,15 +114,43 @@
                                 $fgColor = '#ef4444';
                             }
                         @endphp
-                        <span style="padding: 4px 8px; border-radius: 4px; background: {{ $bgColor }}; color: {{ $fgColor }}; font-size: 12px; font-weight: 600;">{{ ucfirst($order->order_status ?? 'Pending') }}</span>
+                        <span style="padding: 4px 8px; border-radius: 4px; background: {{ $bgColor }}; color: {{ $fgColor }}; font-size: 12px; font-weight: 600;">{{ ucfirst($order->status ?? 'Pending') }}</span>
+                    </td>
+                    <td>
+                        @php
+                            $pStatus = strtolower($order->payment_status ?? 'pending');
+                            $pBg = $pStatus === 'paid' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)';
+                            $pFg = $pStatus === 'paid' ? '#059669' : '#d97706';
+                        @endphp
+                        <span style="padding: 4px 8px; border-radius: 4px; background: {{ $pBg }}; color: {{ $pFg }}; font-size: 11px; font-weight: 700; text-transform: uppercase;">{{ $order->payment_status ?? 'Pending' }}</span>
+                    </td>
+                    <td>
+                        @if($order->cjOrder)
+                            <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; background:rgba(201,169,98,0.15); color:#c9a962; padding:3px 8px; border-radius:6px; border:1px solid rgba(201,169,98,0.3);">
+                                <i data-lucide="check" style="width:12px;"></i> {{ $order->cjOrder->cj_order_id }}
+                            </span>
+                        @elseif(in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success']))
+                            <form action="{{ route('admin.orders.fulfill_cj', $order->id) }}" method="POST" style="display:inline;">
+                                @csrf
+                                <button type="submit" style="padding: 4px 10px; border-radius: 6px; background: linear-gradient(135deg, #c9a962, #b89851); color: #0a0a0c; font-size: 11px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Dispatch to CJ Dropshipping">
+                                    <i data-lucide="send" style="width:12px;"></i> Fulfill on CJ
+                                </button>
+                            </form>
+                        @else
+                            <span style="font-size:11px; color:var(--text-secondary);">Awaiting Payment</span>
+                        @endif
+                    </td>
                     <td style="text-align: right; white-space: nowrap;">
-                        <button onclick="openOrderModal({{ json_encode($order) }})" style="background:transparent; border:none; color:var(--accent); cursor:pointer; padding: 4px;"><i data-lucide="eye" style="width:16px;"></i></button>
-                        <button type="button" style="background:transparent; border:none; color:#ef4444; cursor:pointer; padding: 4px;" onclick="showOrderDeleteConfirm({{ $order->id }})" title="Delete Order"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                        <a href="{{ route('admin.orders.show', $order->id) }}" style="display:inline-flex; align-items:center; background:rgba(37,99,235,0.1); border:1px solid rgba(37,99,235,0.2); color:var(--accent); border-radius:6px; padding: 4px 8px; font-size:12px; font-weight:700; margin-right:4px;" title="Open Control Tower">
+                            <i data-lucide="shield-check" style="width:14px; margin-right:4px;"></i> Tower
+                        </a>
+                        <button onclick="openOrderModal({{ json_encode($order) }})" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; padding: 4px;" title="Quick Preview"><i data-lucide="eye" style="width:16px;"></i></button>
+                        <button type="button" style="background:transparent; border:none; color:#ef4444; cursor:pointer; padding: 4px;" onclick="showOrderDeleteConfirm({{ $order->id }})" title="Cancel Order"><i data-lucide="trash-2" style="width:16px;"></i></button>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="empty-state">No orders found for the current filters.</td>
+                    <td colspan="9" class="empty-state">No orders found for the current filters.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -211,7 +269,7 @@
         document.getElementById('modalTotal').innerText = '$' + parseFloat(order.total_amount || 0).toFixed(2);
 
         // Set status
-        document.getElementById('modalOrderStatus').value = order.order_status || 'pending';
+        document.getElementById('modalOrderStatus').value = order.status || 'pending';
         document.getElementById('modalPaymentStatus').value = order.payment_status || 'pending';
         
         // Set form action
@@ -222,11 +280,13 @@
         tbody.innerHTML = '';
         if (order.items && order.items.length > 0) {
             order.items.forEach(item => {
+                const prodName = item.product ? item.product.name : (item.product_name || 'Product #' + (item.product_id || ''));
+                const itemTotal = parseFloat(item.total_price || item.subtotal || ((item.unit_price || 0) * (item.quantity || 1))).toFixed(2);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">${item.product_name}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid var(--border-color);">${prodName}</td>
                     <td style="padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">${item.quantity}</td>
-                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border-color); font-weight: 600;">$${parseFloat(item.subtotal || 0).toFixed(2)}</td>
+                    <td style="padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border-color); font-weight: 600;">$${itemTotal}</td>
                 `;
                 tbody.appendChild(tr);
             });

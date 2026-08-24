@@ -116,7 +116,7 @@
                 <a href="{{ route('admin.catalog.categories') }}" class="nav-item {{ request()->routeIs('admin.catalog.categories') ? 'active' : '' }}"><i data-lucide="layout-grid" style="width:16px;"></i> Categories</a>
                 <a href="{{ route('admin.catalog.brands') }}" class="nav-item {{ request()->routeIs('admin.catalog.brands') ? 'active' : '' }}"><i data-lucide="tags" style="width:16px;"></i> Brands</a>
                 <a href="{{ route('admin.catalog.import') }}" class="nav-item {{ request()->routeIs('admin.catalog.import') ? 'active' : '' }}"><i data-lucide="download" style="width:16px;"></i> CJ Import</a>
-                <a href="/admin-strategy-hub.html" target="_blank" class="nav-item" style="color: #c9a962; font-weight: 600;"><i data-lucide="compass" style="width:16px;"></i> Strategy Hub <span style="font-size:9px; background:rgba(201,169,98,0.2); color:#c9a962; padding:2px 6px; border-radius:4px; margin-left:auto;">2.0</span></a>
+                <a href="{{ route('admin.strategy_hub') }}" class="nav-item {{ request()->routeIs('admin.strategy_hub') ? 'active' : '' }}" style="color: #c9a962; font-weight: 600;"><i data-lucide="compass" style="width:16px;"></i> Strategy Hub <span style="font-size:9px; background:rgba(201,169,98,0.2); color:#c9a962; padding:2px 6px; border-radius:4px; margin-left:auto;">2.0</span></a>
             </div>
             
             <div class="nav-group">

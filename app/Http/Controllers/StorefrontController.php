@@ -81,18 +81,54 @@ class StorefrontController extends Controller
 
     public function product($slug)
     {
-        $product = Product::where(function($query) use ($slug) {
-            $query->where('slug', $slug);
-            if (is_numeric($slug)) {
-                $query->orWhere('id', (int)$slug);
-            }
-        })->where('is_active', true)->firstOrFail();
+        $product = Product::with(['variants', 'media', 'specifications', 'approvedReviews.user', 'category.parent'])
+            ->where(function($query) use ($slug) {
+                $query->where('slug', $slug);
+                if (is_numeric($slug)) {
+                    $query->orWhere('id', (int)$slug);
+                }
+            })
+            ->where('is_active', true)
+            ->firstOrFail();
 
         $relatedProducts = Product::where('category_id', $product->category_id)
                                   ->where('id', '!=', $product->id)
+                                  ->where('is_active', true)
                                   ->limit(4)
                                   ->get();
                                   
         return view('store.product', compact('product', 'relatedProducts'));
+    }
+
+    public function submitReview(Request $request, $slug)
+    {
+        $product = Product::where('slug', $slug)->firstOrFail();
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'title' => 'nullable|string|max:150',
+            'review' => 'required|string|min:5|max:2000',
+        ]);
+
+        $userId = auth()->id() ?? 1; // Default to current user or guest user ID 1
+        $hasPurchased = false;
+
+        if (auth()->check()) {
+            $hasPurchased = \App\Models\OrderItem::whereHas('order', function ($q) {
+                $q->where('user_id', auth()->id())->where('payment_status', 'paid');
+            })->where('product_id', $product->id)->exists();
+        }
+
+        \App\Models\ProductReview::create([
+            'user_id' => $userId,
+            'product_id' => $product->id,
+            'rating' => $validated['rating'],
+            'title' => $validated['title'] ?? null,
+            'review' => $validated['review'],
+            'status' => 'approved', // Auto-approved for verified display
+            'verified_purchase' => $hasPurchased,
+        ]);
+
+        return back()->with('success', 'Thank you! Your verified review has been published.');
     }
 }

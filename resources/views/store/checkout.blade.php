@@ -3,7 +3,13 @@
 @section('title', 'Secure Checkout - AtoZGadgets')
 
 @section('content')
-<script src="https://www.paypal.com/sdk/js?client-id={{ config('paypal.client_id') }}&currency=USD" defer></script>
+@php
+    $paypalMode = \App\Models\Setting::get('paypal_mode', 'sandbox');
+    $paypalClientId = ($paypalMode === 'live')
+        ? (\App\Models\Setting::get('paypal_live_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')))
+        : (\App\Models\Setting::get('paypal_sandbox_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')));
+@endphp
+<script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency=USD&disable-funding=card,paylater" defer></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
@@ -14,37 +20,37 @@
 
     /* Steps */
     .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; font-size: 14px; }
-    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); }
-    .step-btn.active { color: var(--text-primary); }
+    .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; }
+    .step-btn.active { color: var(--accent); font-weight: 700; }
 
     /* Forms */
-    .form-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+    .form-section h2 { font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary); }
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
     @media (min-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } }
     
-    .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
-    .input-group input, .input-group select { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--bg-color); color: var(--text-primary); font-size: 14px; outline: none; transition: border-color 0.3s; }
-    .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
+    .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+    .input-group input, .input-group select { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(15, 15, 20, 0.85); color: var(--text-primary); font-size: 14px; outline: none; transition: all 0.2s; }
+    .input-group input:focus, .input-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201, 169, 98, 0.2); }
 
     /* Payment Methods */
-    .payment-option { border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(59,130,246,0.05); margin-bottom: 16px; }
+    .payment-option { border: 1px solid rgba(201, 169, 98, 0.35); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; background: rgba(201, 169, 98, 0.06); margin-bottom: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .payment-header { display: flex; justify-content: space-between; align-items: center; }
-    .payment-title { font-weight: 700; font-size: 16px; color:#3b82f6; }
-    .payment-desc { font-size: 12px; color: var(--text-secondary); }
+    .payment-title { font-weight: 700; font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .payment-desc { font-size: 13px; color: var(--text-secondary); }
 
     /* Order Summary block */
-    .summary-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; }
-    .summary-item { display: flex; gap: 12px; margin-bottom: 16px; }
-    .summary-item img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: #000; }
+    .summary-card { background: rgba(20, 20, 28, 0.8); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .summary-item { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+    .summary-item img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; background: #000; border: 1px solid var(--glass-border); }
     .item-info { flex-grow: 1; }
-    .item-info p { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    .item-info p { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
     .item-info span { font-size: 12px; color: var(--text-secondary); }
-    .item-price { font-size: 14px; font-weight: 600; }
+    .item-price { font-size: 14px; font-weight: 700; color: var(--accent); }
 
     .summary-totals { border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 8px; }
-    .total-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px; }
-    .total-row.final { font-size: 18px; font-weight: 700; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 4px; }
-    .free-text { color: #10b981; font-weight: 600; }
+    .total-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px; color: var(--text-secondary); }
+    .total-row.final { font-size: 18px; font-weight: 700; border-top: 1px solid var(--glass-border); padding-top: 16px; margin-top: 4px; color: var(--text-primary); }
+    .free-text { color: #10b981; font-weight: 700; }
 
     /* Utilities */
     .hidden { display: none; }
@@ -134,19 +140,83 @@
         <!-- Step 2: Payment -->
         <div id="step-2" class="form-section hidden" data-aos="fade-in">
             <h2>Select Payment Method</h2>
-            <div class="payment-option">
-                <div class="payment-header">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="payment-title"><i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:4px;"></i> PayPal</span>
+
+            <!-- Payment Method Tabs -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+                <div id="tab-card-select" class="payment-tab active" onclick="switchPaymentMethod('card')" style="padding:16px; border-radius:14px; border:2px solid var(--accent); background:rgba(201, 169, 98, 0.1); cursor:pointer; text-align:center; transition:all 0.2s;">
+                    <div style="font-weight:700; color:var(--accent); font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i data-lucide="credit-card" style="width:18px;"></i> Credit / Debit Card
                     </div>
+                    <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Visa, Mastercard, Amex</div>
                 </div>
-                <p class="payment-desc">Fast, secure checkout via PayPal.</p>
+                <div id="tab-paypal-select" class="payment-tab" onclick="switchPaymentMethod('paypal')" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255, 255, 255, 0.03); cursor:pointer; text-align:center; transition:all 0.2s;">
+                    <div style="font-weight:700; color:var(--text-primary); font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i data-lucide="shield-check" style="width:18px;"></i> PayPal
+                    </div>
+                    <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">PayPal Wallet & Fast Pay</div>
+                </div>
+            </div>
+
+            <!-- Card Payment Container -->
+            <div id="card-payment-box">
+                <form id="card-payment-form" onsubmit="handleCardPayment(event)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <span style="font-size:13px; font-weight:600; color:var(--text-primary);">Card Details</span>
+                        <button type="button" onclick="autoFillTestCard()" style="background:none; border:1px dashed var(--accent); color:var(--accent); font-size:11px; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:600;">
+                            ⚡ Auto-Fill Test Card
+                        </button>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Name on Card</label>
+                        <input type="text" id="card_name" name="card_name" placeholder="John Doe" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Card Number</label>
+                        <input type="text" id="card_number" name="card_number" placeholder="4035 7777 7777 7777" maxlength="19" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; letter-spacing:1px;">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+                        <div>
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Month</label>
+                            <input type="text" id="exp_month" name="exp_month" placeholder="12" maxlength="2" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Year</label>
+                            <input type="text" id="exp_year" name="exp_year" placeholder="28" maxlength="4" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">CVV / CVC</label>
+                            <input type="password" id="cvv" name="cvv" placeholder="123" maxlength="4" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
+                        </div>
+                    </div>
+
+                    <p id="card-error" style="color:#ef4444; font-size:13px; margin-bottom:14px; display:none; padding:10px 14px; border-radius:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);"></p>
+
+                    <button type="submit" id="pay-card-btn" class="btn-primary" style="width:100%; padding:15px; border-radius:12px; background:var(--accent); color:#0a0a0c; font-weight:800; font-size:15px; border:none; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(201,169,98,0.3); transition:all 0.2s;">
+                        <span>Pay Securely with Card</span>
+                        <div class="loader" id="card-pay-loader" style="border-top-color:#000;"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- PayPal Container -->
+            <div id="paypal-payment-box" style="display:none;">
+                <div class="payment-option">
+                    <div class="payment-header">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="payment-title"><i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:4px;"></i> Official PayPal</span>
+                        </div>
+                    </div>
+                    <p class="payment-desc">Fast, secure checkout via official PayPal popup.</p>
+                </div>
+                
+                <div id="paypal-button-container" style="margin-top: 20px;"></div>
             </div>
             
-            <div id="paypal-button-container" style="margin-top: 24px;"></div>
-            
-            <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:16px;">
-                By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
+            <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:20px;">
+                🔒 256-bit Encrypted Checkout · By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
             </p>
         </div>
     </div>
@@ -156,25 +226,43 @@
         <div class="summary-card">
             <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 24px;">Order Summary</h2>
             <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;">
-                @php $subtotal = 29.99; @endphp
-                <div class="summary-item">
-                    <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80" alt="Watch">
-                    <div class="item-info">
-                        <p>Ultra Smart Watch Series 9</p>
-                        <span>Qty: 1</span>
+                @php 
+                    $subtotal = 0; 
+                @endphp
+                @forelse($cart as $id => $item)
+                    @php 
+                        $itemPrice = (float)($item['price'] ?? 0);
+                        $itemQty = (int)($item['quantity'] ?? 1);
+                        $subtotal += ($itemPrice * $itemQty);
+                    @endphp
+                    <div class="summary-item">
+                        <img src="{{ $item['image'] ?? asset('favicon.png') }}" alt="{{ $item['name'] ?? 'Product' }}" onerror="this.src='{{ asset('favicon.png') }}'">
+                        <div class="item-info">
+                            <p style="font-weight:600; color:var(--text-primary);">{{ $item['name'] ?? 'Product' }}</p>
+                            <span>Qty: {{ $itemQty }} &times; ${{ number_format($itemPrice, 2) }}</span>
+                        </div>
+                        <div class="item-price">${{ number_format($itemPrice * $itemQty, 2) }}</div>
                     </div>
-                    <div class="item-price">$29.99</div>
-                </div>
+                @empty
+                    <p style="color:var(--text-secondary); font-size:14px; text-align:center; padding:20px 0;">No items in cart.</p>
+                @endforelse
             </div>
+
+            @php
+                $shippingCost = ($subtotal >= 30 || $subtotal == 0) ? 0 : 5.99;
+                $grandTotal = $subtotal + $shippingCost;
+            @endphp
 
             <div class="summary-totals">
                 <div class="total-row"><span style="color:var(--text-secondary);">Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
                 <div class="total-row">
                     <span style="color:var(--text-secondary);">Shipping</span>
                     @if($subtotal >= 30) <span class="free-text">FREE</span>
-                    @else <span>$5.99</span> @php $subtotal += 5.99; @endphp @endif
+                    @elseif($subtotal > 0) <span>$5.99</span>
+                    @else <span>$0.00</span>
+                    @endif
                 </div>
-                <div class="total-row final"><span>Total</span><span>${{ number_format($subtotal, 2) }}</span></div>
+                <div class="total-row final"><span>Total</span><span style="color:var(--accent);">${{ number_format($grandTotal, 2) }}</span></div>
             </div>
         </div>
     </div>
@@ -238,6 +326,16 @@
                 
                 if(data.success) {
                     document.getElementById('display-email').innerText = document.getElementById('user-email').value;
+                    if(data.dev_otp) {
+                        const otpInput = document.getElementById('otp-input');
+                        if (otpInput) otpInput.value = data.dev_otp;
+                        const resendMsg = document.getElementById('resend-msg');
+                        if (resendMsg) {
+                            resendMsg.innerText = `[DEV Mode: Test OTP ${data.dev_otp} Auto-Filled (or use 123456)]`;
+                            resendMsg.style.color = 'var(--accent)';
+                            resendMsg.style.display = 'block';
+                        }
+                    }
                     step1.classList.add('hidden');
                     step15.classList.remove('hidden');
                     btnStep1.classList.remove('active');
@@ -302,8 +400,60 @@
             }, 5000);
         });
 
-        // Variable to ensure PayPal is rendered only once
+        // Variables for PayPal Order resolution
+        let currentInternalOrderId = null;
         let isPayPalRendered = false;
+
+        function initPayPalButtons() {
+            if (isPayPalRendered || !document.getElementById('paypal-button-container')) return;
+            if (typeof paypal === 'undefined') {
+                setTimeout(initPayPalButtons, 300);
+                return;
+            }
+
+            isPayPalRendered = true;
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    const formData = new FormData(shippingForm);
+                    const address = {};
+                    formData.forEach((value, key) => address[key] = value);
+
+                    return fetch("{{ route('payment.paypal.create') }}", {
+                        method: "post",
+                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" },
+                        body: JSON.stringify({ address: address })
+                    }).then(res => res.json()).then(orderData => {
+                        if (!orderData || !orderData.id) {
+                            const errMsg = orderData.error || orderData.message || (orderData.details && orderData.details[0] ? orderData.details[0].description : 'Server failed to create PayPal Order');
+                            throw new Error(errMsg);
+                        }
+                        currentInternalOrderId = orderData.order_id;
+                        return orderData.id;
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return fetch("{{ route('payment.paypal.capture') }}", {
+                        method: "post",
+                        headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" },
+                        body: JSON.stringify({ 
+                            paypal_order_id: data.orderID,
+                            order_id: currentInternalOrderId 
+                        })
+                    }).then(res => res.json()).then(orderData => {
+                        if (orderData.success) {
+                            localStorage.removeItem('atoz_shipping_cache'); // Clear cache on success
+                            window.location.href = orderData.redirect;
+                        } else {
+                            alert('Payment capture failed: ' + (orderData.error || 'Unknown error'));
+                        }
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal Integration Error:', err);
+                    alert('Payment Error: ' + (err.message || 'Unable to process PayPal payment. Please try again.'));
+                }
+            }).render('#paypal-button-container');
+        }
 
         // Step 1.5 -> Step 2 (Verify OTP)
         verifyOtpBtn.addEventListener('click', async () => {
@@ -329,42 +479,8 @@
                     btnStep15.classList.remove('active');
                     btnStep2.classList.add('active');
 
-                    // Initialize PayPal SDK ONLY when the container is visible
-                    if(typeof paypal !== 'undefined' && !isPayPalRendered) {
-                        isPayPalRendered = true;
-                        paypal.Buttons({
-                            createOrder: function(data, actions) {
-                                return fetch("{{ route('payment.paypal.create') }}", {
-                                    method: "post",
-                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" }
-                                }).then(res => res.json()).then(orderData => {
-                                    if (!orderData || !orderData.id) {
-                                        const errMsg = orderData.error || orderData.message || (orderData.details && orderData.details[0] ? orderData.details[0].description : 'Server failed to create PayPal Order');
-                                        throw new Error(errMsg);
-                                    }
-                                    return orderData.id;
-                                });
-                            },
-                            onApprove: function(data, actions) {
-                                return fetch("{{ route('payment.paypal.capture') }}", {
-                                    method: "post",
-                                    headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}", "Content-Type": "application/json", "Accept": "application/json" },
-                                    body: JSON.stringify({ paypal_order_id: data.orderID })
-                                }).then(res => res.json()).then(orderData => {
-                                    if (orderData.success) {
-                                        localStorage.removeItem('atoz_shipping_cache'); // Clear cache on success
-                                        window.location.href = orderData.redirect;
-                                    } else {
-                                        alert('Payment capture failed: ' + (orderData.error || 'Unknown error'));
-                                    }
-                                });
-                            },
-                            onError: function(err) {
-                                console.error('PayPal Integration Error:', err);
-                                alert('Payment Error: ' + (err.message || 'Unable to process PayPal payment. Please try again.'));
-                            }
-                        }).render('#paypal-button-container');
-                    }
+                    // Initialize PayPal SDK securely
+                    initPayPalButtons();
                 } else {
                     document.getElementById('otp-error').innerText = data.error || 'Invalid OTP code.';
                     document.getElementById('otp-error').style.display = 'block';
@@ -377,6 +493,96 @@
             document.getElementById('otp-loader').style.display = 'none';
             verifyOtpBtn.disabled = false;
         });
+
+        // Card number auto-spacing
+        const cardNumInput = document.getElementById('card_number');
+        if (cardNumInput) {
+            cardNumInput.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                val = val.substring(0, 16);
+                let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+                e.target.value = formatted;
+            });
+        }
     });
+
+    // Switch Payment Method Tab
+    function switchPaymentMethod(method) {
+        const cardBox = document.getElementById('card-payment-box');
+        const paypalBox = document.getElementById('paypal-payment-box');
+        const tabCard = document.getElementById('tab-card-select');
+        const tabPaypal = document.getElementById('tab-paypal-select');
+
+        if (method === 'card') {
+            cardBox.style.display = 'block';
+            paypalBox.style.display = 'none';
+            tabCard.style.border = '2px solid var(--accent)';
+            tabCard.style.background = 'rgba(201, 169, 98, 0.1)';
+            tabCard.querySelector('div').style.color = 'var(--accent)';
+            tabPaypal.style.border = '1px solid var(--glass-border)';
+            tabPaypal.style.background = 'rgba(255, 255, 255, 0.03)';
+            tabPaypal.querySelector('div').style.color = 'var(--text-primary)';
+        } else {
+            cardBox.style.display = 'none';
+            paypalBox.style.display = 'block';
+            tabPaypal.style.border = '2px solid var(--accent)';
+            tabPaypal.style.background = 'rgba(201, 169, 98, 0.1)';
+            tabPaypal.querySelector('div').style.color = 'var(--accent)';
+            tabCard.style.border = '1px solid var(--glass-border)';
+            tabCard.style.background = 'rgba(255, 255, 255, 0.03)';
+            tabCard.querySelector('div').style.color = 'var(--text-primary)';
+        }
+    }
+
+    // Auto-fill Test Card Details
+    function autoFillTestCard() {
+        document.getElementById('card_name').value = 'John Doe';
+        document.getElementById('card_number').value = '4035 7777 7777 7777';
+        document.getElementById('exp_month').value = '12';
+        document.getElementById('exp_year').value = '28';
+        document.getElementById('cvv').value = '123';
+    }
+
+    // Handle Direct Card Payment Submission
+    async function handleCardPayment(e) {
+        e.preventDefault();
+        const btn = document.getElementById('pay-card-btn');
+        const loader = document.getElementById('card-pay-loader');
+        const errorEl = document.getElementById('card-error');
+
+        btn.disabled = true;
+        loader.style.display = 'inline-block';
+        errorEl.style.display = 'none';
+
+        const form = document.getElementById('card-payment-form');
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch("{{ route('payment.card') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                localStorage.removeItem('atoz_shipping_cache');
+                window.location.href = data.redirect;
+            } else {
+                errorEl.innerText = data.error || (data.message || 'Card payment processing failed.');
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        } catch (err) {
+            errorEl.innerText = 'Network error during card payment. Please try again.';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            loader.style.display = 'none';
+        }
+    }
 </script>
 @endsection

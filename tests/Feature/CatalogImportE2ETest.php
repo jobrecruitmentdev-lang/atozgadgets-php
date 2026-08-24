@@ -21,8 +21,11 @@ class CatalogImportE2ETest extends TestCase
         if (!\App\Models\User::find(1)) {
             \App\Models\User::create([
                 'id' => 1,
-                'name' => 'Admin User',
+                'first_name' => 'Admin',
+                'last_name' => 'User',
                 'email' => 'admin@example.com',
+                'mobile' => '1234567890',
+                'role_id' => 1,
                 'password' => bcrypt('password'),
             ]);
         }
@@ -31,12 +34,13 @@ class CatalogImportE2ETest extends TestCase
 
         // Ensure category ID 1 exists since the controller hardcodes it
         if (!Category::find(1)) {
-            Category::create([
-                'id' => 1,
-                'name' => 'Test Category',
-                'slug' => 'test-category',
-                'status' => 'active',
-            ]);
+            Category::firstOrCreate(
+                ['slug' => 'test-category'],
+                [
+                    'name' => 'Test Category',
+                    'status' => 'active',
+                ]
+            );
         }
 
         // Ensure subcategory ID 1 exists
@@ -65,6 +69,7 @@ class CatalogImportE2ETest extends TestCase
             'pid' => 'CJ-TEST-001',
             'title' => 'Awesome Drone',
             'price' => 45.50,
+            'markup' => 2.0,
             'image' => 'https://example.com/drone.jpg',
             'category' => 'Drones'
         ];

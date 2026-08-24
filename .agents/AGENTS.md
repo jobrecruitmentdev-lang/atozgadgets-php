@@ -7,7 +7,10 @@
   2. Perform quality review and price customization locally.
   3. Run `npm run sync:live -- --push` or use `cj_products_export.json` to push curated product records directly from local database to live production server.
 - **Data Integrity Rule:** All imported products must preserve the nullable foreign key pointer in `CjProduct` table to allow seamless Phase 2 switching to own inventory (`fulfillment_type: 'own'`) without data loss.
-- **Test Isolation & Data Cleanup Rule:** Automated security or unit tests must use isolated database transactions or unique test prefixes (`E2E-TEST-*`). Test scripts must never leave raw XSS payloads (`<script>`) or dummy test records in the development/production database view. Run `npm run db:clean-garbage` to purge test artifacts.
+- **Test Isolation & Mandatory Immediate Purge Rule (CRITICAL):**
+  1. Automated tests **MUST** use `RefreshDatabase` and forced SQLite `:memory:` (`phpunit.xml`).
+  2. **ASAP DUMP PURGE:** Immediately after running ANY tests, the agent **MUST** purge any leftover test dump (mock categories like `api-tech-*`, test products like `<script>`, `Awesome Drone`, `SEC-*`, test users `admin_flow_*`, and orphaned records) and execute `php artisan optimize:clear`.
+  3. Never leave test garbage in the development or production database view. Detailed guidelines: `.agents/rules/test-cleanup-rule.md`.
 
 ## Hostinger Deployment & NPROC (Process) Limits
 - **Prisma Client Instantiation:** Hostinger Shared/Business hosting has a strict maximum background process limit (NPROC). Prisma's `query-engine` binary creates new detached processes. **NEVER** instantiate multiple `new PrismaClient()` instances in the backend code (e.g., in background workers, servers, etc.). Always import a single shared singleton instance from `prisma.ts`. Failure to do so will spawn multiple engines, hit the `EAGAIN` limit, and cause 503 errors.
@@ -27,4 +30,61 @@
 
 ## Agent Behavior & Verification Rules
 - **Cross-Verification Rule:** Never give false-positive answers or assume context based solely on markdown documentation. When checking `.md` files (like `ARCHITECTURE.md`), you must always cross-verify the information against the actual codebase files (using search or view tools) to ensure it is accurate and currently implemented. Our goal is to solve the problem, not scale it into the future with incorrect assumptions.
+
+
+
+## GStack Specialist Roles & Skills Integration
+This repository integrates the **gstack** engineering workflows located in `.agents/skills/`. The agent should leverage these specialized skills for tasks:
+- **Planning & Product:** `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/autoplan`
+- **Quality & Investigation:** `/investigate`, `/review`, `/cso` (security audit), `/health`
+- **Testing & UI:** `/qa`, `/browse`, `/design-review`, `/design-html`
+- **Deployment & Flow:** `/ship`, `/land-and-deploy`, `/context-save`, `/context-restore`
+
+## Dual Memory & State Bridge Protocol (.agents/state/)
+Every subagent session MUST check `.agents/state/current-task.md` on startup to recover task context and avoid starting from scratch.
+- **Ephemeral State Bridge**: Located in `.agents/state/` (`current-task.md`, `findings.md`, `decisions.md`, `changed-files.md`, `test-results.md`, `blockers.md`).
+- **Permanent Knowledge Vault**: Managed by the `obsidian-knowledge-manager` skill in `knowledge-vault/`.
+- **Runtime Ground Truth Rule**: Obsidian is project memory, NOT runtime truth. Truth is ALWAYS `Database + Code + Executed Test Results + Actual API Responses`.
+
+## 18 Critical Operating Rules (10-Customer Hardening)
+1. Never rewrite working architecture without concrete evidence.
+2. Never introduce speculative heavy infrastructure (Kafka/Redis clusters) on Hostinger.
+3. Never claim a bug is fixed without an automated test passing.
+4. Never claim a test passed without actually running it in the shell.
+5. Never treat HTTP 200 as business success.
+6. Never trust frontend prices or order totals.
+7. Never trust frontend order IDs.
+8. Never trust frontend payment status flags.
+9. Never send a CJ order without verified address and exact variant ID (VID).
+10. Never create a CJ order twice (Enforce DB unique lock).
+11. Never mark an order PAID from frontend JavaScript alone.
+12. Never perform external fulfillment API calls inside a DB payment transaction.
+13. Every external API operation must be retry-safe and idempotent.
+14. Every webhook must be idempotent against replay attacks.
+15. Preserve existing working functionality; prioritize surgery over overhaul.
+16. Do not fix unrelated LOW/MEDIUM issues during this sprint.
+17. If uncertain, STOP and report in blockers.md instead of guessing.
+18. No "looks correct" claims. Provide raw execution evidence.
+
+## Customer Data Boundary & White-Label Isolation (CRITICAL)
+- **CJ and supplier-specific information is INTERNAL ONLY.**
+- Never expose supplier/provider information through:
+  - Customer API responses
+  - Customer Blade views
+  - JSON endpoints
+  - HTML attributes
+  - JavaScript objects
+  - Page source
+  - Checkout responses
+  - Order confirmation responses
+  - Customer emails
+  - Customer account pages
+  - Public tracking pages
+  - Structured data / schema markup
+  - SEO metadata
+  - Sitemap URLs
+  - Public logs
+- Supplier-specific fields must only be accessible through authorized internal/admin services.
+- Customer-facing resources must use explicit allowlists (API Resources / DTOs), not raw model serialization.
+- CJ is an implementation detail of the Fulfillment Engine, never a customer-facing brand/entity.
 

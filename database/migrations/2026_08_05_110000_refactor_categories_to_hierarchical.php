@@ -53,10 +53,12 @@ class RefactorCategoriesToHierarchical extends Migration
                 }
 
                 // Drop foreign key and column from products
-                Schema::table('products', function (Blueprint $table) {
-                    $table->dropForeign(['subcategory_id']);
-                    $table->dropColumn('subcategory_id');
-                });
+                if (DB::getDriverName() !== 'sqlite') {
+                    Schema::table('products', function (Blueprint $table) {
+                        $table->dropForeign(['subcategory_id']);
+                        $table->dropColumn('subcategory_id');
+                    });
+                }
             }
 
             // 4. Drop sub_categories table

@@ -262,7 +262,7 @@
         <h2 class="section-heading"><i data-lucide="map-pin" style="width:22px;height:22px;"></i> Live Tracking & Secure Handover</h2>
         <div class="policy-content">
             <p>
-                Once your order leaves our warehouse, you will receive an automated shipping confirmation email containing your official tracking number and carrier link (e.g. CJPacket, DHL, FedEx, Bluedart, or India Post).
+                Once your order leaves our fulfillment center, you will receive an automated shipping confirmation email containing your official tracking number and live tracking link.
             </p>
             <p>
                 <strong>Delivery Verification:</strong> For high-value electronics and specific courier routes, an OTP code or physical signature is required upon delivery to ensure that the package is handed directly to the rightful recipient.
