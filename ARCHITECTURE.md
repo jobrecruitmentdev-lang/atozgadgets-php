@@ -47,3 +47,13 @@ Following strict Code-Quality and Ponytail reviews, critical bottlenecks were pa
 - B-Tree Indexes injected into `products`, `categories`, `carts`, and `orders` to eliminate full-table scans.
 - Hostinger NPROC constraints minimized by forcing `php artisan optimize` route/config caching.
 - **Obsidian ADR**: `knowledge-vault/Decisions/2026-07-25-Database-Performance-Indexes.md`
+
+## 8. Variant Hierarchy, Cart Composite Keys & Order Snapshots (2026-08-24 Update)
+- **CJ Variant Priority Normalization**: Resolves supplier variation via `variantNameEn` -> `variantName` -> `variantKey` -> `variantStandard` -> `variantValue1..3`.
+- **Defense-in-Depth `displayName`**: `ProductVariant::getDisplayNameAttribute()` guarantees non-empty customer labels across all UI states.
+- **Composite Cart Keying**: Cart session indexed by `{$product_id}_{$variant_id}` to allow multiple variants of the same product to coexist.
+- **Authoritative Price & Stock Locking**: Backend queries authoritative prices directly from the DB; checkout employs pessimistic database row locks (`lockForUpdate()`) inside ACID transactions.
+- **Immutable Financial & CJ Snapshots**: `order_items` snapshots `merchant_sku_snapshot`, `product_name_snapshot`, `variant_name_snapshot`, `cj_product_id`, `cj_variant_id`, and `cj_variant_sku`.
+- **Obsidian ADR**: `knowledge-vault/Decisions/2026-08-24-Variant-Cart-Snapshot-Architecture.md`
+- **Obsidian ADR**: `knowledge-vault/Decisions/2026-08-24-Storefront-Review-UX-Overhaul.md`
+

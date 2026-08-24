@@ -14,6 +14,8 @@ updated: 2026-07-25
 - [[2026-07-25-Hybrid-Monolith-Architecture]]
 - [[2026-07-25-Database-Performance-Indexes]]
 - [[2026-08-20-Google-Analytics-and-Search-Console-Integration]]
+- [[2026-08-24-Variant-Cart-Snapshot-Architecture]]
+- [[2026-08-24-Storefront-Review-UX-Overhaul]]
 
 ## Integrations
 - [[CJ-Dropshipping-MOC]] — Full CJ API integration: auth, search, import, sync, orders, shipments
