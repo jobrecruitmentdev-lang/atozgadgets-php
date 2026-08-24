@@ -6,9 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\User;
-use App\Models\Category;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Fulfillment;
+use App\Models\FulfillmentException;
+use App\Models\PaymentTransaction;
+use App\Models\Shipment;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -20,50 +21,42 @@ class DashboardController extends Controller
 
     public function index()
     {
-        // 5-minute cached stats with instant fallback
-        $stats = Cache::remember('admin_dashboard_metrics', 300, function () {
-            $totalRevenue = Order::whereIn('payment_status', ['paid', 'completed', 'success'])->sum('total_amount');
-            $totalOrders = Order::count();
-            $processingOrders = Order::where('status', 'processing')->orWhere('payment_status', 'pending')->count();
-            $completedOrders = Order::whereIn('status', ['delivered', 'completed'])->count();
-            $totalCustomers = User::where('role_id', '!=', 1)->count();
-            $totalProducts = Product::count();
-            $lowStockCount = Product::where('stock_quantity', '<=', 5)->count();
+        // 1. Action Required Live Triage Data
+        $twoHoursAgo = now()->subHours(2);
+        $staleSyncThreshold = now()->subHours(48);
 
-            // 30 days daily sales history
-            $thirtyDaysAgo = now()->subDays(30);
-            $dailySales = Order::select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(total_amount) as total'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('created_at', '>=', $thirtyDaysAgo)
-            ->groupBy('date')
-            ->orderBy('date', 'ASC')
-            ->get();
+        $actionRequired = [
+            'fulfillment_exceptions' => FulfillmentException::where('resolution_status', 'OPEN')->count(),
+            'payment_failures' => PaymentTransaction::where('status', 'FAILED')->count(),
+            'pending_stale' => Fulfillment::whereIn('fulfillment_status', ['PENDING', 'SUBMITTING'])->where('created_at', '<=', $twoHoursAgo)->count(),
+            'stale_sync_products' => Product::where('fulfillment_type', 'cj')->where(function($q) use ($staleSyncThreshold) {
+                $q->whereNull('updated_at')->orWhere('updated_at', '<=', $staleSyncThreshold);
+            })->count(),
+            'low_margin_products' => Product::whereRaw('(price - discount_price) < (price * 0.20)')->where('price', '>', 0)->count(),
+        ];
 
-            // Top 5 Selling Products
-            $topProducts = Product::withCount('orderItems')
-                ->orderBy('order_items_count', 'desc')
-                ->take(5)
-                ->get();
+        // 2. Today's Live Operational Pulse
+        $todayStart = now()->startOfDay();
+        $todayPulse = [
+            'orders' => Order::where('created_at', '>=', $todayStart)->count(),
+            'revenue' => (float)Order::whereIn('payment_status', ['paid', 'completed', 'success'])->where('created_at', '>=', $todayStart)->sum('total_amount'),
+            'paid_orders' => Order::whereIn('payment_status', ['paid', 'completed', 'success'])->where('created_at', '>=', $todayStart)->count(),
+            'shipped' => Shipment::where('created_at', '>=', $todayStart)->count(),
+            'delivered' => Shipment::where('status', 'DELIVERED')->where('updated_at', '>=', $todayStart)->count(),
+            'refunded' => PaymentTransaction::where('type', 'REFUND')->where('status', 'SUCCESS')->where('created_at', '>=', $todayStart)->count(),
+        ];
 
-            return [
-                'totalRevenue' => (float)$totalRevenue,
-                'totalOrders' => $totalOrders,
-                'processingOrders' => $processingOrders,
-                'completedOrders' => $completedOrders,
-                'totalCustomers' => $totalCustomers,
-                'totalProducts' => $totalProducts,
-                'lowStockCount' => $lowStockCount,
-                'dailySales' => $dailySales,
-                'topProducts' => $topProducts,
-            ];
-        });
+        // 3. Core Store Aggregate Metrics
+        $stats = [
+            'totalRevenue' => (float)Order::whereIn('payment_status', ['paid', 'completed', 'success'])->sum('total_amount'),
+            'totalOrders' => Order::count(),
+            'totalProducts' => Product::count(),
+            'lowStockCount' => Product::where('stock_quantity', '<=', 5)->count(),
+        ];
 
-        // Fetch recent 10 live orders
-        $recentOrders = Order::with(['user', 'items.product'])->latest()->take(10)->get();
+        // 4. Fetch recent 10 live orders
+        $recentOrders = Order::with(['user', 'orderAddress', 'items.product', 'fulfillments'])->latest()->take(10)->get();
 
-        return view('admin.dashboard', compact('stats', 'recentOrders'));
+        return view('admin.dashboard', compact('actionRequired', 'todayPulse', 'stats', 'recentOrders'));
     }
 }

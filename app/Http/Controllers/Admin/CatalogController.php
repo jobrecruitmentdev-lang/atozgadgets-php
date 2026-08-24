@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Product;
 use App\Models\CjProduct;
+use App\Services\Catalog\ProductContentService;
+use App\Services\Catalog\PricingService;
+use App\Services\Cj\CjProductService;
 use Illuminate\Support\Str;
 
 class CatalogController extends Controller
@@ -16,61 +19,10 @@ class CatalogController extends Controller
         $this->middleware(['auth', 'admin']);
     }
 
-    private $demoCatalog = [
-        [
-            'pid' => 'CJ-SMART-PRO-PROJECTOR-01',
-            'productNameEn' => 'AtoZ Mini HD Smart LED Projector 1080P WiFi Portable',
-            'productSku' => 'CJ-PROJ-1080P',
-            'sellPrice' => 29.50,
-            'productImage' => 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Electronics & Gadgets',
-        ],
-        [
-            'pid' => 'CJ-WIRELESS-LAMP-02',
-            'productNameEn' => 'AtoZ 3-in-1 Fast Wireless Charging Station LED Desk Lamp',
-            'productSku' => 'CJ-LAMP-3IN1',
-            'sellPrice' => 14.80,
-            'productImage' => 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Smart Home',
-        ],
-        [
-            'pid' => 'CJ-RGB-ORB-SPEAKER-03',
-            'productNameEn' => 'AtoZ Magnetic Levitation Floating Bluetooth Speaker RGB',
-            'productSku' => 'CJ-FLOAT-SPK',
-            'sellPrice' => 34.20,
-            'productImage' => 'https://images.unsplash.com/photo-1545454675-3531b543be5d?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Audio & Sound',
-        ],
-        [
-            'pid' => 'CJ-4K-MINI-DRONE-04',
-            'productNameEn' => 'AtoZ 4K Ultra HD Foldable Mini Drone with Obstacle Avoidance',
-            'productSku' => 'CJ-DRONE-4K',
-            'sellPrice' => 42.00,
-            'productImage' => 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Drones & Toys',
-        ],
-        [
-            'pid' => 'CJ-SMART-BOTTLE-05',
-            'productNameEn' => 'AtoZ Digital Temperature Display Smart Vacuum Flask 500ml',
-            'productSku' => 'CJ-BOTTLE-LED',
-            'sellPrice' => 8.90,
-            'productImage' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Home & Kitchen',
-        ],
-        [
-            'pid' => 'CJ-PORTABLE-BLENDER-06',
-            'productNameEn' => 'AtoZ USB Rechargeable Personal Smoothie Juicer Blender 6 Blades',
-            'productSku' => 'CJ-BLENDER-USB',
-            'sellPrice' => 11.50,
-            'productImage' => 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?q=80&w=800&auto=format&fit=crop',
-            'categoryName' => 'Home & Kitchen',
-        ]
-    ];
-
     public function import()
     {
         $categories = \App\Models\Category::whereNull('parent_id')->with('children')->get();
-        $cjCategories = \App\Services\Cj\CjProductService::getCategories();
+        $cjCategories = CjProductService::getCategories();
         $brands = \App\Models\Brand::all();
         $stagedProducts = \App\Models\Product::where('fulfillment_type', 'cj')->get();
         return view('admin.catalog.import', compact('categories', 'cjCategories', 'brands', 'stagedProducts'));
@@ -80,13 +32,8 @@ class CatalogController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => \App\Services\Cj\CjProductService::getCategories()
+            'data' => CjProductService::getCategories()
         ]);
-    }
-
-    private function getCjAccessToken()
-    {
-        return \App\Services\Cj\CjAuthService::getAccessToken();
     }
 
     public function searchCjApi(Request $request)
@@ -107,7 +54,7 @@ class CatalogController extends Controller
             $filters['maxPrice'] = $request->query('maxPrice');
         }
 
-        $result = \App\Services\Cj\CjProductService::searchProducts($keyword, 1, 100, $filters);
+        $result = CjProductService::searchProducts($keyword, 1, 100, $filters);
         
         return response()->json([
             'result' => true,
@@ -118,7 +65,6 @@ class CatalogController extends Controller
             ]
         ]);
     }
-
 
     public function importCjProduct(Request $request)
     {
@@ -148,6 +94,7 @@ class CatalogController extends Controller
             $category = (!empty($data['categoryId']) ? \App\Models\Category::find($data['categoryId']) : null)
                 ?: (\App\Models\Category::first() ?: \App\Models\Category::create(['name' => $data['category'] ?? 'General', 'slug' => 'cat-' . uniqid(), 'status' => 'active']));
             $categoryId = $category->id;
+            $categoryName = $category->name;
 
             $userId = auth('sanctum')->id() ?: auth()->id();
             $createdBy = ($userId && \App\Models\User::where('id', $userId)->exists())
@@ -156,33 +103,41 @@ class CatalogController extends Controller
 
             // Compute dynamic tiered pricing
             $customMultiplier = !empty($data['markup']) ? (float)$data['markup'] : null;
-            $pricing = \App\Services\Catalog\PricingService::calculateRetailPrice((float)$data['price'], $customMultiplier);
+            $pricing = PricingService::calculateRetailPrice((float)$data['price'], $customMultiplier);
 
-            // Clean title logic
-            $cleanTitle = $data['title'];
-            if (preg_match('/[\x{4e00}-\x{9fa5}]/u', $cleanTitle) || strlen(trim($cleanTitle)) < 3) {
-                $cleanTitle = 'AtoZ Smart Gadget - Imported Edition';
-            }
-            $cleanTitle = substr(trim($cleanTitle), 0, 200);
+            // 1. Pillar 2: Content Normalization Layer
+            $cleanTitle = ProductContentService::normalizeTitle($data['title'], $categoryName);
             $slug = Str::slug($cleanTitle) . '-' . substr((string) Str::uuid(), 0, 6);
 
-            $status = !empty($data['publish_now']) ? 'active' : 'draft';
+            // Fetch live/mock details and variants for this PID
+            $cjDetails = CjProductService::getProductDetails($data['pid']);
+            $rawDesc = $cjDetails['description'] ?? $data['title'];
+            $cleanDescription = ProductContentService::normalizeDescription($rawDesc, $cleanTitle, $categoryName);
+
+            // Generate clean customer-safe Merchant SKU (Pillar 6)
+            $merchantSku = ProductContentService::generateMerchantSku($categoryName);
+
+            // 2. Pillar 8: Product Import Validation Gate
+            $validation = ProductContentService::validateForPublish([
+                'name' => $cleanTitle,
+                'description' => $cleanDescription,
+                'category_id' => $categoryId,
+                'thumbnail_image' => $data['image'],
+                'price' => $pricing['selling_price'],
+                'sku' => $merchantSku,
+            ]);
+
+            $targetPublish = !empty($data['publish_now']);
+            $status = ($targetPublish && $validation['can_publish']) ? 'active' : 'draft';
             $isActive = ($status === 'active');
 
-            // Fetch live/mock details and variants for this PID
-            $cjDetails = \App\Services\Cj\CjProductService::getProductDetails($data['pid']);
-
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
-            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $createdBy, $cleanTitle, $slug, $data, $pricing, $status, $isActive, $cjDetails, $customMultiplier) {
-                $cleanDescription = !empty($cjDetails['description']) 
-                    ? strip_tags($cjDetails['description'], '<p><br><ul><li><strong><b><em>') 
-                    : "{$cleanTitle} is crafted for high performance and dependable durability. Sourced and inspected to meet premium consumer standards.";
-
+            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier) {
                 $product = Product::create([
                     'category_id' => $categoryId,
                     'name' => $cleanTitle,
                     'slug' => $slug,
-                    'sku' => $cjDetails['sku'] ?? ('CJ-' . substr((string) Str::uuid(), 0, 8)),
+                    'sku' => $merchantSku,
                     'price' => $pricing['selling_price'],
                     'discount_price' => round($pricing['selling_price'] * 0.85, 2),
                     'description' => $cleanDescription,
@@ -207,7 +162,7 @@ class CatalogController extends Controller
                     ]
                 );
 
-                // 2. Populate Media Gallery (Shields raw external CDN URLs)
+                // 2. Populate Media Gallery (Pillar 1)
                 \App\Models\ProductMedia::create([
                     'product_id' => $product->id,
                     'type' => 'image',
@@ -246,10 +201,11 @@ class CatalogController extends Controller
                     }
                 }
 
-                // 4. Create Supplier Variants & Commercial Storefront Variants (PID vs VID split)
+                // 4. Create Supplier Variants & Commercial Storefront Variants
                 if (!empty($cjDetails['variants'])) {
-                    foreach ($cjDetails['variants'] as $v) {
-                        $vPricing = \App\Services\Catalog\PricingService::calculateRetailPrice((float)$v['costPrice'], $customMultiplier);
+                    foreach ($cjDetails['variants'] as $vIdx => $v) {
+                        $vPricing = PricingService::calculateRetailPrice((float)$v['costPrice'], $customMultiplier);
+                        $vSku = $merchantSku . '-V' . str_pad((string)($vIdx + 1), 2, '0', STR_PAD_LEFT);
 
                         // Supplier variant (VID)
                         \App\Models\CjVariant::updateOrCreate(
@@ -273,7 +229,7 @@ class CatalogController extends Controller
                         $variant = \App\Models\ProductVariant::create([
                             'product_id' => $product->id,
                             'cj_variant_id' => $v['vid'],
-                            'sku' => $v['variantSku'] ?? ($product->sku . '-' . substr(md5($v['vid']), 0, 4)),
+                            'sku' => $vSku,
                             'name' => $v['variantName'] ?? 'Standard Variant',
                             'option1_name' => $v['option1_name'] ?? null,
                             'option1_value' => $v['option1_value'] ?? null,
@@ -306,8 +262,10 @@ class CatalogController extends Controller
             return response()->json([
                 'success' => true,
                 'internal_id' => $product->id,
+                'merchant_sku' => $product->sku,
                 'pricing' => $pricing,
                 'status' => $status,
+                'validation' => $validation,
             ]);
         } catch (\Illuminate\Validation\ValidationException $ve) {
             return response()->json(['success' => false, 'message' => $ve->getMessage(), 'errors' => $ve->errors()], 422);

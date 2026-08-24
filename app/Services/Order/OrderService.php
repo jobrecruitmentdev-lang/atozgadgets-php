@@ -4,6 +4,8 @@ namespace App\Services\Order;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\CheckoutSession;
 use App\Models\OutboxEvent;
 use App\Services\Inventory\InventoryService;
@@ -20,19 +22,34 @@ class OrderService
             $order = Order::create([
                 'user_id' => $session->user_id,
                 'order_number' => $orderNumber,
-                'subtotal' => $session->subtotal,
-                'tax_amount' => $session->tax,
-                'shipping_charge' => $session->shipping,
-                'total_amount' => $session->grand_total,
+                'subtotal' => $session->subtotal ?? 0.00,
+                'tax_amount' => $session->tax ?? 0.00,
+                'shipping_charge' => $session->shipping ?? 0.00,
+                'total_amount' => $session->grand_total ?? 0.00,
                 'status' => 'pending',
                 'payment_status' => 'pending',
                 'shipping_address' => json_encode($address),
             ]);
 
             foreach ($session->line_items as $item) {
+                $product = Product::find($item['product_id']);
+                $variant = !empty($item['variant_id']) ? ProductVariant::find($item['variant_id']) : null;
+
+                // Exact Variant Wholesale Cost and SKU Snapshot
+                $supplierCost = $variant ? (float)$variant->cost_price : (float)($product->cost_price ?? 0.00);
+                $sku = $variant?->sku ?? ($product?->merchant_sku ?? 'AZG-GDT');
+                $variantName = $variant ? $variant->name : null;
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'] ?? null,
+                    'merchant_sku_snapshot' => $sku,
+                    'product_name_snapshot' => $product?->name ?? 'AtoZ Gadget',
+                    'variant_name_snapshot' => $variantName,
+                    'supplier_cost_snapshot' => $supplierCost,
+                    'freight_cost_snapshot' => 0.00,
+                    'contribution_margin_snapshot' => (float)$item['unit_price'] - $supplierCost,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'total_price' => $item['total_price'],
@@ -56,8 +73,11 @@ class OrderService
                 'postal_code' => $address['postal_code'] ?? ($address['zip'] ?? ''),
             ]);
 
-            // Reserve inventory
-            InventoryService::reserve($order->id, $session->line_items);
+            // Reserve inventory with pessimistic row lock
+            $reserved = InventoryService::reserve($order->id, $session->line_items);
+            if (!$reserved) {
+                throw new \Exception('One or more items in your cart are currently out of stock.');
+            }
 
             $session->update(['status' => 'converted']);
 

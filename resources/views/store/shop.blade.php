@@ -1,23 +1,44 @@
 @extends('layouts.store')
 
-@section('title', 'Shop - AtoZGadgets')
+@section('title', (isset($currentCategory) ? $currentCategory->name . ' - ' : '') . 'Shop All Gadgets - AtoZGadgets')
 
 @section('content')
 <style>
-    .shop-header { margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 24px; }
-    .shop-header h1 { font-size: 48px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .shop-header { margin-bottom: 32px; border-bottom: 1px solid var(--glass-border); padding-bottom: 24px; }
+    .shop-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    
+    .shop-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .filter-pills { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .filter-pill { font-size: 13px; padding: 6px 14px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+    .filter-pill.active, .filter-pill:hover { border-color: var(--accent); color: var(--accent); background: rgba(201, 169, 98, 0.1); }
+
+    .sort-select { padding: 8px 14px; border-radius: 8px; background: #111; border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 13px; cursor: pointer; }
     
     .shop-layout { display: flex; flex-direction: column; gap: 32px; }
-    @media (min-width: 768px) { .shop-layout { flex-direction: row; gap: 48px; } }
+    @media (min-width: 768px) { .shop-layout { flex-direction: row; gap: 40px; } }
     
     .sidebar { width: 100%; flex-shrink: 0; }
-    @media (min-width: 768px) { .sidebar { width: 250px; position: sticky; top: 100px; height: calc(100vh - 120px); overflow-y: auto; } }
+    @media (min-width: 768px) { .sidebar { width: 260px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; } }
     
-    .sidebar h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.5px; }
-    .cat-list { display: flex; flex-direction: column; gap: 8px; }
-    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.3s; display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .sidebar h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.3px; color: var(--text-primary); }
+    .cat-list { display: flex; flex-direction: column; gap: 6px; }
+    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; }
     .cat-list a:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-    .cat-list a.active { background: rgba(201, 169, 98, 0.1); color: var(--accent); font-weight: 500; }
+    .cat-list a.active { background: rgba(201, 169, 98, 0.1); color: var(--accent); font-weight: 600; }
+
+    /* Card Micro-Tags */
+    .card-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 11px; }
+    .sku-chip { font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.04); padding: 2px 6px; border-radius: 4px; }
+    .avail-indicator { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .avail-instock { color: #10b981; }
+    .avail-lowstock { color: #f59e0b; }
+    .avail-outofstock { color: #ef4444; }
+    .avail-confirming { color: #3b82f6; }
+
+    .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+    .price-main { font-size: 20px; font-weight: 800; color: var(--accent); }
+    .price-old { font-size: 14px; text-decoration: line-through; color: var(--text-secondary); }
     
     .main-content { flex-grow: 1; }
 </style>
@@ -45,46 +66,87 @@
             @endforeach
         </div>
         <h1>{{ $currentCategory->name }}</h1>
-        <p style="color: var(--text-secondary); font-size: 18px;">Browse products in {{ $currentCategory->name }}.</p>
+        <p style="color: var(--text-secondary); font-size: 16px;">Curated selection of {{ strtolower($currentCategory->name) }} ready to ship worldwide.</p>
     @else
         <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; flex-wrap: wrap;">
             <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:14px;"></i>
             <span style="color: var(--accent); font-weight: 600;">All Products</span>
         </div>
         <h1>All Products</h1>
-        <p style="color: var(--text-secondary); font-size: 18px;">Browse our full catalog of premium gadgets.</p>
+        <p style="color: var(--text-secondary); font-size: 16px;">Browse our complete catalog of innovative gadgets and electronics.</p>
     @endif
+</div>
+
+<div class="shop-toolbar">
+    <div class="filter-pills">
+        <a href="{{ route('store.shop') }}" class="filter-pill {{ !request('max_price') && !request('min_price') ? 'active' : '' }}">All Prices</a>
+        <a href="{{ route('store.shop', array_merge(request()->query(), ['max_price' => 20])) }}" class="filter-pill {{ request('max_price') == 20 ? 'active' : '' }}">Under $20</a>
+        <a href="{{ route('store.shop', array_merge(request()->query(), ['min_price' => 20, 'max_price' => 50])) }}" class="filter-pill {{ request('min_price') == 20 && request('max_price') == 50 ? 'active' : '' }}">$20 to $50</a>
+        <a href="{{ route('store.shop', array_merge(request()->query(), ['min_price' => 50])) }}" class="filter-pill {{ request('min_price') == 50 ? 'active' : '' }}">$50+</a>
+    </div>
+
+    <form method="GET" action="{{ route('store.shop') }}" id="sortForm">
+        @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
+        @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
+        @if(request('min_price')) <input type="hidden" name="min_price" value="{{ request('min_price') }}"> @endif
+        @if(request('max_price')) <input type="hidden" name="max_price" value="{{ request('max_price') }}"> @endif
+        
+        <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()">
+            <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Sort by: Latest</option>
+            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
+            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+        </select>
+    </form>
 </div>
 
 <div class="shop-layout">
     <aside class="sidebar" data-aos="fade-right" data-aos-delay="100">
-        <h3>Categories</h3>
-        <div class="cat-list">
-            <a href="{{ route('store.shop') }}" class="{{ !request('category') ? 'active' : '' }}" style="font-size: 14px; padding: 4px 12px; border-radius: 6px; display: block; text-decoration: none; color: inherit;">
-                All Products
-            </a>
-            @if(isset($globalCategories))
-                <div style="margin-top: 8px;">
-                    @include('store.partials.category_tree', ['categories' => $globalCategories, 'depth' => 0])
-                </div>
-            @endif
+        <div class="sidebar-card">
+            <h3>Categories</h3>
+            <div class="cat-list">
+                <a href="{{ route('store.shop') }}" class="{{ !request('category') ? 'active' : '' }}">
+                    <span>All Categories</span>
+                </a>
+                @if(isset($globalCategories))
+                    <div style="margin-top: 6px;">
+                        @include('store.partials.category_tree', ['categories' => $globalCategories, 'depth' => 0])
+                    </div>
+                @endif
+            </div>
         </div>
     </aside>
 
     <div class="main-content">
         <div class="grid">
             @forelse($products as $index => $product)
-                <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 6) * 100 }}">
-                    <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? asset('favicon.png') }}" alt="{{ $product->name }}">
+                @php $avail = $product->availability; @endphp
+                <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 6) * 80 }}">
+                    <img loading="lazy" decoding="async" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}">
+                    
+                    <div class="card-meta-row">
+                        <span class="sku-chip">{{ $product->merchant_sku }}</span>
+                        <span class="avail-indicator avail-{{ str_replace('_', '', $avail['status']) }}">
+                            <i data-lucide="{{ $avail['icon'] }}" style="width:12px;height:12px;"></i>
+                            {{ $avail['label'] }}
+                        </span>
+                    </div>
+
                     <div class="card-title">{{ $product->name }}</div>
-                    <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
-                    <button class="btn btn-primary" style="width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</button>
+                    
+                    <div class="price-row">
+                        <span class="price-main">${{ number_format($product->discount_price ?? $product->price, 2) }}</span>
+                        @if(isset($product->discount_price) && $product->discount_price < $product->price)
+                            <span class="price-old">${{ number_format($product->price, 2) }}</span>
+                        @endif
+                    </div>
+
+                    <button class="btn btn-primary" style="width:100%; padding: 10px; font-size: 13px; text-transform: uppercase;">View Product</button>
                 </a>
             @empty
                 <div style="grid-column: 1 / -1; text-align: center; padding: 64px 24px; color: var(--text-secondary); background: rgba(128,128,128,0.03); border: 1px dashed var(--border-color); border-radius: 16px;">
                     <i data-lucide="package-search" style="width:48px; height:48px; stroke-width:1.5; color: var(--text-secondary); margin-bottom: 12px; display:inline-block;"></i>
                     <p style="font-size: 16px; font-weight: 600; margin-bottom: 6px;">No products found</p>
-                    <p style="font-size: 14px;">Try selecting a different category or search term.</p>
+                    <p style="font-size: 14px;">Try adjusting your filters or selecting another category.</p>
                 </div>
             @endforelse
         </div>

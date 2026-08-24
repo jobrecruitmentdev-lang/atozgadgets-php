@@ -5,13 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\OrderItem;
+use App\Models\ProductReview;
+use App\Services\Payment\PaymentGatewayManager;
 
 class StorefrontController extends Controller
 {
     public function home()
     {
         $categories = Category::where('status', 'active')->limit(4)->get();
-        $featuredProducts = Product::where('is_active', true)
+        $featuredProducts = Product::published()
                                    ->latest()
                                    ->limit(8)
                                    ->get();
@@ -21,7 +24,7 @@ class StorefrontController extends Controller
 
     public function shop(Request $request)
     {
-        $query = Product::where('is_active', true);
+        $query = Product::published();
         $currentCategory = null;
         
         if ($request->filled('category')) {
@@ -81,28 +84,31 @@ class StorefrontController extends Controller
 
     public function product($slug)
     {
-        $product = Product::with(['variants', 'media', 'specifications', 'approvedReviews.user', 'category.parent'])
+        $product = Product::published()
+            ->with(['variants', 'media', 'specifications', 'approvedReviews.user', 'category.parent'])
             ->where(function($query) use ($slug) {
                 $query->where('slug', $slug);
                 if (is_numeric($slug)) {
                     $query->orWhere('id', (int)$slug);
                 }
             })
-            ->where('is_active', true)
             ->firstOrFail();
 
-        $relatedProducts = Product::where('category_id', $product->category_id)
+        $relatedProducts = Product::published()
+                                  ->where('category_id', $product->category_id)
                                   ->where('id', '!=', $product->id)
-                                  ->where('is_active', true)
                                   ->limit(4)
                                   ->get();
+
+        $paymentMethods = PaymentGatewayManager::customerAvailableMethods();
+        $trustHeadline = PaymentGatewayManager::getTrustHeadline();
                                   
-        return view('store.product', compact('product', 'relatedProducts'));
+        return view('store.product', compact('product', 'relatedProducts', 'paymentMethods', 'trustHeadline'));
     }
 
     public function submitReview(Request $request, $slug)
     {
-        $product = Product::where('slug', $slug)->firstOrFail();
+        $product = Product::published()->where('slug', $slug)->firstOrFail();
 
         $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
@@ -113,22 +119,25 @@ class StorefrontController extends Controller
         $userId = auth()->id() ?? 1; // Default to current user or guest user ID 1
         $hasPurchased = false;
 
+        // Authentic Verified Purchase Check
         if (auth()->check()) {
-            $hasPurchased = \App\Models\OrderItem::whereHas('order', function ($q) {
-                $q->where('user_id', auth()->id())->where('payment_status', 'paid');
+            $hasPurchased = OrderItem::whereHas('order', function ($q) {
+                $q->where('user_id', auth()->id())
+                  ->whereIn('payment_status', ['paid', 'completed', 'success'])
+                  ->whereNotIn('status', ['cancelled', 'failed', 'refunded']);
             })->where('product_id', $product->id)->exists();
         }
 
-        \App\Models\ProductReview::create([
+        ProductReview::create([
             'user_id' => $userId,
             'product_id' => $product->id,
             'rating' => $validated['rating'],
             'title' => $validated['title'] ?? null,
             'review' => $validated['review'],
-            'status' => 'approved', // Auto-approved for verified display
+            'status' => 'approved',
             'verified_purchase' => $hasPurchased,
         ]);
 
-        return back()->with('success', 'Thank you! Your verified review has been published.');
+        return back()->with('success', 'Thank you! Your customer review has been submitted.');
     }
 }

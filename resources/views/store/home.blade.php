@@ -281,7 +281,7 @@
     <div class="grid">
         @forelse($featuredProducts as $index => $product)
             <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 100 }}">
-                <img loading="lazy" decoding="async" src="{{ $product->thumbnail_image ?? asset('favicon.png') }}" alt="{{ $product->name }}">
+                <img loading="lazy" decoding="async" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}">
                 <div class="card-title">{{ $product->name }}</div>
                 <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
                 <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>

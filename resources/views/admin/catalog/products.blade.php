@@ -54,14 +54,14 @@
 <div class="page-header">
     <div class="page-title">
         <h1>Products Catalog</h1>
-        <p>Manage your local products or import trending items from CJDropshipping.</p>
+        <p>Manage your storefront catalog products and staged imports.</p>
     </div>
     <div style="display: flex; gap: 12px;">
         <a href="{{ route('admin.catalog.import') }}" class="btn btn-primary">
-            <i data-lucide="download" style="width:16px;"></i> Import Products from CJ
+            <i data-lucide="download-cloud" style="width:16px;"></i> Product Import
         </a>
         <button class="btn btn-secondary" onclick="toggleForm()">
-            <i data-lucide="plus" style="width:16px;"></i> Manual Add Product
+            <i data-lucide="plus" style="width:16px;"></i> Add Product
         </button>
     </div>
 </div>
@@ -212,20 +212,23 @@
                     <tr>
                         <td>
                             <div class="product-info">
-                                <img src="{{ $product->thumbnail_image ?? 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80' }}" class="product-img" alt="">
+                                <img src="{{ $product->customer_thumbnail }}" class="product-img" alt="">
                                 <div class="product-details">
                                     <span class="product-name">{{ $product->name }}</span>
-                                    <span class="product-sku">{{ $product->sku }}</span>
+                                    <span class="product-sku">{{ $product->merchant_sku }}</span>
                                 </div>
                             </div>
                         </td>
                         <td style="font-weight: 700; color: var(--accent);">${{ number_format($product->price, 2) }}</td>
-                        <td style="font-weight: 500;">{{ $product->stock_quantity ?? 0 }}</td>
+                        <td style="font-weight: 500;">
+                            @php $avail = $product->availability; @endphp
+                            <span class="badge {{ $avail['badge_class'] ?? 'badge-own' }}">{{ $avail['label'] ?? ($product->stock_quantity . ' in stock') }}</span>
+                        </td>
                         <td>
                             @if($product->fulfillment_type == 'cj')
-                                <span class="badge badge-cj"><i data-lucide="sparkles" style="width:10px;"></i> CJ Dropship</span>
+                                <span class="badge badge-cj"><i data-lucide="truck" style="width:10px;"></i> Supplier Fulfillment</span>
                             @else
-                                <span class="badge badge-own">Own Inventory</span>
+                                <span class="badge badge-own">In-House</span>
                             @endif
                         </td>
                         <td style="text-align: right;">
@@ -236,7 +239,7 @@
                 @empty
                     <tr>
                         <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 48px;">
-                            No products found. Click <strong>Import Products from CJ</strong> to fetch items.
+                            No products found. Click <strong>Product Import</strong> to stage catalog items.
                         </td>
                     </tr>
                 @endforelse

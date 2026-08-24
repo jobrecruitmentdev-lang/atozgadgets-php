@@ -22,12 +22,68 @@ class PaymentService
         };
     }
 
+    /**
+     * Compute authoritative payment ledger summary from immutable payment_transactions.
+     */
+    public static function getLedgerSummary(?Order $order): object
+    {
+        if (!$order) {
+            return (object)[
+                'captured' => 0.00,
+                'refunded' => 0.00,
+                'net_paid' => 0.00,
+                'is_fully_paid' => false,
+                'status' => 'UNPAID',
+            ];
+        }
+
+        $captured = (float) PaymentTransaction::where('order_id', $order->id)
+            ->where('type', 'CAPTURE')
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $refunded = (float) PaymentTransaction::where('order_id', $order->id)
+            ->whereIn('type', ['REFUND', 'PARTIAL_REFUND'])
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        // Fallback for payments recorded via Payment model without transaction ledger
+        if ($captured <= 0 && $refunded <= 0) {
+            $paymentCaptured = (float) Payment::where('order_id', $order->id)
+                ->whereIn('status', ['success', 'completed'])
+                ->sum('amount');
+            if ($paymentCaptured > 0) {
+                $captured = $paymentCaptured;
+            }
+        }
+
+        $net = round($captured - $refunded, 2);
+        $total = (float)$order->total_amount;
+
+        $isFullyPaid = ($net >= $total && $captured > 0);
+
+        $status = match (true) {
+            $isFullyPaid => 'PAID',
+            $refunded > 0 && $net > 0 => 'PARTIALLY_REFUNDED',
+            $refunded > 0 && $net <= 0 => 'REFUNDED',
+            $captured > 0 => 'PARTIALLY_PAID',
+            default => 'PENDING',
+        };
+
+        return (object)[
+            'captured' => $captured,
+            'refunded' => $refunded,
+            'net_paid' => $net,
+            'is_fully_paid' => $isFullyPaid,
+            'status' => $status,
+        ];
+    }
+
     public static function createIntent(Order $order, string $provider = 'paypal'): array
     {
         $gateway = self::resolveGateway($provider);
         $orderRef = $order->order_number ?: 'ORD-' . $order->id;
 
-        // Log Payment Attempt
         $attempt = PaymentAttempt::create([
             'order_id' => $order->id,
             'provider' => $provider,
@@ -49,8 +105,9 @@ class PaymentService
 
     public static function captureAndConfirm(Order $order, string $providerOrderId, string $provider = 'paypal', ?array $preCapturedData = null): array
     {
-        // 1. Idempotency Check: if order is already paid, return early
-        if (in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success'])) {
+        // 1. Check if order ledger already records complete capture
+        $ledger = self::getLedgerSummary($order);
+        if ($ledger->is_fully_paid) {
             return [
                 'success' => true,
                 'message' => 'Order is already marked as paid.',
@@ -89,7 +146,6 @@ class PaymentService
 
         // 2. Risk & Amount Verification
         $assessment = RiskService::evaluate($order, $capturedAmount, $capturedCurrency);
-
         if ($assessment->decision === 'REJECT') {
             return [
                 'success' => false,
@@ -144,17 +200,22 @@ class PaymentService
         $refundAmount = $amount ?? (float)$order->total_amount;
 
         return DB::transaction(function () use ($order, $refundAmount, $reason) {
-            $payment = Payment::where('order_id', $order->id)->where('status', 'success')->latest()->first();
+            $payment = Payment::where('order_id', $order->id)
+                ->whereIn('status', ['success', 'partially_refunded'])
+                ->latest()
+                ->first();
 
             if (!$payment) {
                 return ['success' => false, 'error' => 'No successful payment found to refund.'];
             }
 
+            $txType = ($refundAmount >= (float)$order->total_amount) ? 'REFUND' : 'PARTIAL_REFUND';
+
             // Append REFUND transaction to immutable ledger
             $refundTx = PaymentTransaction::create([
                 'payment_id' => $payment->id,
                 'order_id' => $order->id,
-                'type' => 'REFUND',
+                'type' => $txType,
                 'amount' => $refundAmount,
                 'currency' => 'USD',
                 'provider' => $payment->payment_method ?? 'paypal',
@@ -163,13 +224,12 @@ class PaymentService
                 'metadata' => ['reason' => $reason],
             ]);
 
-            $payment->update([
-                'status' => 'refunded',
-            ]);
-
+            // Update projection
+            $ledger = self::getLedgerSummary($order);
+            $payment->update(['status' => ($ledger->net_paid <= 0 ? 'refunded' : 'partially_refunded')]);
             $order->update([
-                'status' => 'refunded',
-                'payment_status' => 'refunded',
+                'status' => ($ledger->net_paid <= 0 ? 'refunded' : 'partially_refunded'),
+                'payment_status' => strtolower($ledger->status),
             ]);
 
             return [
@@ -181,4 +241,3 @@ class PaymentService
         });
     }
 }
-

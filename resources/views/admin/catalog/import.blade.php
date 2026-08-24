@@ -117,14 +117,14 @@
 
 <div class="page-header">
     <div class="page-title">
-        <h1>CJDropshipping Catalog Gateway</h1>
+        <h1>Product Import Pipeline & Quality Gate</h1>
         <div style="margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             @php
                 $isSandbox = \App\Services\Cj\CjAuthService::isSandboxMode();
             @endphp
             <span id="gatewayStatusBadge" class="api-health" style="{{ $isSandbox ? 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);' : '' }}">
                 <i data-lucide="{{ $isSandbox ? 'alert-triangle' : 'activity' }}" style="width:14px;"></i> 
-                <span id="gatewayStatusText">{{ $isSandbox ? 'CJ Sandbox Mode · Mock Data' : 'CJ API Connected · Live' }}</span>
+                <span id="gatewayStatusText">{{ $isSandbox ? 'Supplier Provider · Sandbox Mode' : 'Supplier Provider · Live API' }}</span>
             </span>
             <button type="button" onclick="toggleSandboxGateway()" id="btnGatewayToggle" style="padding: 5px 14px; font-size: 12px; font-weight: 700; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                 <i data-lucide="refresh-cw" style="width:12px;"></i>
@@ -135,10 +135,10 @@
     
     <div class="tabs-container">
         <button class="tab-btn active" onclick="switchTab('staged')" id="tab-btn-staged">
-            <i data-lucide="database" style="width:16px;"></i> Staged Products in DB ({{ $stagedProducts->count() }})
+            <i data-lucide="database" style="width:16px;"></i> Staged Catalog Products ({{ $stagedProducts->count() }})
         </button>
         <button class="tab-btn" onclick="switchTab('fetch')" id="tab-btn-fetch">
-            <i data-lucide="sparkles" style="width:16px;"></i> Fetch New Products from CJ
+            <i data-lucide="download-cloud" style="width:16px;"></i> Fetch from Supplier Catalog
         </button>
     </div>
 </div>

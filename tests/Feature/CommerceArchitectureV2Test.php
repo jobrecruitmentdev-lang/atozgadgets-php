@@ -144,6 +144,14 @@ class CommerceArchitectureV2Test extends TestCase
             'status' => 'active',
         ]);
 
+        \App\Models\Payment::create([
+            'order_id' => $order->id,
+            'transaction_id' => 'PAY-COMMERCE-' . uniqid(),
+            'amount' => 150.00,
+            'payment_method' => 'paypal',
+            'status' => 'success',
+        ]);
+
         $outboxEvent = OutboxEvent::create([
             'event_name' => 'ORDER_PAID',
             'aggregate_type' => 'Order',

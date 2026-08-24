@@ -24,8 +24,7 @@ class AdminCatalogViewTest extends TestCase
         $response = $this->get('/admin/catalog/import');
 
         $response->assertStatus(200);
-        $response->assertSee('CJ Dropshipping Gateway');
-        $response->assertSee('CJ API Connected');
-        $response->assertSee('Fetch New Products from CJ');
+        $response->assertSee('Product Import Pipeline');
+        $response->assertSee('Fetch from Supplier Catalog');
     }
 }

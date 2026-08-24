@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\Inventory\InventoryService;
+use App\Services\Catalog\ProductContentService;
 
 class Product extends Model
 {
@@ -19,6 +21,21 @@ class Product extends Model
         'unavailable', 'committed', 'available', 'onhand_old', 'onhand_new', 
         'status', 'is_featured', 'is_active', 'created_by', 'fulfillment_type'
     ];
+
+    /**
+     * Prevent internal supplier IDs from leaking in public JSON responses
+     */
+    protected $hidden = [
+        'cj_product_id',
+    ];
+
+    /**
+     * Local query scope for public published catalog items
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'active')->where('is_active', true);
+    }
 
     public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -52,7 +69,7 @@ class Product extends Model
 
     public function approvedReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(ProductReview::class, 'product_id')->where('status', 'approved');
+        return $this->hasMany(ProductReview::class, 'product_id')->where('status', 'approved')->latest();
     }
 
     public function media(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -77,6 +94,35 @@ class Product extends Model
             return asset($this->thumbnail_image);
         }
         return asset('favicon.png');
+    }
+
+    /**
+     * Customer-safe Merchant SKU (guarantees no raw supplier ID or "CJ" leakage)
+     */
+    public function getMerchantSkuAttribute(): string
+    {
+        $rawSku = (string)($this->sku ?? '');
+        if (str_starts_with(strtoupper($rawSku), 'CJ') || empty($rawSku)) {
+            $catName = $this->category->name ?? 'GDT';
+            return ProductContentService::generateMerchantSku($catName, $this->id);
+        }
+        return $rawSku;
+    }
+
+    /**
+     * Dynamic inventory availability factoring in quantity and sync freshness
+     */
+    public function getAvailabilityAttribute(): array
+    {
+        return InventoryService::getAvailability($this);
+    }
+
+    /**
+     * Customer-facing shipping promise string
+     */
+    public function getShippingPromiseAttribute(): string
+    {
+        return 'Standard Delivery: 7–15 Business Days';
     }
 
     public function getAverageRatingAttribute(): float

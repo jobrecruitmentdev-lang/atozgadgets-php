@@ -128,6 +128,14 @@ class AdminCjFulfillmentFlowTest extends TestCase
             'status' => 'active',
         ]);
 
+        \App\Models\Payment::create([
+            'order_id' => $order->id,
+            'transaction_id' => 'PAY-' . uniqid(),
+            'amount' => 59.99,
+            'payment_method' => 'paypal',
+            'status' => 'success',
+        ]);
+
         $mockCjId = 'CJ-FULFILL-TORONTO-' . uniqid();
         \App\Models\Setting::set('cj_sandbox_mode', '0');
         \Illuminate\Support\Facades\Cache::forget('setting_cj_sandbox_mode');

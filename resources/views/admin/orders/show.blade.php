@@ -11,17 +11,17 @@
     .badge-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
     .badge-refunded { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
 
-    .health-strip { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
+    .health-strip { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
     .health-node { display: flex; flex-direction: column; gap: 4px; }
     .health-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; }
-    .health-status { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .health-status { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; margin-bottom: 24px; }
-    .tower-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .tower-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-    .card-header h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .card-header h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
 
-    .data-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; border-bottom: 1px dashed rgba(128,128,128,0.15); }
+    .data-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13.5px; border-bottom: 1px dashed rgba(128,128,128,0.15); }
     .data-label { color: var(--text-secondary); font-weight: 500; }
     .data-val { font-weight: 600; color: var(--text-primary); text-align: right; }
 
@@ -31,11 +31,9 @@
     .timeline-time { font-size: 11px; color: var(--text-secondary); }
     .timeline-desc { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 
-    .actions-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-    .btn-action { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border: none; transition: opacity 0.2s; }
-    .btn-action:hover { opacity: 0.9; }
+    .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-action { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: none; }
     .btn-primary { background: var(--accent); color: #ffffff; }
-    .btn-warning { background: #d97706; color: #ffffff; }
     .btn-danger { background: #ef4444; color: #ffffff; }
     .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
 </style>
@@ -58,18 +56,21 @@
             Order #{{ $order->order_number }}
             @php
                 $pStat = strtolower($order->payment_status ?? 'pending');
-                $bClass = $pStat === 'paid' ? 'badge-paid' : ($pStat === 'refunded' ? 'badge-refunded' : 'badge-pending');
+                $bClass = in_array($pStat, ['paid', 'completed', 'success']) ? 'badge-paid' : ($pStat === 'refunded' ? 'badge-refunded' : 'badge-pending');
+                $activeFulfillment = $order->fulfillments->first();
+                $fStat = $activeFulfillment->fulfillment_status ?? 'UNFULFILLED';
             @endphp
             <span class="status-badge {{ $bClass }}">{{ $order->payment_status ?? 'Pending' }}</span>
+            <span class="status-badge" style="background: rgba(59,130,246,0.15); color: #3b82f6;">{{ $fStat }}</span>
         </h1>
-        <p style="font-size: 13px; color: var(--text-secondary);">Placed on {{ $order->created_at->format('M d, Y H:i:s') }}</p>
+        <p style="font-size: 13px; color: var(--text-secondary);">Customer Facing: <strong>{{ $customerStatus['status'] ?? 'Processing' }}</strong> • Placed on {{ $order->created_at->format('M d, Y H:i:s') }}</p>
     </div>
     <div class="actions-bar">
-        @if(in_array($pStat, ['paid', 'completed', 'success']) && (!$order->cjOrder || $order->cjOrder->status === 'failed'))
-            <form action="{{ route('admin.orders.fulfill_cj', $order->id) }}" method="POST">
+        @if(in_array($pStat, ['paid', 'completed', 'success']) && (!in_array($fStat, ['SUBMITTED', 'PROCESSING'])))
+            <form action="{{ route('admin.orders.fulfill', $order->id) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn-action btn-primary">
-                    <i data-lucide="send"></i> Dispatch to CJ Dropshipping
+                    <i data-lucide="send" style="width: 14px;"></i> Fulfill Order
                 </button>
             </form>
         @endif
@@ -78,7 +79,7 @@
             <form action="{{ route('admin.orders.sync_cj', $order->id) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn-action btn-outline">
-                    <i data-lucide="refresh-cw"></i> Sync CJ Tracking Status
+                    <i data-lucide="refresh-cw" style="width: 14px;"></i> Sync Tracking
                 </button>
             </form>
         @endif
@@ -87,7 +88,7 @@
             <form action="{{ route('admin.orders.refund', $order->id) }}" method="POST" onsubmit="return confirm('Process full refund of ${{ number_format($order->total_amount, 2) }}?');">
                 @csrf
                 <button type="submit" class="btn-action btn-danger">
-                    <i data-lucide="rotate-ccw"></i> Process Refund
+                    <i data-lucide="rotate-ccw" style="width: 14px;"></i> Process Refund
                 </button>
             </form>
         @endif
@@ -97,20 +98,20 @@
 <!-- 1. System Health Strip -->
 <div class="health-strip">
     <div class="health-node">
-        <span class="health-label">PayPal Gateway</span>
-        <span class="health-status" style="color: #059669;">● LIVE / SANDBOX</span>
+        <span class="health-label">Payment Gateway</span>
+        <span class="health-status" style="color: #059669;">● CAPTURED</span>
     </div>
     <div class="health-node">
-        <span class="health-label">CJ Dropshipping</span>
-        <span class="health-status" style="color: #059669;">● CONNECTED</span>
+        <span class="health-label">Execution Provider</span>
+        <span class="health-status" style="color: #059669;">● {{ $activeFulfillment->provider->name ?? 'CJ Dropshipping' }}</span>
     </div>
     <div class="health-node">
-        <span class="health-label">Database Ledger</span>
-        <span class="health-status" style="color: #059669;">● HEALTHY</span>
+        <span class="health-label">Fulfillment Ledger</span>
+        <span class="health-status" style="color: #059669;">● {{ $activeFulfillment ? 'ACTIVE' : 'IDLE' }}</span>
     </div>
     <div class="health-node">
-        <span class="health-label">Outbox Worker</span>
-        <span class="health-status" style="color: #059669;">● CRON ACTIVE</span>
+        <span class="health-label">Customer Status</span>
+        <span class="health-status" style="color: var(--accent);">● {{ $customerStatus['status'] }}</span>
     </div>
     <div class="health-node">
         <span class="health-label">Address Verified</span>
@@ -124,7 +125,7 @@
     <!-- 2. Customer & Shipping Card -->
     <div class="tower-card">
         <div class="card-header">
-            <h3><i data-lucide="user"></i> Customer & Verified Address</h3>
+            <h3><i data-lucide="user" style="width: 16px;"></i> Customer & Verified Address</h3>
         </div>
         <div class="data-row">
             <span class="data-label">Customer Name</span>
@@ -161,18 +162,18 @@
     <!-- 3. Payment Card -->
     <div class="tower-card">
         <div class="card-header">
-            <h3><i data-lucide="credit-card"></i> Payment & Financial Ledger</h3>
+            <h3><i data-lucide="credit-card" style="width: 16px;"></i> Payment & Financial Ledger</h3>
         </div>
         @php
             $latestPayment = $order->payments->first();
             $latestTx = $order->paymentTransactions->where('type', 'CAPTURE')->first();
         @endphp
         <div class="data-row">
-            <span class="data-label">Payment Method</span>
+            <span class="data-label">Payment Gateway</span>
             <span class="data-val">{{ strtoupper($latestPayment->payment_method ?? 'PAYPAL') }}</span>
         </div>
         <div class="data-row">
-            <span class="data-label">Transaction / Capture ID</span>
+            <span class="data-label">Capture ID</span>
             <span class="data-val" style="font-family: monospace;">{{ $latestPayment->transaction_id ?? ($latestTx->provider_transaction_id ?? 'N/A') }}</span>
         </div>
         <div class="data-row">
@@ -189,27 +190,29 @@
         </div>
     </div>
 
-    <!-- 4. Commerce & Variant Card -->
+    <!-- 4. Line Items & Commercial Fidelity Card -->
     <div class="tower-card">
         <div class="card-header">
-            <h3><i data-lucide="shopping-bag"></i> Line Items & Variant Fidelity</h3>
+            <h3><i data-lucide="shopping-bag" style="width: 16px;"></i> Line Items & Variant Fidelity</h3>
         </div>
         @foreach($order->items as $item)
             @php
                 $resolvedVid = \App\Services\Cj\CjOrderService::resolveVariantId($item);
-                $cost = (float)($item->variant->cost_price ?? ($item->product->discount_price ?? 0.00));
+                $cost = (float)($item->variant->cost_price ?? ($item->product->discount_price ? $item->product->discount_price * 0.4 : 0.00));
                 $margin = (float)$item->unit_price - $cost;
             @endphp
             <div style="border-bottom: 1px solid var(--border-color); padding: 8px 0; margin-bottom: 8px;">
                 <div style="font-weight: 700; font-size: 14px;">{{ $item->product->name ?? 'Product' }} (x{{ $item->quantity }})</div>
                 <div class="data-row">
-                    <span class="data-label">Variant Name</span>
-                    <span class="data-val">{{ $item->variant->name ?? 'Default' }}</span>
+                    <span class="data-label">Merchant SKU</span>
+                    <span class="data-val" style="font-family: monospace; color: var(--accent);">{{ $item->product->merchant_sku ?? 'AZG-001' }}</span>
                 </div>
+                @if($resolvedVid)
                 <div class="data-row">
-                    <span class="data-label">Mapped CJ Variant ID (VID)</span>
+                    <span class="data-label">Mapped Provider VID</span>
                     <span class="data-val" style="font-family: monospace; color: #059669;">{{ $resolvedVid }}</span>
                 </div>
+                @endif
                 <div class="data-row">
                     <span class="data-label">Selling Price</span>
                     <span class="data-val">${{ number_format($item->unit_price, 2) }}</span>
@@ -222,10 +225,10 @@
         @endforeach
     </div>
 
-    <!-- 5. Internal Supply Chain & Supplier Fulfillment Card -->
+    <!-- 5. Internal Supply Chain & Supplier Fulfillment Card (Admin Only) -->
     <div class="tower-card">
         <div class="card-header">
-            <h3><i data-lucide="truck"></i> Internal Supply Chain (Admin Only)</h3>
+            <h3><i data-lucide="truck" style="width: 16px;"></i> Internal Supply Chain (Admin Only)</h3>
         </div>
         @php
             $supOrder = $order->supplierOrders->first();
@@ -238,7 +241,7 @@
         @endphp
         <div class="data-row">
             <span class="data-label">Fulfillment Provider</span>
-            <span class="data-val" style="font-weight: 700; color: #2563eb;">{{ strtoupper($supOrder->supplier ?? 'CJ Dropshipping') }}</span>
+            <span class="data-val" style="font-weight: 700; color: #2563eb;">{{ $activeFulfillment->provider->name ?? 'CJ Dropshipping' }}</span>
         </div>
         <div class="data-row">
             <span class="data-label">Supplier Order ID</span>
@@ -246,40 +249,58 @@
         </div>
         <div class="data-row">
             <span class="data-label">Fulfillment Status</span>
-            <span class="data-val">{{ ucfirst($supOrder->status ?? ($cjOrd->status ?? ($order->fulfillment_status ?? 'Pending'))) }}</span>
+            <span class="data-val">{{ $fStat }}</span>
         </div>
         <div class="data-row">
             <span class="data-label">Supplier Product Cost</span>
             <span class="data-val">${{ number_format($prodCost, 2) }}</span>
         </div>
         <div class="data-row">
-            <span class="data-label">Supplier Shipping Fee</span>
+            <span class="data-label">Supplier Freight Cost</span>
             <span class="data-val">${{ number_format($shipCost, 2) }}</span>
         </div>
         <div class="data-row">
             <span class="data-label">Net Profit Margin</span>
             <span class="data-val" style="color: #059669; font-weight: 700;">+${{ number_format($profitMargin, 2) }} USD</span>
         </div>
+    </div>
+
+    <!-- 6. White-Labeled Logistics & Customer Carrier -->
+    <div class="tower-card">
+        <div class="card-header">
+            <h3><i data-lucide="navigation" style="width: 16px;"></i> White-Labeled Shipment & Tracking</h3>
+        </div>
+        @php
+            $shipment = $order->shipment ?? ($order->shipments ? $order->shipments->first() : null);
+        @endphp
         <div class="data-row">
-            <span class="data-label">Carrier & Line</span>
-            <span class="data-val">{{ $supOrder->carrier_name ?? ($cjOrd->logistic_name ?? 'Standard Direct Line') }}</span>
+            <span class="data-label">Customer Carrier Name</span>
+            <span class="data-val">{{ $shipment->customer_carrier_name ?? 'Standard Delivery' }}</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Shipment Status</span>
+            <span class="data-val">{{ $shipment->status ?? ($shipment->shipment_status ?? 'NOT_SHIPPED') }}</span>
         </div>
         <div class="data-row">
             <span class="data-label">Tracking Number</span>
-            <span class="data-val" style="font-family: monospace; font-weight: 700; color: var(--accent);">{{ $supOrder->tracking_number ?? ($cjOrd->tracking_number ?? 'Pending Carrier Update') }}</span>
+            <span class="data-val" style="font-family: monospace; font-weight: 700; color: var(--accent);">{{ $shipment->tracking_number ?? 'Pending Carrier Update' }}</span>
+        </div>
+        <div class="data-row">
+            <span class="data-label">Delivery SLA</span>
+            <span class="data-val">7–15 Business Days</span>
         </div>
     </div>
 
-    <!-- 6. Step-by-Step Chronological Audit Timeline -->
+    <!-- 7. Step-by-Step Chronological Audit & Attempt Timeline -->
     <div class="tower-card" style="grid-column: 1 / -1;">
         <div class="card-header">
-            <h3><i data-lucide="clock"></i> Step-by-Step Audit Timeline</h3>
+            <h3><i data-lucide="clock" style="width: 16px;"></i> Step-by-Step Audit Timeline</h3>
         </div>
         <ul class="timeline-list">
             <li class="timeline-item">
                 <div class="timeline-dot"></div>
                 <div class="timeline-time">{{ $order->created_at->format('M d, Y H:i:s') }}</div>
-                <div class="timeline-desc">Order #{{ $order->order_number }} created in status: PENDING</div>
+                <div class="timeline-desc">Order #{{ $order->order_number }} created in commercial ledger</div>
             </li>
             @foreach($order->paymentTransactions as $tx)
             <li class="timeline-item">
@@ -290,19 +311,21 @@
                 </div>
             </li>
             @endforeach
-            @if($order->cjOrder)
-            <li class="timeline-item">
-                <div class="timeline-dot" style="background: #2563eb;"></div>
-                <div class="timeline-time">{{ $order->cjOrder->created_at->format('M d, Y H:i:s') }}</div>
-                <div class="timeline-desc">CJ Dropshipping Order Submitted (ID: {{ $order->cjOrder->cj_order_id }})</div>
-            </li>
-            @if(!empty($order->cjOrder->tracking_number))
-            <li class="timeline-item">
-                <div class="timeline-dot" style="background: #059669;"></div>
-                <div class="timeline-time">{{ $order->cjOrder->updated_at->format('M d, Y H:i:s') }}</div>
-                <div class="timeline-desc">Tracking Number Assigned: {{ $order->cjOrder->tracking_number }} (Carrier: {{ $order->cjOrder->logistic_name }})</div>
-            </li>
-            @endif
+            @if($activeFulfillment)
+                @foreach($activeFulfillment->attempts as $att)
+                    <li class="timeline-item">
+                        <div class="timeline-dot" style="background: {{ $att->status === 'SUCCESS' ? '#2563eb' : '#ef4444' }};"></div>
+                        <div class="timeline-time">{{ $att->created_at->format('M d, Y H:i:s') }}</div>
+                        <div class="timeline-desc">Fulfillment Attempt #{{ $att->attempt_number }} [{{ $att->idempotency_key }}]: {{ $att->status }} {{ $att->error_message ? ' - ' . $att->error_message : '' }}</div>
+                    </li>
+                @endforeach
+                @foreach($activeFulfillment->exceptions as $exc)
+                    <li class="timeline-item">
+                        <div class="timeline-dot" style="background: #ef4444;"></div>
+                        <div class="timeline-time">{{ $exc->created_at->format('M d, Y H:i:s') }}</div>
+                        <div class="timeline-desc" style="color: #ef4444;">EXCEPTION LOGGED [{{ $exc->error_code }}]: {{ $exc->error_message }}</div>
+                    </li>
+                @endforeach
             @endif
         </ul>
     </div>

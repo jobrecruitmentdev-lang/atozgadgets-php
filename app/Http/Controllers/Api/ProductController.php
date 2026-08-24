@@ -9,8 +9,8 @@ class ProductController extends ApiController
 {
     public function index(Request $request)
     {
-        // Mimic Express backend pagination and filtering
-        $query = Product::where('status', 'active');
+        // Query published white-labeled products
+        $query = Product::published();
 
         if ($request->has('category')) {
             $query->whereHas('category', function($q) use ($request) {
@@ -38,7 +38,7 @@ class ProductController extends ApiController
 
     public function show($slug)
     {
-        $product = Product::with(['category', 'brand'])->where('slug', $slug)->first();
+        $product = Product::published()->with(['category', 'brand', 'variants', 'media', 'specifications'])->where('slug', $slug)->first();
 
         if (!$product) {
             return $this->errorResponse('Product not found', 404);

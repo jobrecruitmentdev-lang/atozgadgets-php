@@ -25,6 +25,13 @@ class ProductVariant extends Model
         'image_url',
     ];
 
+    /**
+     * Prevent internal supplier variant IDs from leaking in public JSON responses
+     */
+    protected $hidden = [
+        'cj_variant_id',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);

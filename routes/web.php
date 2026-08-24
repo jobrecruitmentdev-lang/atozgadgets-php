@@ -69,7 +69,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         return redirect()->route('admin.strategy_hub');
     });
 
-    // Catalog Products, Categories, Brands
+    // Catalog Products, Categories, Brands, Import
     Route::get('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('admin.catalog.products');
     Route::post('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('admin.catalog.products.store');
     Route::put('/catalog/products/{id}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('admin.catalog.products.update');
@@ -85,36 +85,54 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::put('/catalog/brands/{id}', [\App\Http\Controllers\Admin\BrandController::class, 'update'])->name('admin.catalog.brands.update');
     Route::delete('/catalog/brands/{id}', [\App\Http\Controllers\Admin\BrandController::class, 'destroy'])->name('admin.catalog.brands.destroy');
 
-    // Reports & CSV Exports
-    Route::get('/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports');
-    Route::get('/reports/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
+    Route::get('/catalog/import', [\App\Http\Controllers\Admin\CatalogController::class, 'import'])->name('admin.catalog.import');
+    Route::patch('/catalog/products/{id}/toggle-status', [\App\Http\Controllers\Admin\CatalogController::class, 'toggleProductStatus'])->name('admin.catalog.products.toggle_status');
+    Route::get('/api/catalog/search', [\App\Http\Controllers\Admin\CatalogController::class, 'searchCjApi']);
+    Route::get('/api/catalog/cj-categories', [\App\Http\Controllers\Admin\CatalogController::class, 'getCjCategories']);
+    Route::post('/api/catalog/import-item', [\App\Http\Controllers\Admin\CatalogController::class, 'importCjProduct']);
 
-    // Settings
-    Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
-    Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
-    Route::post('/settings/toggle-cj-sandbox', [\App\Http\Controllers\Admin\SettingController::class, 'toggleCjSandbox'])->name('admin.settings.toggle_cj_sandbox');
-    Route::post('/settings/test-cj-connection', [\App\Http\Controllers\Admin\SettingController::class, 'testCjConnection'])->name('admin.settings.test_cj_connection');
-    
-    // Orders
+    // Commerce: Orders, Customers, Payments, Reviews
     Route::get('/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('admin.orders');
     Route::get('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('admin.orders.show');
+    Route::post('/orders/{id}/fulfill', [\App\Http\Controllers\Admin\OrderController::class, 'fulfillOrder'])->name('admin.orders.fulfill');
     Route::post('/orders/{id}/fulfill-cj', [\App\Http\Controllers\Admin\OrderController::class, 'fulfillWithCj'])->name('admin.orders.fulfill_cj');
     Route::post('/orders/{id}/sync-cj', [\App\Http\Controllers\Admin\OrderController::class, 'syncCjStatus'])->name('admin.orders.sync_cj');
     Route::post('/orders/{id}/refund', [\App\Http\Controllers\Admin\OrderController::class, 'processRefund'])->name('admin.orders.refund');
     Route::put('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('admin.orders.update');
     Route::delete('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'destroy'])->name('admin.orders.destroy');
     
-    // Customers
     Route::get('/customers', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('admin.customers');
     Route::put('/customers/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'update'])->name('admin.customers.update');
     Route::delete('/customers/{id}', [\App\Http\Controllers\Admin\CustomerController::class, 'destroy'])->name('admin.customers.destroy');
-    
-    // CJ Import Gateway
-    Route::get('/catalog/import', [\App\Http\Controllers\Admin\CatalogController::class, 'import'])->name('admin.catalog.import');
-    Route::patch('/catalog/products/{id}/toggle-status', [\App\Http\Controllers\Admin\CatalogController::class, 'toggleProductStatus'])->name('admin.catalog.products.toggle_status');
-    Route::get('/api/catalog/search', [\App\Http\Controllers\Admin\CatalogController::class, 'searchCjApi']);
-    Route::get('/api/catalog/cj-categories', [\App\Http\Controllers\Admin\CatalogController::class, 'getCjCategories']);
-    Route::post('/api/catalog/import-item', [\App\Http\Controllers\Admin\CatalogController::class, 'importCjProduct']);
+
+    Route::get('/commerce/payments', [\App\Http\Controllers\Admin\PaymentAdminController::class, 'index'])->name('admin.commerce.payments');
+    Route::get('/commerce/reviews', [\App\Http\Controllers\Admin\ReviewAdminController::class, 'index'])->name('admin.commerce.reviews');
+    Route::post('/commerce/reviews/{id}/status', [\App\Http\Controllers\Admin\ReviewAdminController::class, 'updateStatus'])->name('admin.commerce.reviews.update_status');
+    Route::delete('/commerce/reviews/{id}', [\App\Http\Controllers\Admin\ReviewAdminController::class, 'destroy'])->name('admin.commerce.reviews.destroy');
+
+    // Fulfillment Hub: Overview, Queue, Shipments, Exceptions
+    Route::get('/fulfillment', [\App\Http\Controllers\Admin\FulfillmentController::class, 'overview'])->name('admin.fulfillment.overview');
+    Route::get('/fulfillment/queue', [\App\Http\Controllers\Admin\FulfillmentController::class, 'queue'])->name('admin.fulfillment.queue');
+    Route::get('/fulfillment/shipments', [\App\Http\Controllers\Admin\FulfillmentController::class, 'shipments'])->name('admin.fulfillment.shipments');
+    Route::get('/fulfillment/exceptions', [\App\Http\Controllers\Admin\FulfillmentController::class, 'exceptions'])->name('admin.fulfillment.exceptions');
+    Route::post('/fulfillment/{id}/retry', [\App\Http\Controllers\Admin\FulfillmentController::class, 'retry'])->name('admin.fulfillment.retry');
+    Route::post('/fulfillment/exceptions/{id}/resolve', [\App\Http\Controllers\Admin\FulfillmentController::class, 'resolveException'])->name('admin.fulfillment.resolve_exception');
+
+    // Analytics: Sales, Products, Profitability
+    Route::get('/analytics/sales', [\App\Http\Controllers\Admin\AnalyticsAdminController::class, 'sales'])->name('admin.analytics.sales');
+    Route::get('/analytics/products', [\App\Http\Controllers\Admin\AnalyticsAdminController::class, 'products'])->name('admin.analytics.products');
+    Route::get('/analytics/profitability', [\App\Http\Controllers\Admin\AnalyticsAdminController::class, 'profitability'])->name('admin.analytics.profitability');
+
+    // System: Health, Settings, Audit Logs, Reports
+    Route::get('/system/health', [\App\Http\Controllers\Admin\HealthController::class, 'index'])->name('admin.system.health');
+    Route::get('/system/audit-logs', [\App\Http\Controllers\Admin\AuditLogAdminController::class, 'index'])->name('admin.system.audit_logs');
+    Route::get('/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports');
+    Route::get('/reports/export/{type}', [\App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
+
+    Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings');
+    Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.update');
+    Route::post('/settings/toggle-cj-sandbox', [\App\Http\Controllers\Admin\SettingController::class, 'toggleCjSandbox'])->name('admin.settings.toggle_cj_sandbox');
+    Route::post('/settings/test-cj-connection', [\App\Http\Controllers\Admin\SettingController::class, 'testCjConnection'])->name('admin.settings.test_cj_connection');
 });
 
 Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('logout');

@@ -41,6 +41,14 @@ class Order extends Model
     }
 
     /**
+     * Get the fulfillments associated with this order.
+     */
+    public function fulfillments(): HasMany
+    {
+        return $this->hasMany(Fulfillment::class, 'order_id');
+    }
+
+    /**
      * Get the CJ Dropshipping order mapping record.
      */
     public function cjOrder(): HasOne
@@ -75,6 +83,11 @@ class Order extends Model
     public function shipment(): HasOne
     {
         return $this->hasOne(Shipment::class, 'order_id');
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class, 'order_id');
     }
 
     /**

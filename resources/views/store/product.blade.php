@@ -20,7 +20,7 @@
         "{{ $product->customer_thumbnail }}"
       ],
       "description": "{{ addslashes(Str::limit(strip_tags($product->description ?? $product->name), 250)) }}",
-      "sku": "{{ $product->sku }}",
+      "sku": "{{ $product->merchant_sku }}",
       "brand": {
         "@type": "Brand",
         "name": "{{ addslashes($product->brand->name ?? 'AtoZGadgets') }}"
@@ -79,6 +79,9 @@
     .meta-pills { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     .meta-pill { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); color: var(--text-secondary); display: inline-flex; align-items: center; gap: 6px; }
     .pill-instock { color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+    .pill-lowstock { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+    .pill-confirming { color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
+    .pill-outofstock { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
 
     /* Variants */
     .variant-section { margin-bottom: 28px; }
@@ -93,11 +96,16 @@
     .qty-btn { width: 44px; height: 52px; background: transparent; border: none; color: var(--text-primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .qty-input { width: 48px; text-align: center; background: transparent; border: none; color: var(--text-primary); font-weight: 700; font-size: 16px; }
     .btn-cart { flex: 1; padding: 16px 24px; font-size: 16px; font-weight: 700; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-cart:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Trust Strip */
     .trust-badges-box { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 16px; border: 1px solid var(--glass-border); margin-bottom: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .tb-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
     .tb-item i { color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Payment Gateways Strip */
+    .payment-methods-strip { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding: 12px 16px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); font-size: 13px; color: var(--text-secondary); flex-wrap: wrap; }
+    .pm-pill { background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px; font-weight: 600; color: var(--text-primary); font-size: 12px; }
 
     /* Product Tabs */
     .tabs-section { margin-top: 50px; border-top: 1px solid var(--glass-border); padding-top: 36px; }
@@ -152,7 +160,7 @@
 </div>
 
 <div class="product-layout">
-    <!-- 1. Media Gallery (Shields raw supplier CDN) -->
+    <!-- Pillar 1: Media Gallery -->
     <div class="gallery-container" data-aos="fade-up">
         <div class="main-image-wrap">
             <img id="mainProductImg" fetchpriority="high" decoding="sync" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}" class="main-image">
@@ -161,29 +169,34 @@
         @if($product->media && $product->media->count() > 0)
             <div class="thumbnails-strip">
                 <button type="button" class="thumb-btn active" onclick="switchMainImage('{{ $product->customer_thumbnail }}', this)">
-                    <img src="{{ $product->customer_thumbnail }}" alt="Primary Image">
+                    <img src="{{ $product->customer_thumbnail }}" alt="Primary View">
                 </button>
                 @foreach($product->media as $m)
                     <button type="button" class="thumb-btn" onclick="switchMainImage('{{ $m->public_url }}', this)">
-                        <img src="{{ $m->public_url }}" alt="Gallery thumbnail">
+                        <img src="{{ $m->public_url }}" alt="{{ $m->alt_text ?? 'Product view' }}">
                     </button>
                 @endforeach
             </div>
         @endif
     </div>
     
-    <!-- 2. Product Info & Commercial Selection -->
+    <!-- Product Info & Commercial Selection -->
     <div class="product-info" data-aos="fade-left" data-aos-delay="100">
         <h1>{{ $product->name }}</h1>
         
+        <!-- Pillar 3: Authentic Review Summary -->
         <div class="rating-summary">
             <div class="stars">
                 @for($i = 1; $i <= 5; $i++)
-                    <i data-lucide="star" style="width:16px; height:16px; {{ $i <= round($product->average_rating) ? 'fill: #f59e0b;' : 'opacity: 0.3;' }}"></i>
+                    <i data-lucide="star" style="width:16px; height:16px; {{ ($product->review_count > 0 && $i <= round($product->average_rating)) ? 'fill: #f59e0b;' : 'opacity: 0.3;' }}"></i>
                 @endfor
             </div>
-            <span style="font-weight: 700; color: var(--text-primary);">{{ $product->average_rating }}</span>
-            <span class="review-count-badge" onclick="showTab('tab-reviews')">({{ $product->review_count }} verified reviews)</span>
+            @if($product->review_count > 0)
+                <span style="font-weight: 700; color: var(--text-primary);">{{ $product->average_rating }}</span>
+                <span class="review-count-badge" onclick="showTab('tab-reviews')">({{ $product->review_count }} verified reviews)</span>
+            @else
+                <span style="color: var(--text-secondary); font-size: 13px;">(0 customer reviews)</span>
+            @endif
         </div>
 
         <div class="price-wrap">
@@ -197,9 +210,13 @@
             @endif
         </div>
 
+        <!-- Pillar 4 & 6: Truthful Dynamic Stock & Merchant SKU -->
         <div class="meta-pills">
-            <span class="meta-pill pill-instock"><i data-lucide="check-circle" style="width:14px;height:14px;"></i> In Stock (Fast Dispatch)</span>
-            <span class="meta-pill"><i data-lucide="tag" style="width:14px;height:14px;"></i> SKU: {{ $product->sku }}</span>
+            @php $avail = $product->availability; @endphp
+            <span class="meta-pill {{ $avail['badge_class'] }}">
+                <i data-lucide="{{ $avail['icon'] }}" style="width:14px;height:14px;"></i> {{ $avail['label'] }}
+            </span>
+            <span class="meta-pill"><i data-lucide="tag" style="width:14px;height:14px;"></i> SKU: {{ $product->merchant_sku }}</span>
             @if($product->brand)
                 <span class="meta-pill"><i data-lucide="award" style="width:14px;height:14px;"></i> {{ $product->brand->name }}</span>
             @endif
@@ -231,20 +248,30 @@
                     <input type="number" id="qty" name="quantity" value="1" min="1" max="99" class="qty-input" readonly>
                     <button type="button" class="qty-btn" onclick="const q = document.getElementById('qty'); q.value = parseInt(q.value) + 1;">+</button>
                 </div>
-                <button type="submit" class="btn btn-primary btn-cart">
-                    <i data-lucide="shopping-bag" style="display:inline; width:18px; margin-right:8px; vertical-align:middle;"></i> Add to Cart
+                <button type="submit" class="btn btn-primary btn-cart" {{ !$avail['is_purchasable'] ? 'disabled' : '' }}>
+                    <i data-lucide="shopping-bag" style="display:inline; width:18px; margin-right:8px; vertical-align:middle;"></i> 
+                    {{ $avail['is_purchasable'] ? 'Add to Cart' : 'Out of Stock' }}
                 </button>
             </div>
         </form>
 
+        <!-- Pillar 7: Dynamic Payment Gateway Badges -->
+        <div class="payment-methods-strip">
+            <span style="font-weight: 600; color: var(--text-primary);"><i data-lucide="shield-check" style="width:14px;height:14px;display:inline;margin-right:4px;"></i> Accepted Payments:</span>
+            @foreach($paymentMethods ?? [] as $pm)
+                <span class="pm-pill">{{ $pm['badge'] }}</span>
+            @endforeach
+        </div>
+
+        <!-- Pillar 5: Grounded Shipping & Trust Elements -->
         <div class="trust-badges-box">
             <div class="tb-item">
                 <i data-lucide="truck"></i>
-                <span><strong>Standard Delivery</strong><br>Worldwide delivery available</span>
+                <span><strong>Standard Delivery</strong><br>7–15 business days</span>
             </div>
             <div class="tb-item">
                 <i data-lucide="shield-check"></i>
-                <span><strong>Secure Checkout</strong><br>256-Bit SSL Encrypted</span>
+                <span><strong>{{ $trustHeadline ?? 'Secure Checkout' }}</strong><br>256-Bit SSL Encrypted</span>
             </div>
             <div class="tb-item">
                 <i data-lucide="rotate-ccw"></i>
@@ -267,7 +294,7 @@
         <button class="tab-btn" onclick="showTab('tab-reviews', this)">Customer Reviews ({{ $product->review_count }})</button>
     </div>
 
-    <!-- Tab 1: Description -->
+    <!-- Tab 1: Description (Pillar 2 Clean Content) -->
     <div id="tab-desc" class="tab-pane active">
         @if(!empty($product->description))
             {!! nl2br(e($product->description)) !!}
@@ -294,8 +321,8 @@
                     <td>{{ $product->name }}</td>
                 </tr>
                 <tr>
-                    <td>SKU</td>
-                    <td>{{ $product->sku }}</td>
+                    <td>Merchant SKU</td>
+                    <td>{{ $product->merchant_sku }}</td>
                 </tr>
                 <tr>
                     <td>Category</td>
@@ -309,7 +336,7 @@
         @endif
     </div>
 
-    <!-- Tab 3: Shipping & Returns -->
+    <!-- Tab 3: Shipping & Returns (Pillar 5) -->
     <div id="tab-shipping" class="tab-pane">
         <h4 style="color: var(--text-primary); margin-bottom: 10px;">Shipping Details</h4>
         <p>All orders are processed and dispatched within 1–3 business days. You will receive an automated shipping confirmation with your tracking link as soon as your package leaves our fulfillment center.</p>
@@ -318,18 +345,18 @@
             <li><strong>Order Tracking:</strong> Live online tracking accessible 24/7</li>
             <li><strong>Secure Handover:</strong> Verified delivery confirmation</li>
         </ul>
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Return & Refund Policy</h4>
+        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Return & Replacement Policy</h4>
         <p>We provide a 7-day hassle-free return and replacement policy for any defective or damaged products upon arrival. Contact customer support with your order number to initiate a return.</p>
     </div>
 
-    <!-- Tab 4: Customer Reviews -->
+    <!-- Tab 4: Customer Reviews (Pillar 3 Authentic Reviews) -->
     <div id="tab-reviews" class="tab-pane">
         <div class="reviews-container">
             @forelse($product->approvedReviews as $review)
                 <div class="review-card">
                     <div class="review-meta">
                         <div class="review-author">
-                            {{ $review->user->first_name ?? 'Verified Buyer' }}
+                            {{ $review->user->first_name ?? 'Customer' }}
                             @if($review->verified_purchase)
                                 <span class="badge-verified"><i data-lucide="check" style="width:12px;height:12px;display:inline;"></i> Verified Purchase</span>
                             @endif
@@ -384,7 +411,7 @@
     function switchMainImage(src, btn) {
         document.getElementById('mainProductImg').src = src;
         document.querySelectorAll('.thumb-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        if (btn) btn.classList.add('active');
     }
 
     function selectVariant(variantId, price, elem, imageUrl) {

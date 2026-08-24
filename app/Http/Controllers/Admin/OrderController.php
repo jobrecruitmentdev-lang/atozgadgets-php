@@ -71,30 +71,50 @@ class OrderController extends Controller
             'orderAddress',
             'payments',
             'paymentTransactions',
+            'fulfillments.provider',
+            'fulfillments.items.orderItem.product',
+            'fulfillments.attempts',
+            'fulfillments.exceptions',
+            'fulfillments.shipments.carrier',
             'cjOrder',
             'supplierOrders',
         ])->findOrFail($id);
 
-        return view('admin.orders.show', compact('order'));
+        $customerStatus = \App\Services\Order\CustomerOrderStatusResolver::resolve($order);
+
+        return view('admin.orders.show', compact('order', 'customerStatus'));
     }
 
-    public function fulfillWithCj($id)
+    public function fulfillOrder($id)
     {
         try {
-            $order = Order::findOrFail($id);
+            $order = Order::with('items')->findOrFail($id);
 
-            // Guard: Never fulfill unpaid orders to prevent balance loss
+            // Guard: Never fulfill unpaid orders
             if (!in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success'])) {
                 return redirect()->back()->with('error', 'Cannot fulfill order: Payment status is "' . ($order->payment_status ?? 'pending') . '". Orders must be paid before dispatching.');
             }
 
-            $result = CjOrderService::placeOrder($id);
-            $order->update(['status' => 'processing']);
+            $fulfillment = $order->fulfillments()->whereIn('fulfillment_status', ['PENDING', 'EXCEPTION'])->first();
+            if (!$fulfillment) {
+                $fulfillment = \App\Services\Fulfillment\FulfillmentService::createFulfillmentsForOrder($order);
+            }
 
-            return redirect()->back()->with('success', 'Order dispatched to CJ Dropshipping successfully! CJ Order ID: ' . ($result['cjOrderId'] ?? ''));
+            $result = \App\Services\Fulfillment\FulfillmentService::executeFulfillment($fulfillment);
+
+            if ($result->success) {
+                return redirect()->back()->with('success', 'Order dispatched to fulfillment provider successfully! Provider Ref: ' . ($result->externalOrderId ?? ''));
+            }
+
+            return redirect()->back()->with('error', 'Fulfillment Provider Error: ' . ($result->errorMessage ?? 'Unknown error'));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'CJ Fulfillment Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Fulfillment Error: ' . $e->getMessage());
         }
+    }
+
+    public function fulfillWithCj($id)
+    {
+        return $this->fulfillOrder($id);
     }
 
     public function syncCjStatus($id)

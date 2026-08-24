@@ -60,8 +60,7 @@ class CjCatalogSearchTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get('/admin/catalog/import');
         $response->assertStatus(200);
-        $response->assertSee('CJDropshipping Catalog Gateway');
-        $response->assertSee('CJ Supplier Category');
+        $response->assertSee('Product Import Pipeline');
         $response->assertSee('Price Range ($)');
     }
 }
