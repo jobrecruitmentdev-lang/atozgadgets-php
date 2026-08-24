@@ -143,7 +143,17 @@
     .review-form-box { background: rgba(20,20,20,0.6); border: 1px solid var(--glass-border); border-radius: 16px; padding: 24px; margin-top: 30px; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-secondary); }
-    .form-control { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--glass-border); background: #0a0a0a; color: var(--text-primary); font-size: 14px; }
+    .form-control { width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--glass-border); background: #0a0a0a; color: var(--text-primary); font-size: 14px; outline: none; }
+    .form-control:focus { border-color: var(--accent); }
+
+    /* Interactive 5-Star Rating Widget */
+    .star-rating-widget { display: inline-flex; flex-direction: row-reverse; gap: 6px; font-size: 26px; line-height: 1; padding: 4px 0; }
+    .star-rating-widget input[type="radio"] { display: none; }
+    .star-rating-widget label { color: #4b5563; cursor: pointer; transition: color 0.2s, transform 0.2s; margin-bottom: 0 !important; }
+    .star-rating-widget label:hover,
+    .star-rating-widget label:hover ~ label,
+    .star-rating-widget input[type="radio"]:checked ~ label { color: #f59e0b; }
+    .star-rating-widget label:hover { transform: scale(1.15); }
 </style>
 
 <div class="breadcrumb" data-aos="fade-right">
@@ -393,14 +403,23 @@
                 <form action="{{ route('store.product.review', $product->slug) }}" method="POST">
                     @csrf
                     <div class="form-group">
-                        <label>Rating (1 to 5 Stars)</label>
-                        <select name="rating" class="form-control" required style="max-width: 200px;">
-                            <option value="5">★★★★★ (5 Stars - Excellent)</option>
-                            <option value="4">★★★★☆ (4 Stars - Very Good)</option>
-                            <option value="3">★★★☆☆ (3 Stars - Average)</option>
-                            <option value="2">★★☆☆☆ (2 Stars - Below Average)</option>
-                            <option value="1">★☆☆☆☆ (1 Star - Poor)</option>
-                        </select>
+                        <label>Rating</label>
+                        <div class="star-rating-widget" role="radiogroup" aria-label="Product rating">
+                            <input type="radio" id="star5" name="rating" value="5" checked>
+                            <label for="star5" title="5 Stars - Excellent">★</label>
+
+                            <input type="radio" id="star4" name="rating" value="4">
+                            <label for="star4" title="4 Stars - Very Good">★</label>
+
+                            <input type="radio" id="star3" name="rating" value="3">
+                            <label for="star3" title="3 Stars - Average">★</label>
+
+                            <input type="radio" id="star2" name="rating" value="2">
+                            <label for="star2" title="2 Stars - Below Average">★</label>
+
+                            <input type="radio" id="star1" name="rating" value="1">
+                            <label for="star1" title="1 Star - Poor">★</label>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Review Headline / Title</label>

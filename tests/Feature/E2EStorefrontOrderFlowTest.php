@@ -85,7 +85,10 @@ class E2EStorefrontOrderFlowTest extends TestCase
             'product_id' => $product->id
         ]);
         $cartAddRes->assertRedirect();
-        $this->assertEquals(1, session('cart')[$product->id]['quantity']);
+        $cart = session('cart');
+        $cartItem = reset($cart);
+        $this->assertEquals(1, $cartItem['quantity']);
+        $this->assertEquals($product->id, $cartItem['product_id']);
 
         // 4. Send & Verify OTP for Checkout
         $shippingPayload = [

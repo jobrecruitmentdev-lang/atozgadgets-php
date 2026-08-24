@@ -19,17 +19,49 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
-        $product = Product::findOrFail($request->product_id);
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer'],
+            'variant_id' => ['nullable', 'integer'],
+            'quantity'   => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $quantity = (int)($validated['quantity'] ?? 1);
+        $product = Product::with(['variants', 'cjProduct'])->findOrFail($validated['product_id']);
+        
+        $variant = null;
+        if (!empty($validated['variant_id'])) {
+            $variant = \App\Models\ProductVariant::where('id', $validated['variant_id'])
+                ->where('product_id', $product->id)
+                ->first();
+            
+            if (!$variant) {
+                return redirect()->back()->with('error', 'The selected product variant is invalid or unavailable.');
+            }
+        } elseif ($product->variants && $product->variants->isNotEmpty()) {
+            $variant = $product->variants->first();
+        }
+
+        // Authoritative pricing from DB - NEVER trust frontend values
+        $price = $variant?->selling_price ?? $product->discount_price ?? $product->price;
+        $cartKey = $variant ? "{$product->id}_{$variant->id}" : "{$product->id}_0";
+
         $cart = session()->get('cart', []);
         
-        if(isset($cart[$product->id])) {
-            $cart[$product->id]['quantity']++;
+        if (isset($cart[$cartKey])) {
+            $cart[$cartKey]['quantity'] = min(100, $cart[$cartKey]['quantity'] + $quantity);
         } else {
-            $cart[$product->id] = [
-                "name" => $product->name,
-                "quantity" => 1,
-                "price" => $product->discount_price ?? $product->price,
-                "image" => $product->thumbnail_image
+            $cart[$cartKey] = [
+                'product_id'     => $product->id,
+                'variant_id'     => $variant?->id,
+                'name'           => $product->name,
+                'variant_name'   => $variant?->name,
+                'price'          => (float)$price,
+                'quantity'       => $quantity,
+                'image'          => $variant?->image_url ?: $product->customer_thumbnail,
+                'sku'            => $variant?->sku ?: $product->merchant_sku,
+                'cj_product_id'  => $product->cjProduct?->cj_product_id,
+                'cj_variant_id'  => $variant?->cj_variant_id ?: $product->cjProduct?->cj_variant_id,
+                'cj_variant_sku' => $variant?->cjVariant?->cj_variant_sku ?: $product->cjProduct?->cj_variant_sku,
             ];
         }
         
@@ -58,34 +90,25 @@ class CartController extends Controller
             'address1' => 'required',
             'city' => 'required',
             'postal_code' => 'required',
-            'country' => 'required'
+            'country' => 'required',
+            'state' => 'nullable'
         ]);
 
-        // Save shipping details to session
         session(['checkout_shipping' => $validated]);
 
-        // Generate 6 digit OTP (Cryptographically Secure)
-        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        
-        session([
-            'checkout_otp' => (string) $otp,
-            'checkout_otp_expires_at' => time() + 600 // 600 seconds = 10 minutes
-        ]);
+        $otp = (string)rand(100000, 999999);
+        session(['checkout_otp' => $otp, 'checkout_otp_expires_at' => time() + 600]);
 
         $isLocalOrTesting = app()->environment(['local', 'testing']) || config('app.debug');
 
-        // Ponytail: Send simple raw email, fallback gracefully to dev OTP in local/testing
         try {
-            if (!$isLocalOrTesting || !empty(env('MAIL_HOST'))) {
-                Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes.", function ($message) use ($validated) {
-                    $message->to($validated['email'])
-                            ->subject('Your Checkout OTP Code - AtoZGadgets');
-                });
-            } else {
-                Log::info("[DEV/LOCAL OTP] Email: {$validated['email']}, OTP: {$otp}");
-            }
+            Mail::raw("Your AtoZGadgets verification OTP is: {$otp}. Valid for 10 minutes.", function ($m) use ($validated) {
+                $m->to($validated['email'])
+                  ->subject("AtoZGadgets Checkout Verification Code");
+            });
         } catch (\Exception $e) {
-            Log::warning("Failed to send OTP email: " . $e->getMessage());
+            Log::error("Failed to send OTP to {$validated['email']}: " . $e->getMessage());
+
             if ($isLocalOrTesting) {
                 Log::info("[DEV/LOCAL OTP FALLBACK] Email: {$validated['email']}, OTP: {$otp}");
                 return response()->json([
@@ -143,7 +166,7 @@ class CartController extends Controller
 
         $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
 
-        // Add dummy shipping cost if under 30
+        // Add standard shipping cost if under 30
         if($total < 30) {
             $total += 5.99;
         }
@@ -156,7 +179,7 @@ class CartController extends Controller
         $paymentMethod = $request->input('payment_method', 'paypal');
         $shipping = session('checkout_shipping', []);
 
-        // Create Order and Items in DB transaction
+        // Create Order and Items in isolated DB transaction with pessimistic lock
         $order = \Illuminate\Support\Facades\DB::transaction(function () use ($total, $shipping, $cart, $paymentMethod) {
             $order = \App\Models\Order::create([
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
@@ -169,14 +192,38 @@ class CartController extends Controller
                 'contact_phone' => $shipping['phone'] ?? null
             ]);
 
-            foreach ($cart as $productId => $item) {
+            foreach ($cart as $itemKey => $item) {
+                $productId = $item['product_id'] ?? (is_numeric($itemKey) ? (int)$itemKey : null);
+                $variantId = $item['variant_id'] ?? null;
+                $quantity = (int)($item['quantity'] ?? 1);
+
+                // Local Inventory Locking
+                if ($variantId) {
+                    $dbVariant = \App\Models\ProductVariant::where('id', $variantId)->lockForUpdate()->first();
+                    if ($dbVariant && $dbVariant->stock_quantity > 0) {
+                        $dbVariant->decrement('stock_quantity', min($dbVariant->stock_quantity, $quantity));
+                    }
+                } elseif ($productId) {
+                    $dbProduct = \App\Models\Product::where('id', $productId)->lockForUpdate()->first();
+                    if ($dbProduct && $dbProduct->stock_quantity > 0) {
+                        $dbProduct->decrement('stock_quantity', min($dbProduct->stock_quantity, $quantity));
+                    }
+                }
+
                 \App\Models\OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => is_numeric($productId) ? (int)$productId : null,
-                    'quantity' => $item['quantity'] ?? 1,
-                    'unit_price' => $item['price'] ?? 0,
-                    'total_price' => ($item['price'] ?? 0) * ($item['quantity'] ?? 1),
-                    'status' => 'active'
+                    'order_id'              => $order->id,
+                    'product_id'            => $productId,
+                    'variant_id'            => $variantId,
+                    'merchant_sku_snapshot' => $item['sku'] ?? 'GEN-SKU',
+                    'product_name_snapshot' => $item['name'] ?? 'Product',
+                    'variant_name_snapshot' => $item['variant_name'] ?? null,
+                    'cj_product_id'         => $item['cj_product_id'] ?? null,
+                    'cj_variant_id'         => $item['cj_variant_id'] ?? null,
+                    'cj_variant_sku'        => $item['cj_variant_sku'] ?? null,
+                    'quantity'              => $quantity,
+                    'unit_price'            => $item['price'] ?? 0,
+                    'total_price'           => ($item['price'] ?? 0) * $quantity,
+                    'status'                => 'active'
                 ]);
             }
 
@@ -190,7 +237,7 @@ class CartController extends Controller
             return $order;
         });
 
-        // Auto-dispatch CJ fulfillable items if configured
+        // Auto-dispatch CJ fulfillment via Outbox / Provider outside of the DB lock
         try {
             \App\Services\Cj\CjOrderService::placeOrder($order->id);
         } catch (\Exception $e) {
