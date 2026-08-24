@@ -164,7 +164,7 @@
         @endforeach
     @endif
     
-    <span style="color: var(--text-primary);">{{ $product->name }}</span>
+    <span style="color: var(--text-primary); font-weight: 500;" title="{{ $product->name }}">{{ \Illuminate\Support\Str::limit($product->name, 40) }}</span>
 </div>
 
 <div class="product-layout">

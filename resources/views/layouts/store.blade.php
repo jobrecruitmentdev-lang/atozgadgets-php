@@ -102,11 +102,13 @@
         @media (min-width: 768px) { .mobile-menu-btn { display: none; } }
 
         /* Categories Row */
-        .categories-row { border-top: 1px solid var(--glass-border); display: none; }
+        .categories-row { border-top: 1px solid var(--glass-border); display: none; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(12px); }
         @media (min-width: 768px) { .categories-row { display: block; } }
-        .categories-nav { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
-        .cat-link { font-size: 14px; font-weight: 500; color: var(--text-primary); padding: 8px 16px; min-height: 44px; border-radius: 8px; transition: all 0.3s; display: flex; align-items: center; gap: 6px; }
-        .cat-link:hover { background: rgba(255, 255, 255, 0.05); color: var(--accent); }
+        .categories-nav { display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding: 6px 0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .categories-nav::-webkit-scrollbar { display: none; }
+        .cat-link { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 14px; min-height: 38px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; text-decoration: none; border: 1px solid transparent; }
+        .cat-link:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+        .cat-link.active { color: var(--accent); background: rgba(201, 169, 98, 0.08); border-color: rgba(201, 169, 98, 0.2); font-weight: 600; }
         .mega-dropdown { position: relative; }
         .mega-menu { position: absolute; top: 100%; left: 0; min-width: 220px; background: #141414; border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s var(--ease-premium); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 100; }
         
@@ -240,13 +242,13 @@
         <div class="categories-row">
             <div class="container">
                 <nav class="categories-nav">
-                    <a href="{{ route('store.shop') }}" class="cat-link" style="{{ request()->routeIs('store.shop') && !request()->hasAny(['category', 'sort', 'max_price']) ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">All Products</a>
+                    <a href="{{ route('store.shop') }}" class="cat-link {{ request()->routeIs('store.shop') && !request()->hasAny(['category', 'sort', 'max_price']) ? 'active' : '' }}">All Products</a>
                     
                     @if(isset($globalCategories))
                         @foreach($globalCategories as $cat)
                             @if($cat->children->count() > 0)
                                 <div class="mega-dropdown">
-                                    <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link" style="{{ request('category') == $cat->slug ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">
+                                    <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link {{ request('category') == $cat->slug ? 'active' : '' }}">
                                         {{ $cat->name }} <i data-lucide="chevron-down" style="width:14px;height:14px;"></i>
                                     </a>
                                     <div class="mega-menu">
@@ -261,7 +263,7 @@
                                     </div>
                                 </div>
                             @else
-                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link" style="{{ request('category') == $cat->slug ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">
+                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="cat-link {{ request('category') == $cat->slug ? 'active' : '' }}">
                                     {{ $cat->name }}
                                 </a>
                             @endif
