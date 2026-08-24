@@ -22,7 +22,6 @@ test-results/
 # Claude / AI Assistants / Knowledge
 /.agents
 /.claude
-/knowledge-vault
 
 # Security / Framework / Cache
 /storage/framework/
