@@ -12,8 +12,8 @@ if [ "$ACTION" == "push" ]; then
     echo "1/2 🚀 Syncing files to Live Production (atozgadgetz.com)..."
     wsl.exe rsync -avz -e "ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o BatchMode=yes" --exclude-from='.rsyncignore' . $SSH_TARGET:$REMOTE_PATH
     
-    echo "2/2 🔄 Executing Remote Database Migrations & Caching..."
-    wsl.exe ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o BatchMode=yes $SSH_TARGET "cd $REMOTE_PATH && php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+    echo "2/2 🔄 Executing Remote Database Migrations, Storage Link & Caching..."
+    wsl.exe ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o BatchMode=yes $SSH_TARGET "cd $REMOTE_PATH && php artisan storage:link && php artisan migrate --force && php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache"
     
     echo "✅ Deployment & Automated Migrations Complete!"
 elif [ "$ACTION" == "pull" ]; then
