@@ -30,9 +30,13 @@ class CatalogController extends Controller
 
     public function getCjCategories()
     {
+        $categories = \Illuminate\Support\Facades\Cache::remember('cj_categories_list', 3600, function () {
+            return CjProductService::getCategories();
+        });
+
         return response()->json([
             'success' => true,
-            'data' => CjProductService::getCategories()
+            'data' => $categories
         ]);
     }
 
@@ -54,7 +58,10 @@ class CatalogController extends Controller
             $filters['maxPrice'] = $request->query('maxPrice');
         }
 
-        $result = CjProductService::searchProducts($keyword, 1, 100, $filters);
+        $cacheKey = 'cj_search_' . md5($keyword . '_' . json_encode($filters));
+        $result = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($keyword, $filters) {
+            return CjProductService::searchProducts($keyword, 1, 100, $filters);
+        });
         
         return response()->json([
             'result' => true,

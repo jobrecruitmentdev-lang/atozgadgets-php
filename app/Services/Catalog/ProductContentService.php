@@ -218,6 +218,16 @@ class ProductContentService
             return '';
         }
 
+        $ext = pathinfo($parsed['path'] ?? '', PATHINFO_EXTENSION);
+        $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? strtolower($ext) : 'jpg';
+        $filename = md5($remoteUrl) . '.' . $ext;
+        $storagePath = "{$folder}/{$filename}";
+
+        // Fast path: avoid redundant HTTP downloads if media already stored
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storagePath)) {
+            return '/storage/' . $storagePath;
+        }
+
         try {
             // Disable arbitrary redirect chasing to prevent DNS rebinding redirects
             $response = \Illuminate\Support\Facades\Http::timeout(5)
@@ -232,11 +242,6 @@ class ProductContentService
                     \Illuminate\Support\Facades\Log::warning("Media import rejected non-image Content-Type '{$contentType}' from {$remoteUrl}");
                     return '';
                 }
-
-                $ext = pathinfo($parsed['path'] ?? '', PATHINFO_EXTENSION);
-                $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? strtolower($ext) : 'jpg';
-                $filename = md5($remoteUrl) . '.' . $ext;
-                $storagePath = "{$folder}/{$filename}";
 
                 \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $response->body());
                 return '/storage/' . $storagePath;
