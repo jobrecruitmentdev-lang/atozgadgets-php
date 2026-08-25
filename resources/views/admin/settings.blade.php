@@ -139,9 +139,20 @@
                 </div>
 
                 <div class="form-group">
-                    <label>CJ API Key</label>
-                    <input type="password" name="cj_api_key" id="cjApiKey" value="{{ $settings['cj_api_key'] }}" placeholder="UserNum@api@xxxxxxxxxxxxxxx">
-                    <p class="form-help">Found in My CJ &gt; Authorization &gt; API &gt; API Key. <span style="color:var(--color-success, #22c55e); font-weight:500;">(Securely saved &amp; masked. Leave dots intact unless updating with a new key).</span></p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="margin:0;">CJ API Key</label>
+                        @if(!empty($settings['cj_api_key_masked']))
+                            <span style="font-size:12px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 8px; border-radius:6px; border:1px solid rgba(34,197,94,0.3); font-weight:600;">
+                                ✓ Saved: {{ $settings['cj_api_key_masked'] }}
+                            </span>
+                        @else
+                            <span style="font-size:12px; background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:6px; border:1px solid rgba(239,68,68,0.3); font-weight:600;">
+                                ✕ Not Configured
+                            </span>
+                        @endif
+                    </div>
+                    <input type="password" name="cj_api_key" id="cjApiKey" placeholder="{{ !empty($settings['cj_api_key_masked']) ? 'Key is securely saved in DB. Enter new key only to change...' : 'UserNum@api@xxxxxxxxxxxxxxx' }}" autocomplete="new-password">
+                    <p class="form-help">Found in My CJ &gt; Authorization &gt; API &gt; API Key. (Active key is stored in database; leave this field empty to keep current key).</p>
                 </div>
 
                 <div style="margin-bottom: 24px;">
@@ -199,9 +210,20 @@
                         <p class="form-help">Found in PayPal Developer Dashboard > Apps & Credentials (Sandbox).</p>
                     </div>
                     <div class="form-group">
-                        <label>Sandbox Client Secret</label>
-                        <input type="password" name="paypal_sandbox_client_secret" value="{{ $settings['paypal_sandbox_client_secret'] }}" placeholder="••••••••••••••••••••••••">
-                        <p class="form-help">Your sandbox application client secret.</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="margin:0;">Sandbox Client Secret</label>
+                            @if(!empty($settings['paypal_sandbox_client_secret_masked']))
+                                <span style="font-size:12px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 8px; border-radius:6px; border:1px solid rgba(34,197,94,0.3); font-weight:600;">
+                                    ✓ Saved: {{ $settings['paypal_sandbox_client_secret_masked'] }}
+                                </span>
+                            @else
+                                <span style="font-size:12px; background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:6px; border:1px solid rgba(239,68,68,0.3); font-weight:600;">
+                                    ✕ Not Configured
+                                </span>
+                            @endif
+                        </div>
+                        <input type="password" name="paypal_sandbox_client_secret" placeholder="{{ !empty($settings['paypal_sandbox_client_secret_masked']) ? 'Secret is saved in DB. Enter new secret only to change...' : 'Enter Sandbox Client Secret' }}" autocomplete="new-password">
+                        <p class="form-help">Your sandbox application client secret (leave empty to keep current secret).</p>
                     </div>
                 </div>
 
@@ -216,9 +238,20 @@
                         <p class="form-help">Found in PayPal Developer Dashboard > Apps & Credentials (Live).</p>
                     </div>
                     <div class="form-group">
-                        <label>Live Client Secret</label>
-                        <input type="password" name="paypal_live_client_secret" value="{{ $settings['paypal_live_client_secret'] }}" placeholder="••••••••••••••••••••••••">
-                        <p class="form-help">Your live production application client secret.</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <label style="margin:0;">Live Client Secret</label>
+                            @if(!empty($settings['paypal_live_client_secret_masked']))
+                                <span style="font-size:12px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 8px; border-radius:6px; border:1px solid rgba(34,197,94,0.3); font-weight:600;">
+                                    ✓ Saved: {{ $settings['paypal_live_client_secret_masked'] }}
+                                </span>
+                            @else
+                                <span style="font-size:12px; background:rgba(239,68,68,0.15); color:#ef4444; padding:2px 8px; border-radius:6px; border:1px solid rgba(239,68,68,0.3); font-weight:600;">
+                                    ✕ Not Configured
+                                </span>
+                            @endif
+                        </div>
+                        <input type="password" name="paypal_live_client_secret" placeholder="{{ !empty($settings['paypal_live_client_secret_masked']) ? 'Secret is saved in DB. Enter new secret only to change...' : 'Enter Live Client Secret' }}" autocomplete="new-password">
+                        <p class="form-help">Your live production application client secret (leave empty to keep current secret).</p>
                     </div>
                 </div>
 
@@ -278,7 +311,16 @@
         document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
         el.classList.add('active');
         document.getElementById(tabId).style.display = 'block';
+        sessionStorage.setItem('active_settings_tab', tabId);
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedTab = sessionStorage.getItem('active_settings_tab');
+        if (savedTab && document.getElementById(savedTab)) {
+            const tabBtn = Array.from(document.querySelectorAll('.settings-tab')).find(t => t.getAttribute('onclick')?.includes(savedTab));
+            if (tabBtn) showTab(savedTab, tabBtn);
+        }
+    });
 
     function updatePaypalBadge(selectElem) {
         const badge = document.getElementById('paypalStatusBadge');
@@ -315,6 +357,7 @@
             const data = await res.json();
             if (data.success) {
                 showToast(data.message || 'Settings saved successfully!', 'success');
+                setTimeout(() => window.location.reload(), 700);
             } else {
                 showToast('Failed to save settings', 'error');
             }
