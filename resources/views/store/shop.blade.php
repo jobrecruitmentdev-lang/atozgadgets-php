@@ -4,17 +4,18 @@
 
 @section('content')
 <style>
-    .shop-header { margin-bottom: 32px; border-bottom: 1px solid var(--glass-border); padding-bottom: 24px; }
-    .shop-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    .shop-header { margin-bottom: 32px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px; }
+    .shop-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; color: var(--text-primary); }
     
     .shop-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
     .filter-pills { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .filter-pill { font-size: 13px; padding: 6px 14px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
-    .filter-pill.active, .filter-pill:hover { border-color: var(--accent); color: var(--accent); background: rgba(201, 169, 98, 0.1); }
+    .filter-pill { font-size: 13px; padding: 6px 14px; border-radius: 50px; background: var(--hover-subtle); border: 1px solid var(--border-color); color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+    .filter-pill.active, .filter-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--selection-bg); }
 
-    .sort-select { padding: 8px 14px; border-radius: 8px; background: #111; border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 13px; cursor: pointer; }
+    .sort-select { padding: 8px 14px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; cursor: pointer; outline: none; }
+    .sort-select:focus { border-color: var(--accent); }
     
-    .mobile-filter-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: rgba(201, 169, 98, 0.1); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .mobile-filter-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: var(--selection-bg); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
     @media (min-width: 768px) { .mobile-filter-btn { display: none; } }
 
     .shop-layout { display: flex; flex-direction: column; gap: 32px; }
@@ -27,16 +28,16 @@
     }
     @media (min-width: 768px) { .sidebar { width: 260px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; } }
     
-    .sidebar-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    .sidebar-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
     .sidebar h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.3px; color: var(--text-primary); }
     .cat-list { display: flex; flex-direction: column; gap: 6px; }
     .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; min-height: 40px; }
-    .cat-list a:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
-    .cat-list a.active { background: rgba(201, 169, 98, 0.1); color: var(--accent); font-weight: 600; }
+    .cat-list a:hover { background: var(--hover-subtle); color: var(--text-primary); }
+    .cat-list a.active { background: var(--selection-bg); color: var(--accent); font-weight: 600; }
 
     /* Card Micro-Tags */
     .card-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 11px; }
-    .sku-chip { font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.04); padding: 2px 6px; border-radius: 4px; }
+    .sku-chip { font-weight: 600; color: var(--text-secondary); background: var(--hover-subtle); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
     .avail-indicator { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
     .avail-instock { color: #10b981; }
     .avail-lowstock { color: #f59e0b; }
