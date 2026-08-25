@@ -143,8 +143,17 @@ class SettingController extends Controller
 
     public function testCjConnection(Request $request)
     {
-        $email = $request->has('cj_api_email') ? $request->input('cj_api_email') : Setting::get('cj_api_email');
-        $apiKey = $request->has('cj_api_key') ? $request->input('cj_api_key') : Setting::get('cj_api_key');
+        $email = trim((string)$request->input('cj_api_email', ''));
+        $apiKey = trim((string)$request->input('cj_api_key', ''));
+
+        // If apiKey is empty or contains bullet mask, resolve the stored real key
+        if (empty($apiKey) || str_contains($apiKey, '•')) {
+            $apiKey = Setting::get('cj_api_key', env('CJ_API_KEY', config('services.cj.key', '')));
+        }
+
+        if (empty($email)) {
+            $email = Setting::get('cj_api_email', env('CJ_API_EMAIL', config('services.cj.email', '')));
+        }
 
         $result = \App\Services\Cj\CjAuthService::testConnection($email, $apiKey);
 

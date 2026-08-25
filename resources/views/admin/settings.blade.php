@@ -141,7 +141,7 @@
                 <div class="form-group">
                     <label>CJ API Key</label>
                     <input type="password" name="cj_api_key" id="cjApiKey" value="{{ $settings['cj_api_key'] }}" placeholder="UserNum@api@xxxxxxxxxxxxxxx">
-                    <p class="form-help">Found in My CJ > Authorization > API > API Key.</p>
+                    <p class="form-help">Found in My CJ &gt; Authorization &gt; API &gt; API Key. <span style="color:var(--color-success, #22c55e); font-weight:500;">(Securely saved &amp; masked. Leave dots intact unless updating with a new key).</span></p>
                 </div>
 
                 <div style="margin-bottom: 24px;">
