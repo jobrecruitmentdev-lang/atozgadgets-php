@@ -103,6 +103,19 @@ class CatalogController extends Controller
             $categoryId = $category->id;
             $categoryName = $category->name;
 
+            // Deterministic Brand Resolution: Map to existing brand or assign default authoritative brand entity
+            $brandId = null;
+            if (!empty($data['brandId'])) {
+                $brandId = \App\Models\Brand::where('id', $data['brandId'])->value('id');
+            }
+            if (!$brandId) {
+                $defaultBrand = \App\Models\Brand::firstOrCreate(
+                    ['name' => 'AtoZGadgets'],
+                    ['slug' => 'atozgadgets', 'status' => 'active']
+                );
+                $brandId = $defaultBrand->id;
+            }
+
             $userId = auth('sanctum')->id() ?: auth()->id();
             $createdBy = ($userId && \App\Models\User::where('id', $userId)->exists())
                 ? $userId
@@ -142,9 +155,10 @@ class CatalogController extends Controller
             $localThumbnail = ProductContentService::downloadAndStoreMedia($data['image']);
 
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
-            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $localThumbnail) {
+            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $localThumbnail) {
                 $product = Product::create([
                     'category_id' => $categoryId,
+                    'brand_id' => $brandId,
                     'name' => $cleanTitle,
                     'slug' => $slug,
                     'sku' => $merchantSku,
@@ -177,6 +191,7 @@ class CatalogController extends Controller
                     'product_id' => $product->id,
                     'type' => 'image',
                     'url' => $localThumbnail,
+                    'storage_path' => str_starts_with($localThumbnail, '/storage/') ? ltrim(str_replace('/storage/', '', $localThumbnail), '/') : null,
                     'alt_text' => $cleanTitle,
                     'sort_order' => 0,
                     'is_primary' => true,
@@ -190,6 +205,7 @@ class CatalogController extends Controller
                                 'product_id' => $product->id,
                                 'type' => 'image',
                                 'url' => $localGalleryImg,
+                                'storage_path' => str_starts_with($localGalleryImg, '/storage/') ? ltrim(str_replace('/storage/', '', $localGalleryImg), '/') : null,
                                 'alt_text' => "{$cleanTitle} - View " . ($idx + 2),
                                 'sort_order' => $idx + 1,
                                 'is_primary' => false,

@@ -54,9 +54,15 @@
         </div>
         <div class="cart-summary">
             <h2 style="margin-bottom: 20px; font-size: 22px;">Order Summary</h2>
+            @php
+                $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
+                $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
+                $cartShipping = ($total >= $freeThreshold || $total == 0) ? 0 : $stdRate;
+                $cartGrandTotal = $total + $cartShipping;
+            @endphp
             <div class="summary-row"><span>Subtotal</span> <span>${{ number_format($total, 2) }}</span></div>
-            <div class="summary-row"><span>Shipping</span> <span>Free</span></div>
-            <div class="summary-total"><span>Total</span> <span>${{ number_format($total, 2) }}</span></div>
+            <div class="summary-row"><span>Shipping</span> <span>{{ $cartShipping == 0 ? 'Free' : '$' . number_format($cartShipping, 2) }}</span></div>
+            <div class="summary-total"><span>Total</span> <span>${{ number_format($cartGrandTotal, 2) }}</span></div>
             <a href="{{ route('store.checkout') }}" class="btn btn-primary" style="width: 100%; text-align: center; margin-top: 30px; font-size: 18px; padding: 15px;">Proceed to Checkout</a>
         </div>
     </div>

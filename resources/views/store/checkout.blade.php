@@ -194,7 +194,9 @@
             </div>
 
             @php
-                $shippingCost = ($subtotal >= 30 || $subtotal == 0) ? 0 : 5.99;
+                $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
+                $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
+                $shippingCost = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0 : $stdRate;
                 $grandTotal = $subtotal + $shippingCost;
             @endphp
 
@@ -202,8 +204,8 @@
                 <div class="total-row"><span style="color:var(--text-secondary);">Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
                 <div class="total-row">
                     <span style="color:var(--text-secondary);">Shipping</span>
-                    @if($subtotal >= 30) <span class="free-text">FREE</span>
-                    @elseif($subtotal > 0) <span>$5.99</span>
+                    @if($subtotal >= $freeThreshold) <span class="free-text">FREE</span>
+                    @elseif($subtotal > 0) <span>${{ number_format($stdRate, 2) }}</span>
                     @else <span>$0.00</span>
                     @endif
                 </div>
