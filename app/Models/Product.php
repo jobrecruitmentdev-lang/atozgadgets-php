@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\Inventory\InventoryService;
 use App\Services\Catalog\ProductContentService;
+use App\Services\Catalog\PricingService;
 
 class Product extends Model
 {
@@ -123,6 +124,16 @@ class Product extends Model
     public function getShippingPromiseAttribute(): string
     {
         return 'Standard Delivery: 7–15 Business Days';
+    }
+
+    public function getEffectivePriceAttribute(): float
+    {
+        return PricingService::resolveCustomerPrice($this);
+    }
+
+    public function getHasActiveDiscountAttribute(): bool
+    {
+        return PricingService::hasActiveDiscount($this);
     }
 
     public function getAverageRatingAttribute(): float

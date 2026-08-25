@@ -14,7 +14,9 @@ class ProductResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'price' => (float)$this->price,
-            'discount_price' => $this->discount_price ? (float)$this->discount_price : null,
+            'discount_price' => $this->has_active_discount ? (float)$this->discount_price : null,
+            'effective_price' => (float)$this->effective_price,
+            'has_active_discount' => (bool)$this->has_active_discount,
             'stock_quantity' => (int)($this->stock_quantity ?? 0),
             'in_stock' => ($this->stock_quantity ?? 0) > 0,
             'thumbnail_image' => $this->thumbnail_image,
@@ -32,7 +34,8 @@ class ProductResource extends JsonResource
                         'id' => $variant->id,
                         'name' => $variant->name ?? $variant->variant_name,
                         'sku' => $variant->sku,
-                        'price' => (float)($variant->price ?? $this->price),
+                        'price' => (float)\App\Services\Catalog\PricingService::resolveCustomerPrice($this->resource, $variant),
+                        'selling_price' => !is_null($variant->selling_price) ? (float)$variant->selling_price : null,
                         'stock_quantity' => (int)($variant->stock_quantity ?? 0),
                     ];
                 });

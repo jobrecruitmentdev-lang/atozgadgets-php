@@ -283,7 +283,7 @@
             <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 100 }}">
                 <img loading="lazy" decoding="async" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}">
                 <div class="card-title">{{ $product->name }}</div>
-                <div class="card-price">${{ $product->discount_price ?? $product->price }}</div>
+                <div class="card-price">${{ number_format($product->effective_price, 2) }}</div>
                 <span class="btn btn-primary" style="display:block; text-align:center; width:100%; padding: 12px; font-size: 14px; text-transform: uppercase;">View Details</span>
             </a>
         @empty

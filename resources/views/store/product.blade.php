@@ -29,7 +29,7 @@
         "@type": "Offer",
         "url": "{{ url()->current() }}",
         "priceCurrency": "USD",
-        "price": "{{ $product->discount_price ?? $product->price }}",
+        "price": "{{ number_format($product->effective_price, 2, '.', '') }}",
         "availability": "{{ ($product->stock_quantity ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}"
       }
       @if($product->review_count > 0)
@@ -222,11 +222,11 @@
         </div>
 
         <div class="price-wrap">
-            <span class="price-tag" id="displayPrice">${{ number_format($product->discount_price ?? $product->price, 2) }}</span>
-            @if(isset($product->discount_price) && $product->discount_price < $product->price)
+            <span class="price-tag" id="displayPrice">${{ number_format($product->effective_price, 2) }}</span>
+            @if($product->has_active_discount)
                 <span class="old-price" id="displayOldPrice">${{ number_format($product->price, 2) }}</span>
                 @php
-                    $discountPct = round((($product->price - $product->discount_price) / $product->price) * 100);
+                    $discountPct = round((($product->price - $product->effective_price) / $product->price) * 100);
                 @endphp
                 <span class="save-badge">Save {{ $discountPct }}%</span>
             @endif
@@ -258,7 +258,7 @@
                             <button type="button" 
                                     class="variant-option {{ $idx === 0 ? 'active' : '' }}" 
                                     data-variant-id="{{ $variant->id }}"
-                                    data-price="{{ number_format($variant->selling_price ?? $product->price, 2) }}"
+                                    data-price="{{ number_format(\App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant), 2) }}"
                                     data-image="{{ $variant->image_url ?? '' }}"
                                     onclick="selectVariant(this)">
                                 {{ $variant->display_name }}

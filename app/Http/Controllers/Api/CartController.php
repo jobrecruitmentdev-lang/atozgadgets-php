@@ -15,7 +15,7 @@ class CartController extends ApiController
         $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
         
         $total = $cartItems->sum(function($item) {
-            return $item->quantity * ($item->product->discount_price ?? $item->product->price ?? 0);
+            return $item->quantity * ($item->product ? \App\Services\Catalog\PricingService::resolveCustomerPrice($item->product) : 0);
         });
 
         return $this->successResponse([

@@ -54,4 +54,54 @@ class PricingService
             'margin_percent' => round($marginPercentage, 1),
         ];
     }
+
+    /**
+     * Authoritative Single Source of Truth for customer-facing retail price.
+     *
+     * Rule:
+     * 1. If variant exists and has a valid selling_price > 0 -> return variant.selling_price
+     * 2. Otherwise, if discount_price > 0 AND discount_price < base price -> return discount_price
+     * 3. Otherwise -> return base product.price
+     *
+     * @param \App\Models\Product $product
+     * @param \App\Models\ProductVariant|null $variant
+     * @return float
+     */
+    public static function resolveCustomerPrice(\App\Models\Product $product, ?\App\Models\ProductVariant $variant = null): float
+    {
+        // 1. Selected Variant has absolute first priority if selling_price > 0
+        if ($variant && !is_null($variant->selling_price)) {
+            $variantPrice = (float)$variant->selling_price;
+            if ($variantPrice > 0) {
+                return round($variantPrice, 2);
+            }
+        }
+
+        $basePrice = !is_null($product->price) ? (float)$product->price : 0.00;
+        $discountPrice = !is_null($product->discount_price) ? (float)$product->discount_price : 0.00;
+
+        // 2. Discount price is ONLY valid if it is positive (> 0) AND strictly lower than base price
+        if ($discountPrice > 0 && $discountPrice < $basePrice) {
+            return round($discountPrice, 2);
+        }
+
+        // 3. Fallback to base regular price
+        return round($basePrice, 2);
+    }
+
+    /**
+     * Determine if a product has a valid active customer discount.
+     *
+     * Returns TRUE only when discount_price > 0 AND discount_price < price.
+     *
+     * @param \App\Models\Product $product
+     * @return bool
+     */
+    public static function hasActiveDiscount(\App\Models\Product $product): bool
+    {
+        $basePrice = !is_null($product->price) ? (float)$product->price : 0.00;
+        $discountPrice = !is_null($product->discount_price) ? (float)$product->discount_price : 0.00;
+
+        return $discountPrice > 0 && $discountPrice < $basePrice;
+    }
 }

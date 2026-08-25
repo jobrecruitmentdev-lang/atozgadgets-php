@@ -22,10 +22,10 @@ class CheckoutService
             $variant = $variantId ? \App\Models\ProductVariant::find($variantId) : null;
 
             // Authoritative variant & discount price resolution from database
-            if ($variant) {
+            if ($product) {
+                $unitPrice = \App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant);
+            } elseif ($variant && !is_null($variant->selling_price) && (float)$variant->selling_price > 0) {
                 $unitPrice = (float)$variant->selling_price;
-            } elseif ($product) {
-                $unitPrice = (float)($product->discount_price ?? $product->price);
             } else {
                 $unitPrice = (float)($item['price'] ?? 0.0);
             }

@@ -149,8 +149,8 @@
                     <div class="card-title">{{ $product->name }}</div>
                     
                     <div class="price-row">
-                        <span class="price-main">${{ number_format($product->discount_price ?? $product->price, 2) }}</span>
-                        @if(isset($product->discount_price) && $product->discount_price < $product->price)
+                        <span class="price-main">${{ number_format($product->effective_price, 2) }}</span>
+                        @if($product->has_active_discount)
                             <span class="price-old">${{ number_format($product->price, 2) }}</span>
                         @endif
                     </div>

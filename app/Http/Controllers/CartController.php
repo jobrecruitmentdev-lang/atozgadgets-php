@@ -42,7 +42,7 @@ class CartController extends Controller
         }
 
         // Authoritative pricing from DB - NEVER trust frontend values
-        $price = $variant?->selling_price ?? $product->discount_price ?? $product->price;
+        $price = \App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant);
         $cartKey = $variant ? "{$product->id}_{$variant->id}" : "{$product->id}_0";
 
         $cart = session()->get('cart', []);
