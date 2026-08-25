@@ -226,11 +226,6 @@
                             <span class="badge">{{ count(session('cart')) }}</span>
                         @endif
                     </a>
-                    
-                    <button type="button" class="icon-btn" onclick="AtoZTheme.toggle()" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
-                        <i data-lucide="sun" class="theme-icon-light"></i>
-                        <i data-lucide="moon" class="theme-icon-dark"></i>
-                    </button>
 
                     @auth
                     <form method="POST" action="{{ route('logout') }}" style="display: inline-flex; align-items: center;">
@@ -414,24 +409,6 @@
     </footer>
     
     <script>
-        // Global Theme Controller
-        window.AtoZTheme = {
-            toggle: function() {
-                try {
-                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    document.documentElement.setAttribute('data-theme', next);
-                    localStorage.setItem('atoz_theme', next);
-                    if(typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-                } catch(e) {}
-            },
-            get: function() {
-                return document.documentElement.getAttribute('data-theme');
-            }
-        };
-
         // Wait for DOM and Lucide (deferred load)
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof lucide !== 'undefined') {

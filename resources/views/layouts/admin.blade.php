@@ -155,10 +155,6 @@
             </form>
             <div class="header-actions">
                 <a href="{{ route('store.home') }}" target="_blank" style="font-size:14px; font-weight:500; color:var(--accent); margin-right:12px; text-decoration:none;">View Storefront</a>
-                <button type="button" class="icon-btn" onclick="AtoZTheme.toggle()" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
-                    <i data-lucide="sun" class="theme-icon-light" style="width:20px;"></i>
-                    <i data-lucide="moon" class="theme-icon-dark" style="width:20px;"></i>
-                </button>
                 <button class="icon-btn" aria-label="Notifications"><i data-lucide="bell" style="width:20px;"></i></button>
                 <div class="avatar">A</div>
             </div>
@@ -170,24 +166,6 @@
     </div>
 
     <script>
-        // Global Theme Controller
-        window.AtoZTheme = {
-            toggle: function() {
-                try {
-                    const current = document.documentElement.getAttribute('data-theme') || 'light';
-                    const next = current === 'dark' ? 'light' : 'dark';
-                    document.documentElement.setAttribute('data-theme', next);
-                    localStorage.setItem('atoz_theme', next);
-                    if(typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-                } catch(e) {}
-            },
-            get: function() {
-                return document.documentElement.getAttribute('data-theme');
-            }
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof lucide !== 'undefined') {
                 lucide.createIcons();
