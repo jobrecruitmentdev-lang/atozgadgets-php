@@ -17,9 +17,19 @@ class CheckoutService
 
         foreach ($rawCart as $key => $item) {
             $productId = is_numeric($key) ? (int)$key : ($item['product_id'] ?? null);
+            $variantId = $item['variant_id'] ?? null;
             $product = $productId ? Product::find($productId) : null;
+            $variant = $variantId ? \App\Models\ProductVariant::find($variantId) : null;
 
-            $unitPrice = $product ? (float)$product->price : (float)($item['price'] ?? 0.0);
+            // Authoritative variant & discount price resolution from database
+            if ($variant) {
+                $unitPrice = (float)$variant->selling_price;
+            } elseif ($product) {
+                $unitPrice = (float)($product->discount_price ?? $product->price);
+            } else {
+                $unitPrice = (float)($item['price'] ?? 0.0);
+            }
+
             $qty = max(1, (int)($item['quantity'] ?? 1));
             $itemTotal = round($unitPrice * $qty, 2);
 
@@ -27,8 +37,10 @@ class CheckoutService
 
             $lineItems[] = [
                 'product_id' => $product ? $product->id : $productId,
+                'variant_id' => $variant ? $variant->id : $variantId,
                 'name' => $product ? $product->name : ($item['name'] ?? 'Gadget Item'),
-                'sku' => $product ? $product->sku : ($item['sku'] ?? 'SKU-ITEM'),
+                'variant_name' => $variant ? $variant->name : ($item['variant_name'] ?? null),
+                'sku' => $variant ? $variant->sku : ($product ? $product->sku : ($item['sku'] ?? 'SKU-ITEM')),
                 'unit_price' => $unitPrice,
                 'quantity' => $qty,
                 'total_price' => $itemTotal,

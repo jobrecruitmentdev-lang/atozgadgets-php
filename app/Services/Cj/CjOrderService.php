@@ -64,6 +64,7 @@ class CjOrderService
             'orderNumber' => $order->order_number,
             'fromCountryCode' => 'CN', // Defaulting to China warehouse
             'logisticName' => $logisticName,
+            'shippingCountry' => $countryCode,
             'shippingCountryCode' => $countryCode,
             'shippingAddress' => $address->address_line1 ?? ($address->address1 ?? 'Address Line 1'),
             'shippingAddress2' => $address->address_line2 ?? ($address->address2 ?? ''),
@@ -102,6 +103,10 @@ class CjOrderService
         }
 
         if (CjAuthService::isSandboxMode() || ($headers['CJ-Access-Token'] ?? '') === 'SANDBOX_DEMO_TOKEN') {
+            if (app()->environment('production')) {
+                throw new \RuntimeException("CJ sandbox fulfillment is strictly forbidden on production orders. Real supplier credentials required.");
+            }
+
             $cjOrderId = 'CJ-SANDBOX-' . strtoupper(uniqid());
             $cjOrder = CjOrder::updateOrCreate(
                 ['internal_order_id' => $order->id],

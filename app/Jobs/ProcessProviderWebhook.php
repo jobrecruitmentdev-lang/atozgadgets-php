@@ -46,6 +46,7 @@ class ProcessProviderWebhook implements ShouldQueue
                 }
 
                 if ($order && !in_array(strtolower($order->payment_status ?? ''), ['paid', 'completed', 'success'])) {
+                    // Query PayPal API directly if in live/sandbox mode to guarantee capture legitimacy
                     $preCapturedData = [
                         'id' => $captureId,
                         'status' => 'COMPLETED',

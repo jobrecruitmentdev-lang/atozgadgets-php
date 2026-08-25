@@ -75,30 +75,49 @@ class CjShipmentService
         return $results;
     }
 
-    public static function handleWebhook(array $payload)
+    public static function handleWebhook(array $payload): bool
     {
         $orderNumber = $payload['orderNumber'] ?? null;
-        $orderStatus = $payload['orderStatus'] ?? null;
+        $orderStatus = strtolower(trim($payload['orderStatus'] ?? ''));
         $trackingNumber = $payload['trackingNumber'] ?? null;
         $carrierName = $payload['carrierName'] ?? null;
-        $trackingUrl = $payload['trackingUrl'] ?? null;
+
+        if (empty($orderNumber) || empty($orderStatus)) {
+            return false;
+        }
 
         $order = Order::where('order_number', $orderNumber)->first();
-        if (!$order) return;
+        if (!$order) {
+            return false;
+        }
 
         $cjOrder = CjOrder::where('internal_order_id', $order->id)->first();
-        if (!$cjOrder) return;
+        if (!$cjOrder) {
+            return false;
+        }
+
+        $currentOrderStatus = strtolower($order->status ?? 'pending');
+
+        // Invariant: Completed or delivered orders CANNOT be cancelled by supplier webhook
+        if (in_array($currentOrderStatus, ['delivered', 'completed']) && $orderStatus === 'cancelled') {
+            \Illuminate\Support\Facades\Log::warning("CJ Webhook Invariant: Rejecting cancellation on completed/delivered order {$orderNumber}");
+            return false;
+        }
+
+        // Invariant: Already cancelled or refunded orders CANNOT be moved to shipped/delivered via webhook
+        if (in_array($currentOrderStatus, ['cancelled', 'refunded']) && in_array($orderStatus, ['shipped', 'delivered'])) {
+            \Illuminate\Support\Facades\Log::warning("CJ Webhook Invariant: Rejecting shipment status on cancelled/refunded order {$orderNumber}");
+            return false;
+        }
 
         $cjOrder->update(['status' => $orderStatus]);
 
-        if ($trackingNumber) {
+        if (!empty($trackingNumber)) {
             $shipment = DB::table('shipments')->where('order_id', $order->id)->first();
             if ($shipment) {
-                // Removed insertion into cj_shipments as the table does not exist in schema
-
                 DB::table('shipments')->where('id', $shipment->id)->update([
                     'tracking_number' => $trackingNumber,
-                    'carrier' => $carrierName,
+                    'carrier' => $carrierName ?: 'CJPacket',
                     'status' => ($orderStatus === 'delivered') ? 'delivered' : 'shipped',
                     'updated_at' => now(),
                 ]);
@@ -106,13 +125,15 @@ class CjShipmentService
         }
 
         $statusMap = [
-            'shipped' => 'Shipped',
-            'delivered' => 'Delivered',
-            'cancelled' => 'Cancelled',
+            'shipped' => 'shipped',
+            'delivered' => 'completed',
+            'cancelled' => 'cancelled',
         ];
 
         if (isset($statusMap[$orderStatus])) {
-            $order->update(['status' => strtolower($statusMap[$orderStatus])]);
+            $order->update(['status' => $statusMap[$orderStatus]]);
         }
+
+        return true;
     }
 }

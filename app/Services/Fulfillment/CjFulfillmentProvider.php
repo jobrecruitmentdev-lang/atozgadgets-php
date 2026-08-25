@@ -23,6 +23,11 @@ class CjFulfillmentProvider implements FulfillmentProviderInterface
             $result = CjOrderService::placeOrder($order);
 
             $externalId = is_array($result) ? ($result['cjOrderId'] ?? 'CJ-' . uniqid()) : ($result->cj_order_id ?? 'CJ-' . uniqid());
+
+            if (app()->environment('production') && str_starts_with((string)$externalId, 'CJ-SANDBOX-')) {
+                return FulfillmentResult::failure("Production invariant violated: Synthetic sandbox CJ order ID ({$externalId}) cannot be marked as successful in production.");
+            }
+
             $cjOrderModel = is_array($result) ? ($result['cjOrder'] ?? null) : $result;
             $cost = $cjOrderModel ? (float)($cjOrderModel->order_amount ?? 0.0) : 0.0;
             $shipping = $cjOrderModel ? (float)($cjOrderModel->shipping_fee ?? 0.0) : 0.0;

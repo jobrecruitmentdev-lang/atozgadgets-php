@@ -174,13 +174,40 @@ class ProductionFailureDrillTest extends TestCase
             ]
         ];
 
-        $response1 = $this->postJson("/api/webhooks/paypal", $webhookPayload);
+        $headers = [
+            'PAYPAL-TRANSMISSION-SIG' => 'mock_valid_signature_token',
+            'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
+            'PAYPAL-TRANSMISSION-ID' => 'wh_tx_id_101',
+            'PAYPAL-TRANSMISSION-TIME' => now()->toIso8601String(),
+            'PAYPAL-CERT-URL' => 'https://api.sandbox.paypal.com/v1/certs/test',
+        ];
+
+        $response1 = $this->postJson("/api/webhooks/paypal", $webhookPayload, $headers);
         $response1->assertStatus(200);
 
-        $response2 = $this->postJson("/api/webhooks/paypal", $webhookPayload);
+        $response2 = $this->postJson("/api/webhooks/paypal", $webhookPayload, $headers);
         $response2->assertStatus(200);
 
         $eventCount = ProviderEvent::where("event_id", "WH-PAYPAL-UNIQUE-EVENT-101")->count();
         $this->assertEquals(1, $eventCount);
+    }
+
+    /** @test */
+    public function drill_test_5_unsigned_or_forged_paypal_webhook_is_rejected_with_401()
+    {
+        $forgedWebhookPayload = [
+            "id" => "WH-FORGED-EVENT-999",
+            "event_type" => "PAYMENT.CAPTURE.COMPLETED",
+            "resource" => [
+                "id" => "FORGED-CAP-123",
+                "custom_id" => "ORD-VICTIM-001",
+                "amount" => ["value" => "999.00", "currency_code" => "USD"]
+            ]
+        ];
+
+        // Post without cryptographic transmission signature
+        $response = $this->postJson("/api/webhooks/paypal", $forgedWebhookPayload);
+        $response->assertStatus(401);
+        $this->assertDatabaseMissing("provider_events", ["event_id" => "WH-FORGED-EVENT-999"]);
     }
 }

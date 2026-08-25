@@ -12,10 +12,38 @@ class SettingController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
+        $this->middleware(function ($request, $next) {
+            if (!auth()->check() || (int)auth()->user()->role_id !== 1) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false, 
+                        'error' => 'Unauthorized: System configuration requires Superadmin privileges.'
+                    ], 403);
+                }
+                abort(403, 'Unauthorized: System configuration requires Superadmin privileges.');
+            }
+            return $next($request);
+        });
+    }
+
+    private function maskSecret(?string $secret): string
+    {
+        if (empty($secret)) {
+            return '';
+        }
+        $len = strlen($secret);
+        if ($len <= 4) {
+            return str_repeat('•', 8);
+        }
+        return str_repeat('•', 12) . substr($secret, -4);
     }
 
     public function index()
     {
+        $rawCjKey = Setting::get('cj_api_key', env('CJ_API_KEY', config('services.cj.key', '')));
+        $rawSandboxSecret = Setting::get('paypal_sandbox_client_secret', Setting::get('paypal_client_secret', env('PAYPAL_SANDBOX_CLIENT_SECRET', '')));
+        $rawLiveSecret = Setting::get('paypal_live_client_secret', env('PAYPAL_LIVE_CLIENT_SECRET', ''));
+
         $settings = [
             'store_name' => Setting::get('store_name', 'AtoZGadgets'),
             'support_email' => Setting::get('support_email', 'support@atozgadgetz.com'),
@@ -24,14 +52,14 @@ class SettingController extends Controller
             'free_shipping_threshold' => Setting::get('free_shipping_threshold', '50.00'),
             'default_markup' => Setting::get('default_markup', '2.5'),
             'cj_api_email' => Setting::get('cj_api_email', env('CJ_API_EMAIL', config('services.cj.email', ''))),
-            'cj_api_key' => Setting::get('cj_api_key', env('CJ_API_KEY', config('services.cj.key', ''))),
+            'cj_api_key' => $this->maskSecret($rawCjKey),
             'cj_sandbox_mode' => Setting::get('cj_sandbox_mode', '0'),
             'cj_auto_fulfill' => Setting::get('cj_auto_fulfill', '1'),
             'paypal_mode' => Setting::get('paypal_mode', 'sandbox'),
             'paypal_sandbox_client_id' => Setting::get('paypal_sandbox_client_id', Setting::get('paypal_client_id', env('PAYPAL_SANDBOX_CLIENT_ID', ''))),
-            'paypal_sandbox_client_secret' => Setting::get('paypal_sandbox_client_secret', Setting::get('paypal_client_secret', env('PAYPAL_SANDBOX_CLIENT_SECRET', ''))),
+            'paypal_sandbox_client_secret' => $this->maskSecret($rawSandboxSecret),
             'paypal_live_client_id' => Setting::get('paypal_live_client_id', env('PAYPAL_LIVE_CLIENT_ID', '')),
-            'paypal_live_client_secret' => Setting::get('paypal_live_client_secret', env('PAYPAL_LIVE_CLIENT_SECRET', '')),
+            'paypal_live_client_secret' => $this->maskSecret($rawLiveSecret),
             'paypal_client_id' => Setting::get('paypal_client_id', ''),
             'payoneer_account' => Setting::get('payoneer_account', ''),
         ];
@@ -60,10 +88,13 @@ class SettingController extends Controller
         $data = $request->only($allowedKeys);
 
         foreach ($data as $key => $value) {
-            // Secret & Credential Protection: Do not wipe existing stored credentials if blank in form
+            // Secret & Credential Protection: Do not wipe or replace with masked placeholder
             if (in_array($key, $protectedKeys)) {
-                if (empty($value) && Setting::where('key', $key)->whereNotNull('value')->where('value', '!=', '')->exists()) {
-                    continue;
+                $trimmed = trim((string)$value);
+                if (empty($trimmed) || str_contains($trimmed, '•')) {
+                    if (Setting::where('key', $key)->whereNotNull('value')->where('value', '!=', '')->exists()) {
+                        continue;
+                    }
                 }
             }
 

@@ -163,13 +163,41 @@ class OrderController extends Controller
     public function update(Request $request, $id)
     {
         $order = Order::findOrFail($id);
-        $order->update($request->only(['status', 'payment_status']));
+        
+        $validated = $request->validate([
+            'status' => 'nullable|string|in:pending,processing,shipped,delivered,completed,cancelled',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        if (!empty($validated['status'])) {
+            $newStatus = $validated['status'];
+            $currentStatus = strtolower($order->status ?? 'pending');
+
+            // Invariant: Completed or delivered orders cannot be arbitrarily set to cancelled without formal return
+            if (in_array($currentStatus, ['delivered', 'completed']) && $newStatus === 'cancelled') {
+                return redirect()->back()->with('error', 'Cannot cancel an order that has already been delivered or completed.');
+            }
+
+            $order->status = $newStatus;
+        }
+
+        if (isset($validated['notes'])) {
+            $order->notes = $validated['notes'];
+        }
+
+        $order->save();
+
         return redirect()->back()->with('success', 'Order updated successfully!');
     }
 
     public function destroy($id)
     {
         $order = Order::findOrFail($id);
+        
+        if (in_array(strtolower($order->status), ['delivered', 'completed'])) {
+            return redirect()->back()->with('error', 'Cannot cancel an order that has already been delivered.');
+        }
+
         $order->update(['status' => 'cancelled']);
         return redirect()->back()->with('success', 'Order marked as cancelled successfully.');
     }

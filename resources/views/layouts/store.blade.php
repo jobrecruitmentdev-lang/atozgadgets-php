@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app="store">
 <head>
+    @include('partials.theme-init')
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS0E52WE2D"></script>
     <script>
@@ -23,26 +24,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Global Tokens -->
+    <link rel="stylesheet" href="{{ asset('css/tokens.css') }}">
+    
     <!-- Defer render-blocking scripts -->
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
-            --bg-color: #0a0a0a;
-            --text-primary: #fafaf9;
-            --text-secondary: #a1a1aa; /* WCAG AA 6.2:1 contrast ratio */
-            --accent: #c9a962;
-            --accent-hover: #b89851;
-            --glass-bg: rgba(20, 20, 20, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+            --bg-color: var(--bg-base);
+            --accent: var(--brand-primary);
+            --accent-hover: var(--brand-primary-hover);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         html { scroll-behavior: smooth; }
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-base);
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background-color var(--duration-fast), color var(--duration-fast);
         }
         /* Performance Fix: Use fixed pseudo-element instead of background-attachment: fixed on body */
         body::before {
@@ -227,6 +227,11 @@
                         @endif
                     </a>
                     
+                    <button type="button" class="icon-btn" onclick="AtoZTheme.toggle()" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
+                        <i data-lucide="sun" class="theme-icon-light"></i>
+                        <i data-lucide="moon" class="theme-icon-dark"></i>
+                    </button>
+
                     @auth
                     <form method="POST" action="{{ route('logout') }}" style="display: inline-flex; align-items: center;">
                         @csrf
@@ -409,6 +414,24 @@
     </footer>
     
     <script>
+        // Global Theme Controller
+        window.AtoZTheme = {
+            toggle: function() {
+                try {
+                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('atoz_theme', next);
+                    if(typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                } catch(e) {}
+            },
+            get: function() {
+                return document.documentElement.getAttribute('data-theme');
+            }
+        };
+
         // Wait for DOM and Lucide (deferred load)
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof lucide !== 'undefined') {

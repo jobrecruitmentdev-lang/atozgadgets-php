@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\Checkout\CheckoutService;
 use App\Services\Order\OrderService;
 use App\Services\Payment\PaymentService;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
@@ -97,6 +98,10 @@ class PaymentController extends Controller
      */
     public function sandboxInstantPay(Request $request)
     {
+        if (!app()->environment(['local', 'testing']) || !config('app.debug')) {
+            return response()->json(['error' => 'Sandbox Instant Pay is disabled in production.'], 403);
+        }
+
         $rawCart = session()->get('cart', []);
         if (empty($rawCart)) {
             return response()->json(['error' => 'Cart is empty'], 400);

@@ -12,8 +12,22 @@ class PayPalWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        $payload = $request->all();
-        $eventId = $payload['id'] ?? ('evt_' . md5($request->getContent()));
+        $rawContent = $request->getContent();
+        $payload = json_decode($rawContent, true) ?: $request->all();
+        $headers = $request->headers->all();
+
+        $gateway = new \App\Services\Payment\PayPalGateway();
+        $isValidSignature = $gateway->verifyWebhookSignature($headers, $rawContent);
+
+        if (!$isValidSignature) {
+            Log::warning('PayPal Webhook Rejected: Invalid or forged cryptographic signature.', [
+                'ip' => $request->ip(),
+                'headers' => array_keys($headers),
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Invalid signature verification'], 401);
+        }
+
+        $eventId = $payload['id'] ?? ('evt_' . md5($rawContent));
         $eventType = $payload['event_type'] ?? 'UNKNOWN';
 
         // 1. Idempotent Ingestion into provider_events
@@ -29,14 +43,14 @@ class PayPalWebhookController extends Controller
             ]
         );
 
-        // 2. Dispatch Async Processing Job (or process synchronously if queue is sync)
+        // 2. Dispatch Async Processing Job
         try {
             ProcessProviderWebhook::dispatch($event);
         } catch (\Throwable $e) {
             Log::error('Webhook dispatch error:', ['error' => $e->getMessage()]);
         }
 
-        // Return instant 200 OK to PayPal
+        // Return instant 200 OK to PayPal so it does not retry
         return response()->json(['status' => 'success', 'event_id' => $eventId], 200);
     }
 }

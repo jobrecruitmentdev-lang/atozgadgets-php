@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app="admin">
 <head>
+    @include('partials.theme-init')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Control Tower') - AtoZGadgets</title>
@@ -12,40 +13,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Global Tokens -->
+    <link rel="stylesheet" href="{{ asset('css/tokens.css') }}">
+    
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <style>
         :root {
-            --bg-color: #f9fafb;
-            --bg-card: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --sidebar-bg: #000000;
-            --sidebar-text: #ffffff;
-            --sidebar-hover: rgba(255,255,255,0.1);
-            --border-color: #e5e7eb;
-            --accent: #2563eb;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #030712;
-                --bg-card: #0b0f19;
-                --text-primary: #f9fafb;
-                --text-secondary: #9ca3af;
-                --sidebar-bg: #0b0f19;
-                --sidebar-text: #f8fafc;
-                --sidebar-hover: rgba(255,255,255,0.08);
-                --border-color: #1f2937;
-                --accent: #3b82f6;
-            }
+            --bg-color: var(--bg-base);
+            --bg-card: var(--bg-surface);
+            --sidebar-bg: var(--bg-surface);
+            --sidebar-text: var(--text-primary);
+            --sidebar-hover: var(--hover-subtle);
+            --accent: var(--brand-primary);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); display: flex; min-height: 100vh; overflow-x: hidden; }
+        body { background-color: var(--bg-base); color: var(--text-primary); display: flex; min-height: 100vh; overflow-x: hidden; transition: background-color var(--duration-fast), color var(--duration-fast); }
         a { text-decoration: none; color: inherit; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; transition: transform 0.3s ease; z-index: 100; border-right: 1px solid var(--border-color); }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text); flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; transition: transform 0.3s ease, background-color var(--duration-fast); z-index: 100; border-right: 1px solid var(--border-color); }
         .sidebar-header { padding: 20px 24px; border-bottom: 1px solid rgba(128,128,128,0.2); display: flex; justify-content: space-between; align-items: center; }
         .sidebar-header h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
         .sidebar-close-btn { display: none; background: transparent; border: none; color: var(--sidebar-text); cursor: pointer; }
@@ -168,7 +155,11 @@
             </form>
             <div class="header-actions">
                 <a href="{{ route('store.home') }}" target="_blank" style="font-size:14px; font-weight:500; color:var(--accent); margin-right:12px; text-decoration:none;">View Storefront</a>
-                <button class="icon-btn"><i data-lucide="bell" style="width:20px;"></i></button>
+                <button type="button" class="icon-btn" onclick="AtoZTheme.toggle()" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
+                    <i data-lucide="sun" class="theme-icon-light" style="width:20px;"></i>
+                    <i data-lucide="moon" class="theme-icon-dark" style="width:20px;"></i>
+                </button>
+                <button class="icon-btn" aria-label="Notifications"><i data-lucide="bell" style="width:20px;"></i></button>
                 <div class="avatar">A</div>
             </div>
         </header>
@@ -179,6 +170,24 @@
     </div>
 
     <script>
+        // Global Theme Controller
+        window.AtoZTheme = {
+            toggle: function() {
+                try {
+                    const current = document.documentElement.getAttribute('data-theme') || 'light';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('atoz_theme', next);
+                    if(typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                } catch(e) {}
+            },
+            get: function() {
+                return document.documentElement.getAttribute('data-theme');
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof lucide !== 'undefined') {
                 lucide.createIcons();

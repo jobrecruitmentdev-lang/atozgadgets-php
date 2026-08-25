@@ -164,88 +164,29 @@ class CartController extends Controller
             return redirect()->route('store.cart');
         }
 
-        $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
-
-        // Add standard shipping cost if under 30
-        if($total < 30) {
-            $total += 5.99;
-        }
-
         // Verify that OTP was verified
         if(!session('checkout_otp_verified')) {
             return redirect()->route('store.checkout')->with('error', 'Please verify your phone/email via OTP first.');
         }
 
-        $paymentMethod = $request->input('payment_method', 'paypal');
         $shipping = session('checkout_shipping', []);
+        $paymentMethod = $request->input('payment_method', 'paypal');
 
-        // Create Order and Items in isolated DB transaction with pessimistic lock
-        $order = \Illuminate\Support\Facades\DB::transaction(function () use ($total, $shipping, $cart, $paymentMethod) {
-            $order = \App\Models\Order::create([
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'user_id' => auth()->id(),
-                'total_amount' => $total,
-                'status' => 'processing',
-                'payment_status' => 'paid',
-                'shipping_address' => json_encode($shipping),
-                'contact_email' => $shipping['email'] ?? null,
-                'contact_phone' => $shipping['phone'] ?? null
-            ]);
+        try {
+            // 1. Create Immutable Checkout Session with authoritative DB prices
+            $session = \App\Services\Checkout\CheckoutService::createSession(auth()->id(), $cart, $shipping);
 
-            foreach ($cart as $itemKey => $item) {
-                $productId = $item['product_id'] ?? (is_numeric($itemKey) ? (int)$itemKey : null);
-                $variantId = $item['variant_id'] ?? null;
-                $quantity = (int)($item['quantity'] ?? 1);
+            // 2. Pre-Create Order in PENDING state
+            $order = \App\Services\Order\OrderService::createPendingOrderFromSession($session, $shipping);
 
-                // Local Inventory Locking
-                if ($variantId) {
-                    $dbVariant = \App\Models\ProductVariant::where('id', $variantId)->lockForUpdate()->first();
-                    if ($dbVariant && $dbVariant->stock_quantity > 0) {
-                        $dbVariant->decrement('stock_quantity', min($dbVariant->stock_quantity, $quantity));
-                    }
-                } elseif ($productId) {
-                    $dbProduct = \App\Models\Product::where('id', $productId)->lockForUpdate()->first();
-                    if ($dbProduct && $dbProduct->stock_quantity > 0) {
-                        $dbProduct->decrement('stock_quantity', min($dbProduct->stock_quantity, $quantity));
-                    }
-                }
-
-                \App\Models\OrderItem::create([
-                    'order_id'              => $order->id,
-                    'product_id'            => $productId,
-                    'variant_id'            => $variantId,
-                    'merchant_sku_snapshot' => $item['sku'] ?? 'GEN-SKU',
-                    'product_name_snapshot' => $item['name'] ?? 'Product',
-                    'variant_name_snapshot' => $item['variant_name'] ?? null,
-                    'cj_product_id'         => $item['cj_product_id'] ?? null,
-                    'cj_variant_id'         => $item['cj_variant_id'] ?? null,
-                    'cj_variant_sku'        => $item['cj_variant_sku'] ?? null,
-                    'quantity'              => $quantity,
-                    'unit_price'            => $item['price'] ?? 0,
-                    'total_price'           => ($item['price'] ?? 0) * $quantity,
-                    'status'                => 'active'
-                ]);
+            // If paying with PayPal, proceed to PayPal payment authorization
+            if ($paymentMethod === 'paypal') {
+                return redirect()->route('store.checkout')->with('info', 'Please complete payment with the PayPal button below to finalize your order.');
             }
 
-            \App\Models\Payment::create([
-                'order_id' => $order->id,
-                'amount' => $total,
-                'payment_method' => $paymentMethod,
-                'status' => 'completed'
-            ]);
-
-            return $order;
-        });
-
-        // Auto-dispatch CJ fulfillment via Outbox / Provider outside of the DB lock
-        try {
-            \App\Services\Cj\CjOrderService::placeOrder($order->id);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::info('CJ auto-dispatch deferred: ' . $e->getMessage());
+            return redirect()->route('store.checkout')->with('error', 'Please select a valid payment method.');
+        } catch (\Throwable $e) {
+            return redirect()->route('store.checkout')->with('error', 'Checkout error: ' . $e->getMessage());
         }
-
-        session()->forget(['cart', 'checkout_shipping', 'checkout_otp_verified']);
-
-        return redirect()->route('store.home')->with('success', 'Order placed successfully! Paid via ' . ucfirst($paymentMethod) . '.');
     }
 }

@@ -148,11 +148,21 @@ class E2EStorefrontOrderFlowTest extends TestCase
             'payment_method' => 'paypal'
         ]);
         
-        $checkoutRes->assertRedirect(route('store.home'));
-
-        // 6. ADBMS Database Integrity & Relationship Assertions
         $order = Order::orderBy('id', 'desc')->first();
         $this->assertNotNull($order);
+
+        // 5. Complete PayPal Payment Capture
+        \App\Services\Order\OrderService::markAsPaid($order);
+        \App\Models\Payment::create([
+            'order_id' => $order->id,
+            'amount' => $order->total_amount,
+            'payment_method' => 'paypal',
+            'status' => 'success',
+            'transaction_id' => 'CAP-E2E-TEST-123'
+        ]);
+        $order->refresh();
+
+        // 6. ADBMS Database Integrity & Relationship Assertions
         $this->assertEquals('processing', $order->status);
         $this->assertEquals('paid', $order->payment_status);
 
@@ -219,7 +229,7 @@ class E2EStorefrontOrderFlowTest extends TestCase
         // Verify CjOrder mapping
         $cjOrder = \App\Models\CjOrder::where('internal_order_id', $order->id)->first();
         $this->assertNotNull($cjOrder);
-        $this->assertEquals($checkoutCjId, $cjOrder->cj_order_id);
+        $this->assertEquals($mockLiveCjId, $cjOrder->cj_order_id);
         $this->assertEquals($order->id, $cjOrder->order->id);
 
         // 8. Test CJ Webhook Tracking Sync

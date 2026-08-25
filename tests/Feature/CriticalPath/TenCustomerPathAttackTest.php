@@ -317,7 +317,15 @@ class TenCustomerPathAttackTest extends TestCase
             ]
         ];
 
-        $res = $this->postJson(route('webhooks.paypal'), $webhookPayload);
+        $headers = [
+            'PAYPAL-TRANSMISSION-SIG' => 'mock_valid_signature_token',
+            'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
+            'PAYPAL-TRANSMISSION-ID' => 'wh_drop_tx_' . uniqid(),
+            'PAYPAL-TRANSMISSION-TIME' => now()->toIso8601String(),
+            'PAYPAL-CERT-URL' => 'https://api.sandbox.paypal.com/v1/certs/test',
+        ];
+
+        $res = $this->postJson(route('webhooks.paypal'), $webhookPayload, $headers);
         $res->assertStatus(200);
 
         $event = ProviderEvent::where('event_id', $webhookPayload['id'])->first();

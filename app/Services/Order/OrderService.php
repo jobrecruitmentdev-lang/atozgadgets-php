@@ -39,6 +39,8 @@ class OrderService
                 $supplierCost = $variant ? (float)$variant->cost_price : (float)($product->cost_price ?? 0.00);
                 $sku = $variant?->sku ?? ($product?->merchant_sku ?? 'AZG-GDT');
                 $variantName = $variant ? $variant->name : null;
+                $cjVariant = $variant?->cjVariant;
+                $cjProduct = $product?->cjProduct;
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -47,6 +49,9 @@ class OrderService
                     'merchant_sku_snapshot' => $sku,
                     'product_name_snapshot' => $product?->name ?? 'AtoZ Gadget',
                     'variant_name_snapshot' => $variantName,
+                    'cj_product_id' => $cjProduct?->cj_product_id,
+                    'cj_variant_id' => $variant?->cj_variant_id ?: $cjProduct?->cj_variant_id,
+                    'cj_variant_sku' => $cjVariant?->cj_variant_sku ?: $cjProduct?->cj_variant_sku,
                     'supplier_cost_snapshot' => $supplierCost,
                     'freight_cost_snapshot' => 0.00,
                     'contribution_margin_snapshot' => (float)$item['unit_price'] - $supplierCost,

@@ -251,8 +251,15 @@ class CommerceCorePaymentOrchestrationTest extends TestCase
             ]
         ];
 
-        // 1. Post to Webhook endpoint
-        $response = $this->postJson('/api/webhooks/paypal', $webhookPayload);
+        // 1. Post to Webhook endpoint with authenticated PayPal mock transmission headers
+        $headers = [
+            'PAYPAL-TRANSMISSION-SIG' => 'mock_valid_signature_token',
+            'PAYPAL-AUTH-ALGO' => 'SHA256withRSA',
+            'PAYPAL-TRANSMISSION-ID' => 'wh_tx_id_' . uniqid(),
+            'PAYPAL-TRANSMISSION-TIME' => now()->toIso8601String(),
+            'PAYPAL-CERT-URL' => 'https://api.sandbox.paypal.com/v1/certs/test',
+        ];
+        $response = $this->postJson('/api/webhooks/paypal', $webhookPayload, $headers);
         $response->assertStatus(200);
 
         // 2. Process the job

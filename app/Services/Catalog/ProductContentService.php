@@ -190,10 +190,50 @@ class ProductContentService
             return $remoteUrl ?: '';
         }
 
+        $parsed = parse_url($remoteUrl);
+        $scheme = strtolower($parsed['scheme'] ?? '');
+        $host = strtolower($parsed['host'] ?? '');
+
+        // 1. Strict Scheme Validation
+        if (!in_array($scheme, ['http', 'https']) || empty($host)) {
+            return $remoteUrl;
+        }
+
+        // 2. SSRF Protection: Reject localhost, loopback, and cloud metadata names
+        if (in_array($host, ['localhost', '127.0.0.1', '::1', '169.254.169.254', 'metadata.google.internal'])) {
+            \Illuminate\Support\Facades\Log::warning("SSRF Protection: Blocked loopback/metadata host '{$host}' in media import.");
+            return '';
+        }
+
+        // 3. DNS Resolution and Private/Reserved IP Filtering
+        $ip = gethostbyname($host);
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            \Illuminate\Support\Facades\Log::warning("SSRF Protection: Host '{$host}' resolved to non-public/private IP '{$ip}'. Request aborted.");
+            return '';
+        }
+
+        // Reject link-local / cloud metadata IP range (169.254.0.0/16)
+        if (str_starts_with($ip, '169.254.') || str_starts_with($ip, '127.') || str_starts_with($ip, '10.') || str_starts_with($ip, '192.168.')) {
+            \Illuminate\Support\Facades\Log::warning("SSRF Protection: Blocked private IP '{$ip}' in media import.");
+            return '';
+        }
+
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($remoteUrl);
+            // Disable arbitrary redirect chasing to prevent DNS rebinding redirects
+            $response = \Illuminate\Support\Facades\Http::timeout(5)
+                ->withOptions(['allow_redirects' => false])
+                ->get($remoteUrl);
+
             if ($response->successful() && !empty($response->body())) {
-                $ext = pathinfo(parse_url($remoteUrl, PHP_URL_PATH), PATHINFO_EXTENSION);
+                $contentType = strtolower($response->header('Content-Type') ?? '');
+                
+                // Validate that response is genuinely an image
+                if (!empty($contentType) && !str_starts_with($contentType, 'image/')) {
+                    \Illuminate\Support\Facades\Log::warning("Media import rejected non-image Content-Type '{$contentType}' from {$remoteUrl}");
+                    return '';
+                }
+
+                $ext = pathinfo($parsed['path'] ?? '', PATHINFO_EXTENSION);
                 $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? strtolower($ext) : 'jpg';
                 $filename = md5($remoteUrl) . '.' . $ext;
                 $storagePath = "{$folder}/{$filename}";

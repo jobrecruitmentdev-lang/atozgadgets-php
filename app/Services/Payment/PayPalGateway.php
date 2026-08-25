@@ -128,8 +128,81 @@ class PayPalGateway implements PaymentGatewayInterface
 
     public function verifyWebhookSignature(array $headers, string $rawBody): bool
     {
-        // Production signature verification against PayPal verify-webhook-signature API
-        // For testing/mocking, returns true when headers are present
-        return !empty($headers);
+        $webhookId = Setting::get('paypal_webhook_id', config('paypal.webhook_id', env('PAYPAL_WEBHOOK_ID', '')));
+        
+        // In local/testing mock environments without a live webhook ID
+        if (app()->environment('testing') && empty($webhookId)) {
+            return !empty($headers['PAYPAL-TRANSMISSION-SIG'] ?? $headers['paypal-transmission-sig'] ?? null);
+        }
+
+        if (empty($webhookId)) {
+            \Illuminate\Support\Facades\Log::error('PayPal Webhook Verification Failed: PAYPAL_WEBHOOK_ID is not configured in settings or environment.');
+            return false;
+        }
+
+        // Normalize header keys (handle case insensitivity)
+        $normalizedHeaders = [];
+        foreach ($headers as $key => $value) {
+            $normalizedHeaders[strtoupper($key)] = is_array($value) ? ($value[0] ?? '') : $value;
+        }
+
+        $authAlgo = $normalizedHeaders['PAYPAL-AUTH-ALGO'] ?? null;
+        $certUrl = $normalizedHeaders['PAYPAL-CERT-URL'] ?? null;
+        $transmissionId = $normalizedHeaders['PAYPAL-TRANSMISSION-ID'] ?? null;
+        $transmissionSig = $normalizedHeaders['PAYPAL-TRANSMISSION-SIG'] ?? null;
+        $transmissionTime = $normalizedHeaders['PAYPAL-TRANSMISSION-TIME'] ?? null;
+
+        if (!$authAlgo || !$certUrl || !$transmissionId || !$transmissionSig || !$transmissionTime) {
+            \Illuminate\Support\Facades\Log::warning('PayPal Webhook Verification Failed: Missing required cryptographic transmission headers.', [
+                'has_auth_algo' => !empty($authAlgo),
+                'has_cert_url' => !empty($certUrl),
+                'has_transmission_id' => !empty($transmissionId),
+                'has_transmission_sig' => !empty($transmissionSig),
+                'has_transmission_time' => !empty($transmissionTime),
+            ]);
+            return false;
+        }
+
+        // Cert URL safety check (must be a genuine PayPal domain)
+        if (!str_starts_with($certUrl, 'https://api.paypal.com/') && 
+            !str_starts_with($certUrl, 'https://api-m.paypal.com/') && 
+            !str_starts_with($certUrl, 'https://api.sandbox.paypal.com/') && 
+            !str_starts_with($certUrl, 'https://api-m.sandbox.paypal.com/')) {
+            \Illuminate\Support\Facades\Log::error('PayPal Webhook Verification Failed: Untrusted cert_url domain: ' . $certUrl);
+            return false;
+        }
+
+        $decodedBody = json_decode($rawBody);
+        if (!$decodedBody) {
+            \Illuminate\Support\Facades\Log::error('PayPal Webhook Verification Failed: Invalid JSON body.');
+            return false;
+        }
+
+        $verificationPayload = [
+            'auth_algo' => $authAlgo,
+            'cert_url' => $certUrl,
+            'transmission_id' => $transmissionId,
+            'transmission_sig' => $transmissionSig,
+            'transmission_time' => $transmissionTime,
+            'webhook_id' => $webhookId,
+            'webhook_event' => $decodedBody,
+        ];
+
+        try {
+            $response = Http::withToken($this->getAccessToken())
+                ->timeout(10)
+                ->post($this->getBaseUrl() . '/v1/notifications/verify-webhook-signature', $verificationPayload);
+
+            if ($response->successful()) {
+                $status = $response->json('verification_status');
+                return strtoupper($status) === 'SUCCESS';
+            }
+
+            \Illuminate\Support\Facades\Log::error('PayPal Webhook Signature API call failed: ' . $response->body());
+            return false;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PayPal Webhook Signature Verification Exception: ' . $e->getMessage());
+            return false;
+        }
     }
 }

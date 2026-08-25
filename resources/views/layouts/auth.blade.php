@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app="auth">
 <head>
+    @include('partials.theme-init')
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS0E52WE2D"></script>
     <script>
@@ -17,17 +18,15 @@
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Global Tokens -->
+    <link rel="stylesheet" href="{{ asset('css/tokens.css') }}">
+    
     <style>
         :root {
-            --bg-color: #0a0a0a;
-            --text-primary: #fafaf9;
-            --text-secondary: #888888;
-            --accent: #c9a962;
-            --accent-hover: #b89851;
-            --glass-bg: rgba(20, 20, 20, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --input-bg: rgba(255, 255, 255, 0.04);
-            --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+            --bg-color: var(--bg-base);
+            --accent: var(--brand-primary);
+            --accent-hover: var(--brand-primary-hover);
         }
 
         * {

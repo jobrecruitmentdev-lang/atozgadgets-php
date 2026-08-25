@@ -197,11 +197,11 @@ class PaymentService
 
     public static function processRefund(Order $order, ?float $amount = null, string $reason = 'Customer Request'): array
     {
-        $refundAmount = $amount ?? (float)$order->total_amount;
-
-        return DB::transaction(function () use ($order, $refundAmount, $reason) {
+        return DB::transaction(function () use ($order, $amount, $reason) {
+            // Lock payment records for update to prevent concurrent double refunds
             $payment = Payment::where('order_id', $order->id)
                 ->whereIn('status', ['success', 'partially_refunded'])
+                ->lockForUpdate()
                 ->latest()
                 ->first();
 
@@ -209,7 +209,33 @@ class PaymentService
                 return ['success' => false, 'error' => 'No successful payment found to refund.'];
             }
 
-            $txType = ($refundAmount >= (float)$order->total_amount) ? 'REFUND' : 'PARTIAL_REFUND';
+            $ledger = self::getLedgerSummary($order);
+            $refundableBalance = round($ledger->net_paid, 2);
+
+            if ($refundableBalance <= 0.00) {
+                return ['success' => false, 'error' => 'No refundable balance available on this order.'];
+            }
+
+            // Determine exact refund amount
+            if ($amount === null) {
+                $refundAmount = $refundableBalance;
+            } else {
+                $refundAmount = round((float)$amount, 2);
+            }
+
+            // Strict Financial Invariants
+            if ($refundAmount <= 0.00) {
+                return ['success' => false, 'error' => 'Refund amount must be strictly greater than $0.00.'];
+            }
+
+            if ($refundAmount > $refundableBalance) {
+                return [
+                    'success' => false, 
+                    'error' => sprintf('Requested refund amount ($%.2f) exceeds available refundable balance ($%.2f).', $refundAmount, $refundableBalance)
+                ];
+            }
+
+            $txType = ($refundAmount >= $refundableBalance && $ledger->refunded <= 0.00) ? 'REFUND' : 'PARTIAL_REFUND';
 
             // Append REFUND transaction to immutable ledger
             $refundTx = PaymentTransaction::create([
@@ -224,12 +250,14 @@ class PaymentService
                 'metadata' => ['reason' => $reason],
             ]);
 
-            // Update projection
-            $ledger = self::getLedgerSummary($order);
-            $payment->update(['status' => ($ledger->net_paid <= 0 ? 'refunded' : 'partially_refunded')]);
+            // Recompute authoritative projection from immutable transactions
+            $newLedger = self::getLedgerSummary($order);
+            $isFullyRefunded = ($newLedger->net_paid <= 0.001);
+
+            $payment->update(['status' => ($isFullyRefunded ? 'refunded' : 'partially_refunded')]);
             $order->update([
-                'status' => ($ledger->net_paid <= 0 ? 'refunded' : 'partially_refunded'),
-                'payment_status' => strtolower($ledger->status),
+                'status' => ($isFullyRefunded ? 'refunded' : 'partially_refunded'),
+                'payment_status' => ($isFullyRefunded ? 'refunded' : 'partially_refunded'),
             ]);
 
             return [
@@ -237,6 +265,7 @@ class PaymentService
                 'message' => 'Refund processed successfully.',
                 'refund_id' => $refundTx->provider_transaction_id,
                 'amount' => $refundAmount,
+                'remaining_balance' => max(0.0, round($newLedger->net_paid, 2)),
             ];
         });
     }
