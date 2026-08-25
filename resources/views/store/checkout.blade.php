@@ -9,7 +9,7 @@
         ? (\App\Models\Setting::get('paypal_live_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')))
         : (\App\Models\Setting::get('paypal_sandbox_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')));
 @endphp
-<script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency=USD&disable-funding=card,paylater" defer></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency=USD" defer></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
@@ -148,80 +148,17 @@
         <!-- Step 2: Payment -->
         <div id="step-2" class="form-section hidden" data-aos="fade-in">
             <h2>Select Payment Method</h2>
-
-            <!-- Payment Method Tabs -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
-                <div id="tab-card-select" class="payment-tab active" onclick="switchPaymentMethod('card')" style="padding:16px; border-radius:14px; border:2px solid var(--accent); background:rgba(201, 169, 98, 0.1); cursor:pointer; text-align:center; transition:all 0.2s;">
-                    <div style="font-weight:700; color:var(--accent); font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i data-lucide="credit-card" style="width:18px;"></i> Credit / Debit Card
+            
+            <div class="payment-option">
+                <div class="payment-header">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="payment-title"><i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:4px;"></i> Secure Checkout</span>
                     </div>
-                    <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">Visa, Mastercard, Amex</div>
                 </div>
-                <div id="tab-paypal-select" class="payment-tab" onclick="switchPaymentMethod('paypal')" style="padding:16px; border-radius:14px; border:1px solid var(--glass-border); background:rgba(255, 255, 255, 0.03); cursor:pointer; text-align:center; transition:all 0.2s;">
-                    <div style="font-weight:700; color:var(--text-primary); font-size:14px; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i data-lucide="shield-check" style="width:18px;"></i> PayPal
-                    </div>
-                    <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">PayPal Wallet & Fast Pay</div>
-                </div>
+                <p class="payment-desc">Pay safely with your PayPal account or Debit / Credit Card via PayPal's encrypted hosted fields.</p>
             </div>
-
-            <!-- Card Payment Container -->
-            <div id="card-payment-box">
-                <form id="card-payment-form" onsubmit="handleCardPayment(event)">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                        <span style="font-size:13px; font-weight:600; color:var(--text-primary);">Card Details</span>
-                        <button type="button" onclick="autoFillTestCard()" style="background:none; border:1px dashed var(--accent); color:var(--accent); font-size:11px; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:600;">
-                            ⚡ Auto-Fill Test Card
-                        </button>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Name on Card</label>
-                        <input type="text" id="card_name" name="card_name" placeholder="John Doe" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:16px;">
-                        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Card Number</label>
-                        <input type="text" id="card_number" name="card_number" placeholder="4035 7777 7777 7777" maxlength="19" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; letter-spacing:1px;">
-                    </div>
-
-                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
-                        <div>
-                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Month</label>
-                            <input type="text" id="exp_month" name="exp_month" placeholder="12" maxlength="2" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
-                        </div>
-                        <div>
-                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">Year</label>
-                            <input type="text" id="exp_year" name="exp_year" placeholder="28" maxlength="4" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
-                        </div>
-                        <div>
-                            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-primary);">CVV / CVC</label>
-                            <input type="password" id="cvv" name="cvv" placeholder="123" maxlength="4" required style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(15,15,20,0.85); color:#fff; font-size:14px; text-align:center;">
-                        </div>
-                    </div>
-
-                    <p id="card-error" style="color:#ef4444; font-size:13px; margin-bottom:14px; display:none; padding:10px 14px; border-radius:8px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);"></p>
-
-                    <button type="submit" id="pay-card-btn" class="btn-primary" style="width:100%; padding:15px; border-radius:12px; background:var(--accent); color:#0a0a0c; font-weight:800; font-size:15px; border:none; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(201,169,98,0.3); transition:all 0.2s;">
-                        <span>Pay Securely with Card</span>
-                        <div class="loader" id="card-pay-loader" style="border-top-color:#000;"></div>
-                    </button>
-                </form>
-            </div>
-
-            <!-- PayPal Container -->
-            <div id="paypal-payment-box" style="display:none;">
-                <div class="payment-option">
-                    <div class="payment-header">
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="payment-title"><i data-lucide="shield-check" style="display:inline; width:20px; vertical-align:middle; margin-right:4px;"></i> Official PayPal</span>
-                        </div>
-                    </div>
-                    <p class="payment-desc">Fast, secure checkout via official PayPal popup.</p>
-                </div>
-                
-                <div id="paypal-button-container" style="margin-top: 20px;"></div>
-            </div>
+            
+            <div id="paypal-button-container" style="margin-top: 20px; min-height: 150px;"></div>
             
             <p style="font-size:12px; color:var(--text-secondary); text-align:center; margin-top:20px;">
                 🔒 256-bit Encrypted Checkout · By placing your order you agree to our <a href="{{ route('store.terms') }}" style="color:var(--accent);">Terms</a> and <a href="{{ route('store.privacy') }}" style="color:var(--accent);">Privacy Policy</a>.
@@ -501,96 +438,6 @@
             document.getElementById('otp-loader').style.display = 'none';
             verifyOtpBtn.disabled = false;
         });
-
-        // Card number auto-spacing
-        const cardNumInput = document.getElementById('card_number');
-        if (cardNumInput) {
-            cardNumInput.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '');
-                val = val.substring(0, 16);
-                let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
-                e.target.value = formatted;
-            });
-        }
     });
-
-    // Switch Payment Method Tab
-    function switchPaymentMethod(method) {
-        const cardBox = document.getElementById('card-payment-box');
-        const paypalBox = document.getElementById('paypal-payment-box');
-        const tabCard = document.getElementById('tab-card-select');
-        const tabPaypal = document.getElementById('tab-paypal-select');
-
-        if (method === 'card') {
-            cardBox.style.display = 'block';
-            paypalBox.style.display = 'none';
-            tabCard.style.border = '2px solid var(--accent)';
-            tabCard.style.background = 'rgba(201, 169, 98, 0.1)';
-            tabCard.querySelector('div').style.color = 'var(--accent)';
-            tabPaypal.style.border = '1px solid var(--glass-border)';
-            tabPaypal.style.background = 'rgba(255, 255, 255, 0.03)';
-            tabPaypal.querySelector('div').style.color = 'var(--text-primary)';
-        } else {
-            cardBox.style.display = 'none';
-            paypalBox.style.display = 'block';
-            tabPaypal.style.border = '2px solid var(--accent)';
-            tabPaypal.style.background = 'rgba(201, 169, 98, 0.1)';
-            tabPaypal.querySelector('div').style.color = 'var(--accent)';
-            tabCard.style.border = '1px solid var(--glass-border)';
-            tabCard.style.background = 'rgba(255, 255, 255, 0.03)';
-            tabCard.querySelector('div').style.color = 'var(--text-primary)';
-        }
-    }
-
-    // Auto-fill Test Card Details
-    function autoFillTestCard() {
-        document.getElementById('card_name').value = 'John Doe';
-        document.getElementById('card_number').value = '4035 7777 7777 7777';
-        document.getElementById('exp_month').value = '12';
-        document.getElementById('exp_year').value = '28';
-        document.getElementById('cvv').value = '123';
-    }
-
-    // Handle Direct Card Payment Submission
-    async function handleCardPayment(e) {
-        e.preventDefault();
-        const btn = document.getElementById('pay-card-btn');
-        const loader = document.getElementById('card-pay-loader');
-        const errorEl = document.getElementById('card-error');
-
-        btn.disabled = true;
-        loader.style.display = 'inline-block';
-        errorEl.style.display = 'none';
-
-        const form = document.getElementById('card-payment-form');
-        const formData = new FormData(form);
-
-        try {
-            const res = await fetch("{{ route('payment.card') }}", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                    'Accept': 'application/json'
-                },
-                body: formData
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                localStorage.removeItem('atoz_shipping_cache');
-                window.location.href = data.redirect;
-            } else {
-                errorEl.innerText = data.error || (data.message || 'Card payment processing failed.');
-                errorEl.style.display = 'block';
-                btn.disabled = false;
-                loader.style.display = 'none';
-            }
-        } catch (err) {
-            errorEl.innerText = 'Network error during card payment. Please try again.';
-            errorEl.style.display = 'block';
-            btn.disabled = false;
-            loader.style.display = 'none';
-        }
-    }
 </script>
 @endsection

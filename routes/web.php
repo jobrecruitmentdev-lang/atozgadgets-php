@@ -36,12 +36,10 @@ Route::middleware('storefront')->group(function () {
     Route::post('/checkout/send-otp', [\App\Http\Controllers\CartController::class, 'sendOtp'])->middleware('throttle:3,1')->name('store.checkout.send-otp');
     Route::post('/checkout/verify-otp', [\App\Http\Controllers\CartController::class, 'verifyOtp'])->name('store.checkout.verify-otp');
     
-    // Payments
-    Route::post('/payment/card', [\App\Http\Controllers\PaymentController::class, 'payWithCard'])->name('payment.card');
-    Route::post('/payment/payoneer', [\App\Http\Controllers\PaymentController::class, 'payWithPayoneer'])->name('payment.payoneer');
+    // Payments & Order Confirmation
     Route::post('/payment/paypal/create-order', [\App\Http\Controllers\PaymentController::class, 'paypalCreateOrder'])->name('payment.paypal.create');
     Route::post('/payment/paypal/capture-order', [\App\Http\Controllers\PaymentController::class, 'paypalCaptureOrder'])->name('payment.paypal.capture');
-    Route::post('/payment/sandbox/instant-pay', [\App\Http\Controllers\PaymentController::class, 'sandboxInstantPay'])->name('payment.sandbox.instant');
+    Route::get('/order-confirmation/{order_number}', [\App\Http\Controllers\StorefrontController::class, 'orderConfirmation'])->name('store.order_confirmation');
 
     Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);

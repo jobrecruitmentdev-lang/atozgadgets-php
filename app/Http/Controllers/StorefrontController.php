@@ -140,4 +140,13 @@ class StorefrontController extends Controller
 
         return back()->with('success', 'Thank you! Your customer review has been submitted.');
     }
+
+    public function orderConfirmation($orderNumber)
+    {
+        $order = \App\Models\Order::with(['items.product', 'items.variant', 'orderAddress', 'user'])
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+
+        return view('store.order_confirmation', compact('order'));
+    }
 }

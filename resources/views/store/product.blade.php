@@ -244,7 +244,7 @@
             @endif
         </div>
 
-        <form action="{{ route('store.cart.add') }}" method="POST">
+        <form action="{{ route('store.cart.add') }}" method="POST" onsubmit="const b=this.querySelector('.btn-cart'); if(b){ b.disabled=true; b.innerHTML='Adding...'; }">
             @csrf
             <input type="hidden" name="product_id" value="{{ $product->id }}">
             <input type="hidden" name="variant_id" id="selectedVariantId" value="{{ $product->variants->first()->id ?? '' }}">
