@@ -122,9 +122,13 @@ class CjOrderService
             return ['cjOrderId' => $cjOrderId, 'cjOrder' => $cjOrder];
         }
 
-        $response = Http::withHeaders($headers)
-            ->timeout(12)
-            ->post(self::getApiUrl('/shopping/order/createOrderV2'), $payload);
+        usleep(1100000); // 1.1s delay to respect CJ 1 QPS limit
+
+        $response = self::executeWithRetry(function () use ($headers, $payload) {
+            return Http::withHeaders($headers)
+                ->timeout(15)
+                ->post(self::getApiUrl('/shopping/order/createOrderV2'), $payload);
+        });
 
         $responseData = $response->json();
 
@@ -150,6 +154,7 @@ class CjOrderService
             ]
         );
 
+        usleep(1100000); // 1.1s delay before submitOrder
         $submitRes = self::submitOrder($cjOrderId, $headers);
         if (isset($submitRes['code']) && $submitRes['code'] !== 200) {
             $msg = $submitRes['message'] ?? 'CJ Wallet payment/deduction failed. Please check CJ account balance.';
@@ -159,18 +164,41 @@ class CjOrderService
         return ['cjOrderId' => $cjOrderId, 'cjOrder' => $cjOrder];
     }
 
+    public static function executeWithRetry(callable $callback, int $maxRetries = 3)
+    {
+        $attempt = 0;
+        $response = null;
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            $response = $callback();
+            $data = $response->json();
+            
+            // Check if CJ hit QPS rate limit (code 1600200)
+            if (isset($data['code']) && $data['code'] === 1600200) {
+                \Illuminate\Support\Facades\Log::warning("CJ QPS Rate Limit hit (attempt {$attempt}/{$maxRetries}). Sleeping 1.2s before retry...");
+                usleep(1200000);
+                continue;
+            }
+            
+            return $response;
+        }
+        return $response;
+    }
+
     private static function getBestLogistic($countryCode, $products, $headers)
     {
         // Simple fallback if no specific logistics found
         $fallback = 'CJPacket Fast Line';
         
         try {
-            $response = Http::withHeaders($headers)
-                ->post(self::getApiUrl('/logistic/freightCalculate'), [
-                    'startCountryCode' => 'CN',
-                    'endCountryCode' => $countryCode,
-                    'products' => $products
-                ]);
+            $response = self::executeWithRetry(function () use ($headers, $countryCode, $products) {
+                return Http::withHeaders($headers)
+                    ->post(self::getApiUrl('/logistic/freightCalculate'), [
+                        'startCountryCode' => 'CN',
+                        'endCountryCode' => $countryCode,
+                        'products' => $products
+                    ]);
+            });
             
             $data = $response->json();
             if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
@@ -187,10 +215,12 @@ class CjOrderService
 
     private static function submitOrder($cjOrderId, $headers)
     {
-        $response = Http::withHeaders($headers)
-            ->post(self::getApiUrl('/shopping/order/submitOrder'), [
-                'orderId' => $cjOrderId
-            ]);
+        $response = self::executeWithRetry(function () use ($headers, $cjOrderId) {
+            return Http::withHeaders($headers)
+                ->post(self::getApiUrl('/shopping/order/submitOrder'), [
+                    'orderId' => $cjOrderId
+                ]);
+        });
         return $response->json();
     }
 
