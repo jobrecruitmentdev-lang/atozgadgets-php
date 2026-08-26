@@ -103,18 +103,30 @@ class MediaController extends Controller
      */
     private function serveOrProxyImage(string $url, string $cacheKey): Response
     {
+        $targetUrl = trim($url);
+        if (str_starts_with($targetUrl, '//')) {
+            $targetUrl = 'https:' . $targetUrl;
+        }
+
         // Cache image binary for 7 days
-        $cached = Cache::remember("media_bin_{$cacheKey}", 604800, function () use ($url) {
+        $cached = Cache::remember("media_bin_{$cacheKey}", 604800, function () use ($targetUrl) {
             try {
-                $response = Http::timeout(8)->get($url);
-                if ($response->successful()) {
+                $response = Http::timeout(8)
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                        'Referer' => 'https://cjdropshipping.com/'
+                    ])
+                    ->get($targetUrl);
+
+                if ($response->successful() && !empty($response->body())) {
                     return [
                         'body' => base64_encode($response->body()),
                         'mime' => $response->header('Content-Type') ?: 'image/jpeg',
                     ];
                 }
             } catch (\Throwable $e) {
-                // Ignore fetch error
+                \Illuminate\Support\Facades\Log::warning("Media proxy fetch error for {$targetUrl}: " . $e->getMessage());
             }
             return null;
         });
