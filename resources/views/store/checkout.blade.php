@@ -19,6 +19,9 @@
     .order-summary { width: 100%; flex-shrink: 0; min-width: 0; }
     @media (min-width: 1024px) { .order-summary { width: 380px; position: sticky; top: 100px; height: max-content; } }
 
+    .checkout-title { font-size: 24px; }
+    @media (min-width: 768px) { .checkout-title { font-size: 32px; margin-bottom: 36px !important; } }
+
     /* Steps */
     .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; font-size: 14px; flex-wrap: wrap; }
     .step-btn { background: none; border: none; font-weight: 500; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s; min-height: 36px; }
@@ -71,7 +74,7 @@
 
 <div class="checkout-layout">
     <div class="checkout-form">
-        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 40px;" data-aos="fade-right">Checkout</h1>
+        <h1 class="checkout-title" style="font-weight: 800; margin-bottom: 24px;" data-aos="fade-right">Checkout</h1>
         
         <div class="step-indicator">
             <button class="step-btn active" id="btn-step-1">1. Shipping</button>

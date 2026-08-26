@@ -17,6 +17,12 @@
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(12px);
     }
+    @media (max-width: 600px) {
+        .confirm-card {
+            padding: 24px 16px;
+            border-radius: 16px;
+        }
+    }
     .success-icon-wrap {
         width: 72px;
         height: 72px;
