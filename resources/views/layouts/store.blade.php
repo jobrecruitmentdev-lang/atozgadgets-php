@@ -183,8 +183,11 @@
 </head>
 <body>
     <header id="main-header">
+        @php
+            $globalFreeThreshold = (int)\App\Models\Setting::get('free_shipping_threshold', 50);
+        @endphp
         <div class="top-banner">
-            Free worldwide shipping on orders over $30 · 7–15 day delivery · Secure checkout
+            Free worldwide priority shipping on orders over ${{ $globalFreeThreshold }} · Express 3–7 Day Delivery · 100% Secure Checkout
         </div>
         
         <div class="container">
