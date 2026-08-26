@@ -38,7 +38,7 @@ class AuthController extends Controller
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
-            'mobile' => $data['mobile'],
+            'mobile' => !empty($data['mobile']) ? $data['mobile'] : null,
             'role_id' => 3, // Customer role
             'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
             'is_active' => 1

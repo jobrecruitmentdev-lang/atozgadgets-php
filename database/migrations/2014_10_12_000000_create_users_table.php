@@ -19,7 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('first_name', 100);
             $table->string('last_name', 100)->nullable();
             $table->string('email', 150)->unique();
-            $table->string('mobile', 20)->unique();
+            $table->string('mobile', 20)->nullable()->unique();
             $table->string('password'); // password_hash in prisma
             $table->string('profile_image')->nullable();
             $table->boolean('is_active')->default(true);

@@ -48,7 +48,7 @@ class AuthController extends ApiController
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'] ?? null,
             'email' => $validated['email'],
-            'mobile' => $validated['mobile'],
+            'mobile' => !empty($validated['mobile']) ? $validated['mobile'] : null,
             'password' => Hash::make($validated['password']),
             'role_id' => 3, // Default customer
             'is_active' => 1
