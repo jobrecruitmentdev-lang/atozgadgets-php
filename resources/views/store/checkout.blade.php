@@ -127,8 +127,13 @@
                     </div>
                 </div>
 
+                <!-- Real-Time Logistics & Eligibility Box -->
+                <div id="shipping-eligibility-box" style="margin-top: 15px; margin-bottom: 15px; padding: 14px 16px; border-radius: 12px; font-size: 13px; display: none; transition: all 0.3s ease;">
+                    <div id="eligibility-content"></div>
+                </div>
+
                 <div style="display:flex; align-items:center;">
-                    <button type="button" class="btn btn-primary" id="save-shipping-btn" style="padding: 16px 32px; margin-top: 16px; display:flex; align-items:center;">
+                    <button type="button" class="btn btn-primary" id="save-shipping-btn" style="padding: 16px 32px; margin-top: 8px; display:flex; align-items:center;">
                         Verify & Continue <span class="loader" id="shipping-loader"></span>
                     </button>
                     <p id="shipping-error" style="color: #ef4444; margin-left: 15px; display:none;"></p>
@@ -258,14 +263,76 @@
             } catch(e) {}
         }
 
-        // Auto-save shipping data on input
-        shippingForm.addEventListener('input', () => {
-            const formData = new FormData(shippingForm);
-            const dataObj = {};
-            formData.forEach((value, key) => dataObj[key] = value);
-            localStorage.setItem('atoz_shipping_cache', JSON.stringify(dataObj));
-        });
-        
+        // --- Real-Time Country & Logistics Eligibility Engine ---
+        const countrySelect = document.querySelector('select[name="country"]');
+        const eligibilityBox = document.getElementById('shipping-eligibility-box');
+        const eligibilityContent = document.getElementById('eligibility-content');
+
+        async function verifyCountryEligibility(countryCode) {
+            if (!eligibilityBox || !eligibilityContent) return;
+
+            eligibilityBox.style.display = 'block';
+            eligibilityBox.style.background = 'rgba(255, 255, 255, 0.03)';
+            eligibilityBox.style.border = '1px solid var(--border-color)';
+            eligibilityContent.innerHTML = '<span style="color: var(--text-secondary);"><i data-lucide="loader" style="width:14px;height:14px;display:inline;vertical-align:middle;animation:spin 1s linear infinite;"></i> Checking carrier logistics & warehouse routes...</span>';
+            if (window.lucide) lucide.createIcons();
+
+            try {
+                const res = await fetch("{{ route('store.checkout.eligibility') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ country: countryCode })
+                });
+
+                const data = await res.json();
+
+                if (data.eligible) {
+                    eligibilityBox.style.background = 'rgba(34, 197, 94, 0.08)';
+                    eligibilityBox.style.border = '1px solid rgba(34, 197, 94, 0.25)';
+                    eligibilityContent.innerHTML = `
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="color: #22c55e; font-size: 16px; margin-top: 1px;">✓</div>
+                            <div>
+                                <div style="font-weight: 600; color: #22c55e; margin-bottom: 2px;">Delivery Available to ${data.country_name || data.country}</div>
+                                <div style="color: var(--text-secondary); font-size: 12.5px;">
+                                    <strong>Carrier:</strong> ${data.carrier || 'Express Direct Line'} · 
+                                    <strong>ETA:</strong> <span style="color: var(--accent); font-weight: 600;">${data.eta || '7–12 Business Days'}</span> · 
+                                    <strong>Hub:</strong> ${data.warehouse || 'Priority Distribution Hub'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    saveShippingBtn.disabled = false;
+                    document.getElementById('shipping-error').style.display = 'none';
+                } else {
+                    eligibilityBox.style.background = 'rgba(239, 68, 68, 0.08)';
+                    eligibilityBox.style.border = '1px solid rgba(239, 68, 68, 0.25)';
+                    eligibilityContent.innerHTML = `
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="color: #ef4444; font-size: 16px; margin-top: 1px;">⚠️</div>
+                            <div>
+                                <div style="font-weight: 600; color: #ef4444; margin-bottom: 2px;">Shipping Unavailable to ${data.country_name || data.country}</div>
+                                <div style="color: #fca5a5; font-size: 12px;">${data.message || 'One or more items in your cart cannot be delivered to this destination due to regional carrier restrictions.'}</div>
+                            </div>
+                        </div>
+                    `;
+                    saveShippingBtn.disabled = true;
+                }
+            } catch (e) {
+                eligibilityBox.style.display = 'none';
+            }
+        }
+
+        if (countrySelect) {
+            countrySelect.addEventListener('change', (e) => verifyCountryEligibility(e.target.value));
+            // Run check on initial load
+            setTimeout(() => verifyCountryEligibility(countrySelect.value || 'US'), 100);
+        }
+
         // --- Step 1 -> Step 1.5 (Send OTP) ---
         saveShippingBtn.addEventListener('click', async () => {
             if(!shippingForm.checkValidity()) { shippingForm.reportValidity(); return; }

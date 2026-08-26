@@ -189,4 +189,17 @@ class CartController extends Controller
             return redirect()->route('store.checkout')->with('error', 'Checkout error: ' . $e->getMessage());
         }
     }
+
+    public function checkShippingEligibility(Request $request)
+    {
+        $country = $request->input('country', 'US');
+        $rawCart = session()->get('cart', []);
+
+        if (empty($rawCart)) {
+            return response()->json(['eligible' => false, 'message' => 'Your cart is empty.']);
+        }
+
+        $result = \App\Services\Shipping\CjShippingEligibilityService::checkEligibility($rawCart, $country);
+        return response()->json($result);
+    }
 }

@@ -36,6 +36,13 @@ class PaymentController extends Controller
         ]);
 
         try {
+            // 0. Authoritative CJ Shipping & Country Eligibility Guard
+            $countryCode = $address['country'] ?? 'US';
+            $eligibility = \App\Services\Shipping\CjShippingEligibilityService::checkEligibility($rawCart, $countryCode);
+            if (!$eligibility['eligible']) {
+                return response()->json(['error' => $eligibility['message']], 422);
+            }
+
             // 1. Create Immutable Checkout Session
             $session = CheckoutService::createSession(auth()->id(), $rawCart, $address);
 
