@@ -22,6 +22,9 @@
     <!-- Global Tokens -->
     <link rel="stylesheet" href="{{ asset('css/tokens.css') }}">
     
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    
     <style>
         :root {
             --bg-color: var(--bg-base);
@@ -179,9 +182,43 @@
             transition: color 0.2s ease;
         }
 
-        .auth-footer a:hover {
-            color: var(--text-primary);
-            text-decoration: underline;
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .password-input-wrapper .form-input {
+            padding-right: 48px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--accent);
+            background: rgba(201, 169, 98, 0.12);
+        }
+
+        .password-toggle-btn svg, .password-toggle-btn i {
+            width: 18px;
+            height: 18px;
         }
     </style>
 </head>
@@ -190,6 +227,35 @@
     @yield('content')
 
     <script>
+        // Password Visibility Toggle Handler
+        function togglePasswordVisibility(btn) {
+            const wrapper = btn.closest('.password-input-wrapper');
+            if (!wrapper) return;
+            const input = wrapper.querySelector('input');
+            if (!input) return;
+            
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            
+            const newLabel = isPassword ? 'Hide password' : 'Show password';
+            btn.setAttribute('aria-label', newLabel);
+            btn.setAttribute('title', newLabel);
+            
+            const iconName = isPassword ? 'eye-off' : 'eye';
+            btn.innerHTML = `<i data-lucide="${iconName}"></i>`;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                window.addEventListener('load', () => lucide && lucide.createIcons());
+            }
+        });
+
         // Button ripple micro-animation
         document.querySelectorAll('.btn-primary').forEach(button => {
             button.addEventListener('click', function (e) {

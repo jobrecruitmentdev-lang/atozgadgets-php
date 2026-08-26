@@ -46,12 +46,22 @@
 
         <div class="form-group">
             <label class="form-label" for="password">Password</label>
-            <input type="password" id="password" name="password" class="form-input" required placeholder="••••••••">
+            <div class="password-input-wrapper">
+                <input type="password" id="password" name="password" class="form-input" required placeholder="••••••••">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility(this)" aria-label="Show password" title="Show password">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
         </div>
         
         <div class="form-group">
             <label class="form-label" for="password_confirmation">Confirm Password</label>
-            <input type="password" id="password_confirmation" name="password_confirmation" class="form-input" required placeholder="••••••••">
+            <div class="password-input-wrapper">
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-input" required placeholder="••••••••">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility(this)" aria-label="Show password" title="Show password">
+                    <i data-lucide="eye"></i>
+                </button>
+            </div>
         </div>
 
         <button type="submit" class="btn-primary" style="margin-top: 10px;">Create Account</button>
