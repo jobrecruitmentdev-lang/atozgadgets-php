@@ -103,13 +103,26 @@
                 <div class="form-grid">
                     <div class="input-group"><label>Postal Code *</label><input type="text" name="postal_code" required></div>
                     <div class="input-group">
-                        <label>Country *</label>
+                        <label>Country / Region *</label>
                         <select name="country" required>
-                            <option value="US">United States</option>
-                            <option value="CA">Canada</option>
-                            <option value="GB">United Kingdom</option>
-                            <option value="AU">Australia</option>
-                            <option value="IN">India</option>
+                            <option value="US" selected>United States (US)</option>
+                            <option value="CA">Canada (CA)</option>
+                            <option value="GB">United Kingdom (UK)</option>
+                            <option value="AU">Australia (AU)</option>
+                            <option value="DE">Germany (DE)</option>
+                            <option value="FR">France (FR)</option>
+                            <option value="IT">Italy (IT)</option>
+                            <option value="ES">Spain (ES)</option>
+                            <option value="NL">Netherlands (NL)</option>
+                            <option value="SE">Sweden (SE)</option>
+                            <option value="NO">Norway (NO)</option>
+                            <option value="CH">Switzerland (CH)</option>
+                            <option value="NZ">New Zealand (NZ)</option>
+                            <option value="AE">United Arab Emirates (UAE)</option>
+                            <option value="SG">Singapore (SG)</option>
+                            <option value="IE">Ireland (IE)</option>
+                            <option value="JP">Japan (JP)</option>
+                            <option value="IN">India (IN)</option>
                         </select>
                     </div>
                 </div>

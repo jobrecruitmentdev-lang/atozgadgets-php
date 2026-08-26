@@ -20,7 +20,11 @@ class AccountController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
-        $recentOrders = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->take(3)->get();
+        $recentOrders = Order::where('user_id', $user->id)
+            ->whereIn('payment_status', ['paid', 'completed', 'success'])
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
         return view('account.dashboard', compact('user', 'recentOrders'));
     }
 
@@ -30,7 +34,10 @@ class AccountController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
-        $orders = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        $orders = Order::where('user_id', $user->id)
+            ->whereIn('payment_status', ['paid', 'completed', 'success'])
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('account.orders', compact('user', 'orders'));
     }
 

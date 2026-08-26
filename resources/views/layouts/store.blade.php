@@ -400,9 +400,9 @@
             </div>
 
             <div class="footer-bottom">
-                <p>© 2026 Atoz Gadgetz · Premium Gadgets with AtoZ · Created by <a href="https://prmarketingventures.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 600; text-decoration: underline;">PR Marketing Ventures</a></p>
+                <p>© 2026 Atoz Gadgetz · Premium Curated Gadgets · Created by <a href="https://prmarketingventures.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 600; text-decoration: underline;">PR Marketing Ventures</a></p>
                 <div>
-                    <span>All Days 11am – 9pm IST</span> · <span>Worldwide Delivery</span>
+                    <span>24/7 Global Customer Support</span> · <span>Priority Worldwide Delivery (7–15 Business Days)</span>
                 </div>
             </div>
         </div>
