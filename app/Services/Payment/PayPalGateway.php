@@ -121,9 +121,10 @@ class PayPalGateway implements PaymentGatewayInterface
                 'Content-Type' => 'application/json',
                 'PayPal-Request-Id' => 'cap_' . md5($providerOrderId),
             ])
+            ->withBody('{}', 'application/json')
             ->post($this->getBaseUrl() . "/v2/checkout/orders/{$providerOrderId}/capture");
 
-        return $response->json();
+        return $response->json() ?? [];
     }
 
     public function verifyWebhookSignature(array $headers, string $rawBody): bool
