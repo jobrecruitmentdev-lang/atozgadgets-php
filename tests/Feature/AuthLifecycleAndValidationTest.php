@@ -193,10 +193,104 @@ class AuthLifecycleAndValidationTest extends TestCase
         $loginView->assertStatus(200);
         $loginView->assertSee('password-toggle-btn');
         $loginView->assertSee('togglePasswordVisibility(this)');
+        $loginView->assertSee('Forgot Password?');
 
         $registerView = $this->get('/register');
         $registerView->assertStatus(200);
         $registerView->assertSee('password-toggle-btn');
         $registerView->assertSee('togglePasswordVisibility(this)');
+    }
+
+    public function test_forgot_password_page_loads_successfully()
+    {
+        $response = $this->get('/forgot-password');
+        $response->assertStatus(200);
+        $response->assertSee('Forgot Password');
+        $response->assertSee('Send Reset Link');
+    }
+
+    public function test_forgot_password_preserves_anti_enumeration_invariant()
+    {
+        // Non-existent email
+        $response = $this->post('/forgot-password', [
+            'email' => 'nonexistent.user@example.com'
+        ]);
+
+        $response->assertSessionHas('status', 'If an account exists with that email, we have sent a password reset link.');
+        $this->assertDatabaseMissing('password_resets', ['email' => 'nonexistent.user@example.com']);
+    }
+
+    public function test_full_forgot_password_and_reset_flow()
+    {
+        $user = User::create([
+            'first_name' => 'Reset',
+            'last_name' => 'Tester',
+            'email' => 'reset.tester@example.com',
+            'mobile' => null,
+            'password' => Hash::make('OldPassword123!'),
+            'role_id' => 3,
+            'is_active' => 1,
+        ]);
+
+        // 1. Request Password Reset Link
+        $forgotRes = $this->post('/forgot-password', [
+            'email' => 'reset.tester@example.com'
+        ]);
+        $forgotRes->assertSessionHas('status');
+
+        $resetRecord = \Illuminate\Support\Facades\DB::table('password_resets')
+            ->where('email', 'reset.tester@example.com')
+            ->first();
+        $this->assertNotNull($resetRecord);
+
+        // 2. View Reset Form with Token
+        $resetView = $this->get('/reset-password/' . $resetRecord->token . '?email=reset.tester@example.com');
+        $resetView->assertStatus(200);
+        $resetView->assertSee('Set New Password');
+        $resetView->assertSee('password-toggle-btn');
+
+        // 3. Submit New Password
+        $updateRes = $this->post('/reset-password', [
+            'token' => $resetRecord->token,
+            'email' => 'reset.tester@example.com',
+            'password' => 'NewSuperPassword123!',
+            'password_confirmation' => 'NewSuperPassword123!',
+        ]);
+
+        $updateRes->assertRedirect(route('login'));
+        $updateRes->assertSessionHas('success');
+
+        // 4. Invariant: Reset token must be purged after use
+        $this->assertDatabaseMissing('password_resets', ['email' => 'reset.tester@example.com']);
+
+        // 5. Verify User Can Login with New Password
+        $loginRes = $this->post('/login', [
+            'email' => 'reset.tester@example.com',
+            'password' => 'NewSuperPassword123!',
+        ]);
+        $loginRes->assertRedirect(route('account.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_reset_password_rejects_invalid_token()
+    {
+        User::create([
+            'first_name' => 'Invalid',
+            'last_name' => 'Token',
+            'email' => 'invalid.token@example.com',
+            'mobile' => null,
+            'password' => Hash::make('OldPassword123!'),
+            'role_id' => 3,
+            'is_active' => 1,
+        ]);
+
+        $response = $this->post('/reset-password', [
+            'token' => 'invalid-token-12345',
+            'email' => 'invalid.token@example.com',
+            'password' => 'NewPassword123!',
+            'password_confirmation' => 'NewPassword123!',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
     }
 }

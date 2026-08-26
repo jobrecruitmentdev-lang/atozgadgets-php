@@ -45,6 +45,12 @@ Route::middleware('storefront')->group(function () {
     Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
     Route::get('/register', [\App\Http\Controllers\AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\AuthController::class, 'register']);
+    
+    // Password Reset Flow
+    Route::get('/forgot-password', [\App\Http\Controllers\AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    Route::post('/forgot-password', [\App\Http\Controllers\AuthController::class, 'sendResetLinkEmail'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/reset-password/{token}', [\App\Http\Controllers\AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::post('/reset-password', [\App\Http\Controllers\AuthController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::prefix('account')->middleware(['auth', 'storefront'])->group(function () {

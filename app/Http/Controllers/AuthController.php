@@ -88,4 +88,106 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login');
     }
+
+    public function showForgotPasswordForm()
+    {
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()->route('store.home');
+        }
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $email = strtolower(trim($request->email));
+
+        $user = \App\Models\User::where('email', $email)->first();
+
+        if ($user) {
+            // Generate cryptographically secure 64-char token (256-bit entropy)
+            $rawToken = bin2hex(random_bytes(32));
+            $tokenHash = hash('sha256', $rawToken);
+
+            // Invalidate old tokens for this email
+            \Illuminate\Support\Facades\DB::table('password_resets')->where('email', $email)->delete();
+
+            \Illuminate\Support\Facades\DB::table('password_resets')->insert([
+                'email' => $email,
+                'token' => $tokenHash,
+                'created_at' => now(),
+            ]);
+
+            // Dispatch Reset Email
+            try {
+                $resetUrl = route('password.reset', ['token' => $rawToken, 'email' => $email]);
+                \Illuminate\Support\Facades\Mail::send('emails.password-reset', ['resetUrl' => $resetUrl, 'user' => $user], function ($m) use ($email) {
+                    $m->to($email)->subject('Reset Your Password - AtoZGadgets');
+                });
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send password reset email to {$email}: " . $e->getMessage());
+            }
+        }
+
+        // Anti-Enumeration Principle: Always return the exact same success message
+        return back()->with('status', 'If an account exists with that email, we have sent a password reset link.');
+    }
+
+    public function showResetPasswordForm(Request $request, $token)
+    {
+        if (\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()->route('store.home');
+        }
+        $email = $request->query('email', '');
+        return view('auth.reset-password', compact('token', 'email'));
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $email = strtolower(trim($request->email));
+        $rawToken = $request->token;
+        $tokenHash = hash('sha256', $rawToken);
+
+        // Find token within 30 minutes validity
+        $record = \Illuminate\Support\Facades\DB::table('password_resets')
+            ->where('email', $email)
+            ->where('token', $tokenHash)
+            ->where('created_at', '>=', now()->subMinutes(30))
+            ->first();
+
+        // Also check raw token for backwards compatibility
+        if (!$record) {
+            $record = \Illuminate\Support\Facades\DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $rawToken)
+                ->where('created_at', '>=', now()->subMinutes(30))
+                ->first();
+        }
+
+        if (!$record) {
+            return back()->withErrors(['email' => 'This password reset link is invalid or has expired. Please request a new one.']);
+        }
+
+        $user = \App\Models\User::where('email', $email)->first();
+        if (!$user) {
+            return back()->withErrors(['email' => 'User not found.']);
+        }
+
+        $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        if ($user->getConnection()->getSchemaBuilder()->hasColumn('users', 'password_hash')) {
+            $user->password_hash = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+        $user->save();
+
+        // Invalidate used reset token
+        \Illuminate\Support\Facades\DB::table('password_resets')->where('email', $email)->delete();
+
+        return redirect()->route('login')->with('success', 'Your password has been reset successfully! Please sign in with your new password.');
+    }
 }
