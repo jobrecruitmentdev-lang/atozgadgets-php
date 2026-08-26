@@ -45,11 +45,68 @@ class ProductController extends Controller
             $query->where('fulfillment_type', $request->input('fulfillment_type'));
         }
 
+        if ($request->filled('status')) {
+            if ($request->input('status') === 'active') {
+                $query->where('status', 'active')->where('is_active', true);
+            } elseif ($request->input('status') === 'draft') {
+                $query->where(function($q) {
+                    $q->where('status', 'draft')->orWhere('is_active', false);
+                });
+            }
+        }
+
         $products = $query->latest()->paginate(20)->withQueryString();
         $categories = Category::all();
         $brands = Brand::all();
 
-        return view('admin.catalog.products', compact('products', 'categories', 'brands'));
+        // Calculate summary statistics for header KPI cards
+        $stats = [
+            'total' => Product::count(),
+            'live' => Product::where('status', 'active')->where('is_active', true)->count(),
+            'draft' => Product::where(function($q) {
+                $q->where('status', 'draft')->orWhere('is_active', false);
+            })->count(),
+            'cj' => Product::where('fulfillment_type', 'cj')->count(),
+            'own' => Product::where('fulfillment_type', '!=', 'cj')->orWhereNull('fulfillment_type')->count(),
+        ];
+
+        return view('admin.catalog.products', compact('products', 'categories', 'brands', 'stats'));
+    }
+
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:publish,draft,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:products,id'
+        ]);
+
+        $ids = $request->input('ids');
+        $action = $request->input('action');
+        $count = count($ids);
+
+        if ($action === 'publish') {
+            Product::whereIn('id', $ids)->update([
+                'status' => 'active',
+                'is_active' => true
+            ]);
+            $msg = "{$count} products published to live storefront.";
+        } elseif ($action === 'draft') {
+            Product::whereIn('id', $ids)->update([
+                'status' => 'draft',
+                'is_active' => false
+            ]);
+            $msg = "{$count} products moved to draft.";
+        } elseif ($action === 'delete') {
+            Product::whereIn('id', $ids)->delete();
+            $msg = "{$count} products permanently deleted.";
+        }
+
+        if ($request->wantsJson() || $request->ajax() || $request->header('Accept') === 'application/json') {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function store(Request $request)

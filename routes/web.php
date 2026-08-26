@@ -76,6 +76,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Catalog Products, Categories, Brands, Import
     Route::get('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('admin.catalog.products');
+    Route::post('/catalog/products/bulk-action', [\App\Http\Controllers\Admin\ProductController::class, 'bulkAction'])->name('admin.catalog.products.bulk_action');
     Route::post('/catalog/products', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('admin.catalog.products.store');
     Route::put('/catalog/products/{id}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('admin.catalog.products.update');
     Route::delete('/catalog/products/{id}', [\App\Http\Controllers\Admin\ProductController::class, 'destroy'])->name('admin.catalog.products.destroy');
