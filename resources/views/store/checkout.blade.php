@@ -8,8 +8,9 @@
     $paypalClientId = ($paypalMode === 'live')
         ? (\App\Models\Setting::get('paypal_live_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')))
         : (\App\Models\Setting::get('paypal_sandbox_client_id') ?: \App\Models\Setting::get('paypal_client_id', config('paypal.client_id')));
+    $storeCurrency = \App\Models\Setting::get('currency', 'USD');
 @endphp
-<script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency=USD" defer></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency={{ $storeCurrency }}" defer></script>
 <style>
     .checkout-layout { display: flex; flex-direction: column; gap: 48px; margin-top: 40px; }
     @media (min-width: 1024px) { .checkout-layout { flex-direction: row; } }
@@ -386,13 +387,19 @@
                             paypal_order_id: data.orderID,
                             order_id: currentInternalOrderId 
                         })
-                    }).then(res => res.json()).then(orderData => {
-                        if (orderData.success) {
+                    }).then(async res => {
+                        const orderData = await res.json().catch(() => ({ error: 'Invalid JSON response from server (Status ' + res.status + ')' }));
+                        if (orderData && orderData.success) {
                             localStorage.removeItem('atoz_shipping_cache'); // Clear cache on success
                             window.location.href = orderData.redirect;
                         } else {
-                            alert('Payment capture failed: ' + (orderData.error || 'Unknown error'));
+                            const errorMsg = orderData.error || orderData.message || (orderData.errors ? Object.values(orderData.errors).flat().join(', ') : 'Unknown error');
+                            console.error('PayPal Capture Failed:', orderData);
+                            alert('Payment capture failed: ' + errorMsg);
                         }
+                    }).catch(err => {
+                        console.error('Capture request network error:', err);
+                        alert('Payment capture error: ' + err.message);
                     });
                 },
                 onError: function(err) {

@@ -20,9 +20,10 @@ class RiskService
         }
 
         // 2. Currency Check
-        if (strtoupper($capturedCurrency) !== 'USD') {
+        $expectedCurrency = strtoupper(\App\Models\Setting::get('currency', 'USD'));
+        if (strtoupper($capturedCurrency) !== $expectedCurrency) {
             $riskScore += 40;
-            $signals[] = "Currency mismatch: expected USD, received {$capturedCurrency}";
+            $signals[] = "Currency mismatch: expected {$expectedCurrency}, received {$capturedCurrency}";
         }
 
         // 3. High Value Review Trigger ($1,000+)

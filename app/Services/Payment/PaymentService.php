@@ -124,6 +124,17 @@ class PaymentService
 
         $status = $captureData['status'] ?? 'UNKNOWN';
         if ($status !== 'COMPLETED' && $status !== 'succeeded') {
+            $reason = $captureData['details'][0]['description'] 
+                ?? $captureData['details'][0]['issue'] 
+                ?? $captureData['message'] 
+                ?? "Status: {$status}";
+
+            \Illuminate\Support\Facades\Log::error("PayPal Capture Rejected [{$providerOrderId}]: {$reason}", [
+                'order_id' => $order->id,
+                'provider_order_id' => $providerOrderId,
+                'response' => $captureData,
+            ]);
+
             PaymentAttempt::where('order_id', $order->id)
                 ->where('provider_order_id', $providerOrderId)
                 ->update([
@@ -134,7 +145,7 @@ class PaymentService
 
             return [
                 'success' => false,
-                'error' => 'Payment capture not completed.',
+                'error' => 'Payment capture not completed: ' . $reason,
                 'details' => $captureData,
             ];
         }
