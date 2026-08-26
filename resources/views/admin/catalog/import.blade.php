@@ -263,7 +263,7 @@
                             </td>
                             <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ $prod->sku }}</td>
                             <td style="font-weight: 700; color: var(--accent);">${{ number_format($prod->price, 2) }}</td>
-                            <td>
+                            <td id="status-cell-{{ $prod->id }}">
                                 @if($prod->status === 'active' && $prod->is_active)
                                     <span style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 4px;">
                                         ● Live
@@ -276,13 +276,9 @@
                             </td>
                             <td><span class="badge-cj"><i data-lucide="sparkles" style="width:10px;"></i> CJ Dropship</span></td>
                             <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
-                                <form action="{{ route('admin.catalog.products.toggle_status', $prod->id) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="action-btn" title="{{ $prod->status === 'active' ? 'Unpublish (Move to Draft)' : 'Publish to Live Storefront' }}" style="{{ $prod->status === 'active' ? 'color: #10b981;' : 'color: var(--text-secondary);' }}">
-                                        <i data-lucide="{{ $prod->status === 'active' ? 'eye' : 'eye-off' }}" style="width:16px;"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="action-btn" id="status-btn-{{ $prod->id }}" onclick="toggleProductLiveStatus({{ $prod->id }}, this)" title="{{ $prod->status === 'active' ? 'Unpublish (Move to Draft)' : 'Publish to Live Storefront' }}" style="{{ $prod->status === 'active' ? 'color: #10b981;' : 'color: var(--text-secondary);' }}">
+                                    <i data-lucide="{{ $prod->status === 'active' ? 'eye' : 'eye-off' }}" style="width:16px;"></i>
+                                </button>
                                 <button class="action-btn" onclick="openEditProduct({{ json_encode($prod) }})" title="Edit Product"><i data-lucide="edit" style="width:16px;"></i></button>
                                 <button class="action-btn delete" onclick="showDeleteConfirm({{ $prod->id }}, '{{ addslashes($prod->name) }}')" title="Delete Product"><i data-lucide="trash-2" style="width:16px;"></i></button>
                             </td>
@@ -860,6 +856,64 @@
             }
         } catch (e) {
             alert('Failed to toggle sandbox mode');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function toggleProductLiveStatus(productId, btn) {
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="lucide-spin" style="width:16px;"></i>`;
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            const res = await fetch(`/admin/catalog/products/${productId}/toggle-status`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                const statusCell = document.getElementById(`status-cell-${productId}`);
+                const isNowActive = data.is_active || data.status === 'active';
+                
+                if (statusCell) {
+                    if (isNowActive) {
+                        statusCell.innerHTML = `
+                            <span style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                                ● Live
+                            </span>`;
+                    } else {
+                        statusCell.innerHTML = `
+                            <span style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 4px;">
+                                ● Draft
+                            </span>`;
+                    }
+                }
+
+                btn.title = isNowActive ? 'Unpublish (Move to Draft)' : 'Publish to Live Storefront';
+                btn.style.color = isNowActive ? '#10b981' : 'var(--text-secondary)';
+                btn.innerHTML = `<i data-lucide="${isNowActive ? 'eye' : 'eye-off'}" style="width:16px;"></i>`;
+                if (window.lucide) lucide.createIcons();
+
+                if (window.showAdminToast) {
+                    window.showAdminToast(data.message || (isNowActive ? 'Product published to storefront 🟢' : 'Product set to draft 🟡'));
+                }
+            } else {
+                alert(data.message || 'Failed to update status');
+                btn.innerHTML = origHtml;
+                if (window.lucide) lucide.createIcons();
+            }
+        } catch (err) {
+            console.error('Status toggle error:', err);
+            alert('Network error while updating product status.');
+            btn.innerHTML = origHtml;
+            if (window.lucide) lucide.createIcons();
         } finally {
             btn.disabled = false;
         }

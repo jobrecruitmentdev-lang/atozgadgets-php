@@ -302,16 +302,29 @@ class CatalogController extends Controller
         }
     }
 
-    public function toggleProductStatus($id)
+    public function toggleProductStatus(Request $request, $id)
     {
         $product = Product::findOrFail($id);
         $newStatus = ($product->status === 'active') ? 'draft' : 'active';
+        $isActive = ($newStatus === 'active');
         $product->update([
             'status' => $newStatus,
-            'is_active' => ($newStatus === 'active'),
-            'stock_quantity' => ($product->stock_quantity <= 0 && $newStatus === 'active') ? 100 : $product->stock_quantity
+            'is_active' => $isActive,
+            'stock_quantity' => ($product->stock_quantity <= 0 && $isActive) ? 100 : $product->stock_quantity
         ]);
 
-        return back()->with('success', "Product '{$product->name}' is now " . ($newStatus === 'active' ? 'Live on Storefront 🟢' : 'Draft / Staged 🟡'));
+        $message = "Product '{$product->name}' is now " . ($isActive ? 'Live on Storefront 🟢' : 'Draft / Staged 🟡');
+
+        if ($request->wantsJson() || $request->ajax() || $request->header('Accept') === 'application/json') {
+            return response()->json([
+                'success' => true,
+                'status' => $newStatus,
+                'is_active' => $isActive,
+                'label' => $isActive ? 'Live' : 'Draft',
+                'message' => $message
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }

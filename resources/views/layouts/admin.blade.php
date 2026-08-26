@@ -194,6 +194,32 @@
             if(closeBtn) closeBtn.addEventListener('click', () => toggleSidebar(false));
             if(overlay) overlay.addEventListener('click', () => toggleSidebar(false));
         });
+
+        window.showAdminToast = function(message, type = 'success') {
+            let container = document.getElementById('adminToastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'adminToastContainer';
+                container.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none;';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            const bg = type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)';
+            toast.style.cssText = `background:${bg}; color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 10px 25px -5px rgba(0,0,0,0.3); transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1); transform:translateY(10px); opacity:0; pointer-events:auto; display:flex; align-items:center; gap:8px;`;
+            toast.innerHTML = `<span style="font-size:16px;">${type === 'error' ? '⚠️' : '✅'}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateY(0)';
+                toast.style.opacity = '1';
+            });
+
+            setTimeout(() => {
+                toast.style.transform = 'translateY(10px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
     </script>
 </body>
 </html>
