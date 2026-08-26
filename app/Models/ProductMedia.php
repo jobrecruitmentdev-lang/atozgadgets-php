@@ -38,11 +38,6 @@ class ProductMedia extends Model
      */
     public function getPublicUrlAttribute(): string
     {
-        if (!empty($this->storage_path)) {
-            return asset('storage/' . $this->storage_path);
-        }
-
-        // Return secure masked media proxy URL to prevent exposing supplier CDN domains
         return route('media.product.image', ['product' => $this->product_id, 'mediaId' => $this->id]);
     }
 }

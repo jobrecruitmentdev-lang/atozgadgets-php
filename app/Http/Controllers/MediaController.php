@@ -17,12 +17,43 @@ class MediaController extends Controller
      */
     public function thumbnail($productId)
     {
-        $product = Product::find($productId);
-        if (!$product || empty($product->thumbnail_image)) {
+        $product = Product::with('cjProduct')->find($productId);
+        if (!$product) {
             return $this->fallbackImage();
         }
 
-        return $this->serveOrProxyImage($product->thumbnail_image, "product_thumb_{$productId}");
+        $imagePath = $product->thumbnail_image;
+
+        // 1. If it's a local storage path (/storage/products/xyz.jpg), check if file exists directly on disk
+        if (!empty($imagePath) && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
+            $cleaned = ltrim($imagePath, '/');
+            if (str_starts_with($cleaned, 'storage/')) {
+                $storageSub = substr($cleaned, 8);
+                if (Storage::disk('public')->exists($storageSub)) {
+                    return response()->file(Storage::disk('public')->path($storageSub), [
+                        'Cache-Control' => 'public, max-age=604800, immutable'
+                    ]);
+                }
+            }
+            $localPath = public_path($cleaned);
+            if (file_exists($localPath) && !is_dir($localPath)) {
+                return response()->file($localPath, [
+                    'Cache-Control' => 'public, max-age=604800, immutable'
+                ]);
+            }
+        }
+
+        // 2. If thumbnail_image is a remote URL, serve or proxy and cache it
+        if (!empty($imagePath) && (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://'))) {
+            return $this->serveOrProxyImage($imagePath, "product_thumb_{$productId}");
+        }
+
+        // 3. Fallback: If local file not found on disk, retrieve from supplier record (cjProduct->cj_image)
+        if ($product->cjProduct && !empty($product->cjProduct->cj_image)) {
+            return $this->serveOrProxyImage($product->cjProduct->cj_image, "product_thumb_cj_{$productId}");
+        }
+
+        return $this->fallbackImage();
     }
 
     /**
@@ -31,15 +62,40 @@ class MediaController extends Controller
     public function image($productId, $mediaId)
     {
         $media = ProductMedia::where('product_id', $productId)->where('id', $mediaId)->first();
-        if (!$media || empty($media->url)) {
+        if (!$media) {
             return $this->fallbackImage();
         }
 
         if (!empty($media->storage_path) && Storage::disk('public')->exists($media->storage_path)) {
-            return response()->file(Storage::disk('public')->path($media->storage_path));
+            return response()->file(Storage::disk('public')->path($media->storage_path), [
+                'Cache-Control' => 'public, max-age=604800, immutable'
+            ]);
         }
 
-        return $this->serveOrProxyImage($media->url, "product_media_{$productId}_{$mediaId}");
+        if (!empty($media->url)) {
+            if (!str_starts_with($media->url, 'http://') && !str_starts_with($media->url, 'https://')) {
+                $cleaned = ltrim($media->url, '/');
+                if (str_starts_with($cleaned, 'storage/')) {
+                    $storageSub = substr($cleaned, 8);
+                    if (Storage::disk('public')->exists($storageSub)) {
+                        return response()->file(Storage::disk('public')->path($storageSub), [
+                            'Cache-Control' => 'public, max-age=604800, immutable'
+                        ]);
+                    }
+                }
+                $localPath = public_path($cleaned);
+                if (file_exists($localPath) && !is_dir($localPath)) {
+                    return response()->file($localPath, [
+                        'Cache-Control' => 'public, max-age=604800, immutable'
+                    ]);
+                }
+            } else {
+                return $this->serveOrProxyImage($media->url, "product_media_{$productId}_{$mediaId}");
+            }
+        }
+
+        // Fallback to product thumbnail
+        return $this->thumbnail($productId);
     }
 
     /**
@@ -47,15 +103,6 @@ class MediaController extends Controller
      */
     private function serveOrProxyImage(string $url, string $cacheKey): Response
     {
-        // If it's already a local storage path
-        if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-            $localPath = public_path(ltrim($url, '/'));
-            if (file_exists($localPath)) {
-                return response()->file($localPath);
-            }
-            return $this->fallbackImage();
-        }
-
         // Cache image binary for 7 days
         $cached = Cache::remember("media_bin_{$cacheKey}", 604800, function () use ($url) {
             try {
@@ -85,7 +132,9 @@ class MediaController extends Controller
     {
         $path = public_path('favicon.png');
         if (file_exists($path)) {
-            return response()->file($path);
+            return response()->file($path, [
+                'Cache-Control' => 'public, max-age=86400'
+            ]);
         }
         return response('', 404);
     }

@@ -88,11 +88,8 @@ class Product extends Model
      */
     public function getCustomerThumbnailAttribute(): string
     {
-        if (!empty($this->thumbnail_image)) {
-            if (str_starts_with($this->thumbnail_image, 'http')) {
-                return route('media.product.thumbnail', ['product' => $this->id]);
-            }
-            return asset($this->thumbnail_image);
+        if (!empty($this->thumbnail_image) || !empty($this->id)) {
+            return route('media.product.thumbnail', ['product' => $this->id]);
         }
         return asset('favicon.png');
     }
