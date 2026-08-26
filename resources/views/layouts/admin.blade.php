@@ -68,6 +68,91 @@
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
         .table-responsive table { min-width: 720px; }
         
+        /* Admin Dark Theme Pagination */
+        nav[aria-label="Pagination Navigation"],
+        nav[role="navigation"] {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        nav[aria-label="Pagination Navigation"] p,
+        nav[role="navigation"] p {
+            color: var(--text-secondary) !important;
+            font-size: 13px !important;
+            margin: 0 !important;
+        }
+        nav[aria-label="Pagination Navigation"] p span,
+        nav[role="navigation"] p span {
+            color: var(--text-primary) !important;
+            font-weight: 600 !important;
+        }
+        nav[aria-label="Pagination Navigation"] .shadow-sm,
+        nav[role="navigation"] .shadow-sm {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+            border-radius: 8px !important;
+            overflow: hidden;
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-surface) !important;
+            display: inline-flex !important;
+        }
+        nav[aria-label="Pagination Navigation"] span[aria-disabled="true"] span,
+        nav[aria-label="Pagination Navigation"] span[aria-current="page"] span,
+        nav[aria-label="Pagination Navigation"] a,
+        nav[role="navigation"] span[aria-disabled="true"] span,
+        nav[role="navigation"] span[aria-current="page"] span,
+        nav[role="navigation"] a {
+            background: var(--bg-surface) !important;
+            border: none !important;
+            border-right: 1px solid var(--border-color) !important;
+            color: var(--text-secondary) !important;
+            padding: 7px 14px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.15s ease !important;
+            text-decoration: none !important;
+        }
+        nav[aria-label="Pagination Navigation"] a:last-child,
+        nav[role="navigation"] a:last-child {
+            border-right: none !important;
+        }
+        nav[aria-label="Pagination Navigation"] a:hover,
+        nav[role="navigation"] a:hover {
+            background: var(--hover-subtle) !important;
+            color: var(--text-primary) !important;
+        }
+        nav[aria-label="Pagination Navigation"] span[aria-current="page"] span,
+        nav[role="navigation"] span[aria-current="page"] span {
+            background: var(--accent) !important;
+            color: #000 !important;
+            font-weight: 700 !important;
+        }
+        nav[aria-label="Pagination Navigation"] svg,
+        nav[role="navigation"] svg {
+            width: 15px !important;
+            height: 15px !important;
+            fill: currentColor !important;
+        }
+        nav[aria-label="Pagination Navigation"] .sm\:hidden,
+        nav[role="navigation"] .sm\:hidden {
+            display: flex !important;
+            gap: 8px !important;
+        }
+        nav[aria-label="Pagination Navigation"] .sm\:hidden span,
+        nav[aria-label="Pagination Navigation"] .sm\:hidden a,
+        nav[role="navigation"] .sm\:hidden span,
+        nav[role="navigation"] .sm\:hidden a {
+            border-radius: 8px !important;
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-surface) !important;
+            color: var(--text-secondary) !important;
+        }
+
         @media (max-width: 768px) {
             .sidebar { position: fixed; transform: translateX(-100%); }
             .sidebar.active { transform: translateX(0); }
