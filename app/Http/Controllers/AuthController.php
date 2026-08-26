@@ -21,14 +21,15 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    public function register(Request $request)
-    {
         $data = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'mobile' => 'nullable|string|max:20',
+            'mobile' => 'nullable|string|max:20|unique:users,mobile',
             'password' => 'required|string|min:8|confirmed'
+        ], [
+            'email.unique' => 'An account with this email address already exists. Please log in.',
+            'mobile.unique' => 'This mobile number is already registered. Please log in or use a different number.',
         ]);
 
         $user = \App\Models\User::create([

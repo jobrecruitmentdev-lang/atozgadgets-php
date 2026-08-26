@@ -36,9 +36,12 @@ class AuthController extends ApiController
         $validated = $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name' => 'nullable|string|max:100',
-            'email' => 'required|string|email|max:150|unique:users',
-            'mobile' => 'required|string|max:20',
+            'email' => 'required|string|email|max:150|unique:users,email',
+            'mobile' => 'nullable|string|max:20|unique:users,mobile',
             'password' => 'required|string|min:6'
+        ], [
+            'email.unique' => 'An account with this email already exists.',
+            'mobile.unique' => 'This mobile number is already registered to another account.',
         ]);
 
         $user = User::create([
