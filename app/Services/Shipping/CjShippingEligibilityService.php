@@ -15,19 +15,19 @@ use Illuminate\Support\Facades\Log;
 class CjShippingEligibilityService
 {
     /**
-     * Tier-1 Global Fast Delivery Corridors Supported by AtoZGadgets
+     * Tier-1 Global Fast Delivery Corridors Supported by AtoZGadgets (White-Labeled)
      */
     const TIER1_CORRIDORS = [
-        'US' => ['name' => 'United States', 'default_carrier' => 'CJPacket Fast Line / USPS', 'eta' => '3–7 Days (US Warehouse) / 7–10 Days (Express)'],
-        'GB' => ['name' => 'United Kingdom', 'default_carrier' => 'CJPacket UK / Royal Mail', 'eta' => '6–10 Business Days'],
-        'CA' => ['name' => 'Canada', 'default_carrier' => 'CJPacket Canada / Canada Post', 'eta' => '7–12 Business Days'],
-        'AU' => ['name' => 'Australia', 'default_carrier' => 'CJPacket Australia / Australia Post', 'eta' => '7–12 Business Days'],
-        'DE' => ['name' => 'Germany', 'default_carrier' => 'CJ Frankfurt Hub / DHL Express', 'eta' => '3–7 Days (EU) / 7–10 Days'],
-        'FR' => ['name' => 'France', 'default_carrier' => 'CJPacket Europe / La Poste', 'eta' => '7–11 Business Days'],
-        'NL' => ['name' => 'Netherlands', 'default_carrier' => 'CJPacket Europe / PostNL', 'eta' => '6–10 Business Days'],
-        'IT' => ['name' => 'Italy', 'default_carrier' => 'CJPacket Europe / Poste Italiane', 'eta' => '7–12 Business Days'],
-        'ES' => ['name' => 'Spain', 'default_carrier' => 'CJPacket Europe / Correos', 'eta' => '7–12 Business Days'],
-        'NZ' => ['name' => 'New Zealand', 'default_carrier' => 'CJPacket NZ / NZ Post', 'eta' => '8–12 Business Days'],
+        'US' => ['name' => 'United States', 'default_carrier' => 'USPS Priority Mail / Express Direct', 'eta' => '3–7 Days (US Warehouse) / 7–10 Days (Express)'],
+        'GB' => ['name' => 'United Kingdom', 'default_carrier' => 'Royal Mail Tracked 24/48', 'eta' => '6–10 Business Days'],
+        'CA' => ['name' => 'Canada', 'default_carrier' => 'Canada Post Expedited', 'eta' => '7–12 Business Days'],
+        'AU' => ['name' => 'Australia', 'default_carrier' => 'Australia Post Express eParcel', 'eta' => '7–12 Business Days'],
+        'DE' => ['name' => 'Germany', 'default_carrier' => 'DHL European Express', 'eta' => '3–7 Days (EU) / 7–10 Days'],
+        'FR' => ['name' => 'France', 'default_carrier' => 'La Poste Colissimo Express', 'eta' => '7–11 Business Days'],
+        'NL' => ['name' => 'Netherlands', 'default_carrier' => 'PostNL International Express', 'eta' => '6–10 Business Days'],
+        'IT' => ['name' => 'Italy', 'default_carrier' => 'Poste Italiane Express', 'eta' => '7–12 Business Days'],
+        'ES' => ['name' => 'Spain', 'default_carrier' => 'Correos Express Paq', 'eta' => '7–12 Business Days'],
+        'NZ' => ['name' => 'New Zealand', 'default_carrier' => 'NZ Post International Express', 'eta' => '8–12 Business Days'],
     ];
 
     /**
@@ -154,7 +154,8 @@ class CjShippingEligibilityService
 
             if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
                 $bestMethod = $data['data'][0];
-                $carrierName = $bestMethod['logisticName'] ?? (self::TIER1_CORRIDORS[$country]['default_carrier'] ?? 'CJPacket Fast Line');
+                $rawCarrierName = $bestMethod['logisticName'] ?? (self::TIER1_CORRIDORS[$country]['default_carrier'] ?? 'Priority Express Direct Line');
+                $carrierName = self::sanitizeCarrierName($rawCarrierName, $country);
                 $logisticAging = $bestMethod['logisticAging'] ?? (self::TIER1_CORRIDORS[$country]['eta'] ?? '7–12 Business Days');
 
                 $result = [
@@ -212,5 +213,23 @@ class CjShippingEligibilityService
 
         Cache::put($cacheKey, $result, now()->addMinutes(60));
         return $result;
+    }
+
+    /**
+     * White-Label Carrier Sanitizer: Guarantees zero supplier brand leakage to customers
+     */
+    public static function sanitizeCarrierName(?string $carrier, string $countryCode): string
+    {
+        if (empty($carrier)) {
+            return self::TIER1_CORRIDORS[$countryCode]['default_carrier'] ?? 'Priority Insured Express';
+        }
+
+        // Clean any raw supplier keywords
+        $carrier = preg_replace('/CJ\s*Packet/i', 'Priority Express', $carrier);
+        $carrier = preg_replace('/CJPacket/i', 'Priority Express', $carrier);
+        $carrier = preg_replace('/CJ\s*Dropshipping/i', 'AtoZGadgets Delivery', $carrier);
+        $carrier = preg_replace('/CJ/i', 'Global', $carrier);
+
+        return trim($carrier) ?: 'Priority Insured Express';
     }
 }

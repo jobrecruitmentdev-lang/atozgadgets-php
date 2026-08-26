@@ -65,22 +65,29 @@ class CjShippingEligibilityEngineTest extends TestCase
         $this->assertNotEmpty($usResult['carrier']);
         $this->assertNotEmpty($usResult['eta']);
         $this->assertNotEmpty($usResult['warehouse']);
+        // White-Label Invariant: Customer must never see raw supplier brand names
+        $this->assertStringNotContainsString('CJPacket', $usResult['carrier']);
+        $this->assertStringNotContainsString('CJ Dropshipping', $usResult['carrier']);
+        $this->assertStringNotContainsString('CJ Frankfurt', $usResult['warehouse']);
 
         // 2. United Kingdom (GB)
         $gbResult = CjShippingEligibilityService::checkEligibility($cart, 'GB');
         $this->assertTrue($gbResult['eligible']);
         $this->assertEquals('GB', $gbResult['country']);
         $this->assertStringContainsString('Royal Mail', $gbResult['carrier']);
+        $this->assertStringNotContainsString('CJPacket', $gbResult['carrier']);
 
         // 3. Canada (CA)
         $caResult = CjShippingEligibilityService::checkEligibility($cart, 'CA');
         $this->assertTrue($caResult['eligible']);
         $this->assertEquals('CA', $caResult['country']);
+        $this->assertStringNotContainsString('CJPacket', $caResult['carrier']);
 
         // 4. Australia (AU)
         $auResult = CjShippingEligibilityService::checkEligibility($cart, 'AU');
         $this->assertTrue($auResult['eligible']);
         $this->assertEquals('AU', $auResult['country']);
+        $this->assertStringNotContainsString('CJPacket', $auResult['carrier']);
     }
 
     public function test_shipping_eligibility_blocks_restricted_or_unsupported_destinations()
