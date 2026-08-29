@@ -1,6 +1,54 @@
 @extends('layouts.store')
 
-@section('title', 'AtoZ Gadgetz — Shop Gadgets Worldwide | Electronics, Smart Home & Tech')
+@section('title', 'AtoZGadgets — Trending Tech, Smart Home & Viral Gadgets Store USA')
+@section('meta_description', 'Discover viral gadgets, innovative smart home devices, and premium electronics at AtoZGadgets. Enjoy fast 3-7 day shipping across the USA, 30-day returns, and 24/7 customer support.')
+@section('meta_keywords', 'trending gadgets USA, viral tech electronics, smart home devices, buy gadgets online, fast shipping gadgets, premium tech store')
+@section('og_title', 'AtoZGadgets — Trending Tech & Viral Gadgets Store USA')
+@section('og_description', 'Shop viral tech, smart home devices, and premium gadgets with fast 3-7 day delivery across the United States.')
+@section('canonical', url('/'))
+
+@section('meta')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How fast is shipping to the United States?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Orders shipped to the United States typically arrive within 3 to 7 business days via USPS Priority Mail or Express Direct carriers from our verified fulfillment hubs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is AtoZGadgets' return policy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We offer a 30-day money-back guarantee on all products. If you are not completely satisfied with your order, return it within 30 days for a full refund or replacement."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What payment methods are accepted?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "We accept all major credit and debit cards (Visa, MasterCard, American Express, Discover) as well as secure PayPal checkout with end-to-end buyer protection."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I track my order?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Once your order ships, you receive an automated confirmation email with your real-time tracking number. You can also track your shipment live on our Order Tracking page."
+      }
+    }
+  ]
+}
+</script>
+@endsection
 
 @section('content')
 <style>

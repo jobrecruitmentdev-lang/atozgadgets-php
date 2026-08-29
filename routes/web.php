@@ -11,6 +11,12 @@ Route::get('/admin-strategy-hub.html', function () {
 });
 
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+Route::get('/llms.txt', function () {
+    $path = public_path('llms.txt');
+    return file_exists($path)
+        ? response(file_get_contents($path), 200, ['Content-Type' => 'text/plain; charset=utf-8'])
+        : response('# AtoZGadgets\n\nTrending Gadgets Store USA.', 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+})->name('llms.txt');
 
 
 Route::middleware('storefront')->group(function () {

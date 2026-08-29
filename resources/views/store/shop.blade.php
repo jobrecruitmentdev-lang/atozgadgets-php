@@ -1,6 +1,46 @@
 @extends('layouts.store')
 
 @section('title', (isset($currentCategory) ? $currentCategory->name . ' - ' : '') . 'Shop All Gadgets - AtoZGadgets')
+@section('meta_description', isset($currentCategory) ? 'Explore the best ' . $currentCategory->name . ' at AtoZGadgets. Fast 3-7 day shipping across the USA, 30-day returns, and top rated electronics.' : 'Browse the full catalog of trending viral tech, smart home devices, and innovative electronics at AtoZGadgets. Fast USA shipping.')
+@section('meta_keywords', (isset($currentCategory) ? $currentCategory->name . ', ' : '') . 'trending gadgets, buy electronics online, viral tech store USA, smart devices')
+@section('og_title', (isset($currentCategory) ? $currentCategory->name . ' - ' : '') . 'Shop All Gadgets - AtoZGadgets')
+@section('og_description', isset($currentCategory) ? 'Shop premium ' . $currentCategory->name . ' with fast USA delivery.' : 'Discover trending electronics, smart devices, and viral gadgets.')
+@section('canonical', url()->current())
+
+@section('meta')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "{{ url()->current() }}#collection",
+      "url": "{{ url()->current() }}",
+      "name": "{{ (isset($currentCategory) ? $currentCategory->name : 'All Products') }} - AtoZGadgets",
+      "description": "Trending gadgets and innovative electronics available for fast shipping across the United States."
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "{{ url()->current() }}#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "{{ url('/') }}"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "{{ isset($currentCategory) ? $currentCategory->name : 'Shop All' }}",
+          "item": "{{ url()->current() }}"
+        }
+      ]
+    }
+  ]
+}
+</script>
+@endsection
 
 @section('content')
 <style>

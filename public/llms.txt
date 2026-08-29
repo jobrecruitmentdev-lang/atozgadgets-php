@@ -1,0 +1,26 @@
+# AtoZGadgets (https://atozgadgetz.com)
+
+> Premium viral tech, smart home devices, and innovative consumer electronics boutique serving the United States, United Kingdom, Canada, Australia, and worldwide.
+
+## About AtoZGadgets
+AtoZGadgets is a curated online electronics and viral gadgets retailer specializing in verified high-quality tech accessories, smart kitchen utilities, modern home automation gadgets, personal care devices, and creative tools. All orders are fulfilled with expedited domestic and international priority courier services.
+
+## Key Capabilities & Highlights
+- **Fast US Shipping:** 3 to 7 business days delivery across all 50 US States via USPS Priority Mail & UPS Express Direct.
+- **Global Shipping:** Tier-1 delivery corridors to Canada, UK, Australia, European Union, and UAE.
+- **30-Day Money-Back Guarantee:** Hassle-free 30-day returns and exchanges on all items.
+- **Secure Multi-Gateway Checkout:** End-to-end buyer protection via PayPal and all major Credit/Debit Cards (Visa, Mastercard, American Express).
+- **24/7 Dedicated Support:** Live order tracking and email support at support@atozgadgetz.com.
+
+## Main Product Categories
+- [All Products](https://atozgadgetz.com/shop): Complete catalog of trending electronics and innovative tools.
+- [Tech & Gadgets](https://atozgadgetz.com/shop?category=tech): High-performance accessories, phone gadgets, audio equipment, and wireless chargers.
+- [Smart Home](https://atozgadgetz.com/shop?category=smart-home): Automated LED lighting, cleaning devices, kitchen gadgets, and home comfort tech.
+- [Personal Care & Wellness](https://atozgadgetz.com/shop?category=wellness): Massagers, electric grooming tools, and health lifestyle tech.
+
+## Sitemaps & Technical Resources
+- XML Sitemap: https://atozgadgetz.com/sitemap.xml
+- Robots.txt: https://atozgadgetz.com/robots.txt
+- Shipping Information: https://atozgadgetz.com/shipping
+- Returns & Refunds: https://atozgadgetz.com/returns
+- Contact Support: https://atozgadgetz.com/contact

@@ -2,43 +2,116 @@
 
 @section('title', ($product->name ?? 'Product') . ' - AtoZGadgets')
 
-@section('meta')
-    <meta name="description" content="{{ Str::limit(strip_tags($product->description ?? $product->name), 155) }}">
-    <meta property="og:title" content="{{ $product->name }} - AtoZGadgets">
-    <meta property="og:description" content="{{ Str::limit(strip_tags($product->description ?? $product->name), 155) }}">
-    <meta property="og:image" content="{{ $product->customer_thumbnail }}">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <link rel="canonical" href="{{ url()->current() }}">
+@section('meta_description', Str::limit(strip_tags($product->description ?? $product->name), 155))
+@section('meta_keywords', addslashes($product->name) . ', buy online, USA fast shipping, premium gadgets, smart electronics')
+@section('og_type', 'product')
+@section('og_title', ($product->name ?? 'Product') . ' - AtoZGadgets')
+@section('og_description', Str::limit(strip_tags($product->description ?? $product->name), 155))
+@section('og_image', $product->customer_thumbnail)
+@section('canonical', url()->current())
 
+@section('meta')
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org/",
-      "@type": "Product",
-      "name": "{{ addslashes($product->name) }}",
-      "image": [
-        "{{ $product->customer_thumbnail }}"
-      ],
-      "description": "{{ addslashes(Str::limit(strip_tags($product->description ?? $product->name), 250)) }}",
-      "sku": "{{ $product->merchant_sku }}",
-      "brand": {
-        "@type": "Brand",
-        "name": "{{ addslashes($product->brand->name ?? 'AtoZGadgets') }}"
-      },
-      "offers": {
-        "@type": "Offer",
-        "url": "{{ url()->current() }}",
-        "priceCurrency": "USD",
-        "price": "{{ number_format($product->effective_price, 2, '.', '') }}",
-        "availability": "{{ ($product->stock_quantity ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}"
-      }
-      @if($product->review_count > 0)
-      ,"aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "{{ $product->average_rating }}",
-        "reviewCount": "{{ $product->review_count }}"
-      }
-      @endif
+      "@graph": [
+        {
+          "@type": "Product",
+          "@id": "{{ url()->current() }}#product",
+          "name": "{{ addslashes($product->name) }}",
+          "image": [
+            "{{ $product->customer_thumbnail }}"
+          ],
+          "description": "{{ addslashes(Str::limit(strip_tags($product->description ?? $product->name), 250)) }}",
+          "sku": "{{ $product->merchant_sku }}",
+          "brand": {
+            "@type": "Brand",
+            "name": "{{ addslashes($product->brand->name ?? 'AtoZGadgets') }}"
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": "{{ url()->current() }}",
+            "priceCurrency": "USD",
+            "price": "{{ number_format($product->effective_price, 2, '.', '') }}",
+            "priceValidUntil": "{{ date('Y-12-31', strtotime('+1 year')) }}",
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": "{{ ($product->stock_quantity ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
+            "seller": {
+              "@type": "Organization",
+              "name": "AtoZGadgets"
+            },
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0.00",
+                "currency": "USD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "US"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 0,
+                  "maxValue": 1,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 3,
+                  "maxValue": 7,
+                  "unitCode": "DAY"
+                }
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "US",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 30,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn"
+            }
+          }
+          @if($product->review_count > 0)
+          ,"aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ $product->average_rating }}",
+            "reviewCount": "{{ $product->review_count }}",
+            "bestRating": "5",
+            "worstRating": "1"
+          }
+          @endif
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "{{ url()->current() }}#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "{{ url('/') }}"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "{{ $product->category->name ?? 'Shop' }}",
+              "item": "{{ $product->category ? route('store.shop', ['category' => $product->category->slug]) : route('store.shop') }}"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "{{ addslashes($product->name) }}",
+              "item": "{{ url()->current() }}"
+            }
+          ]
+        }
+      ]
     }
     </script>
 @endsection

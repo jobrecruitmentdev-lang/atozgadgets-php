@@ -13,8 +13,82 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'AtoZGadgets - Premium Electronics')</title>
+    <title>@yield('title', 'AtoZGadgets - Trending Gadgets, Smart Home & Electronics in USA')</title>
+    <meta name="description" content="@yield('meta_description', 'Shop trending smart electronics, viral gadgets, and premium tech accessories at AtoZGadgets. Fast 3-7 day delivery across the USA, 30-day money-back guarantee, and secure checkout.')">
+    <meta name="keywords" content="@yield('meta_keywords', 'viral gadgets, trending electronics, smart home devices, tech accessories, buy gadgets online USA, fast shipping electronics')">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+
+    <!-- US Geo-Targeting & Regional Search Signals -->
+    <meta name="geo.region" content="US">
+    <meta name="geo.placename" content="United States">
+    <meta name="target" content="all">
+    <meta name="audience" content="all">
+    <meta name="coverage" content="Worldwide">
+    <meta name="distribution" content="Global">
+    <meta name="rating" content="General">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+    <!-- OpenGraph / Social Metadata -->
+    <meta property="og:site_name" content="AtoZGadgets">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:title" content="@yield('og_title', 'AtoZGadgets - Trending Tech & Viral Gadgets Store')">
+    <meta property="og:description" content="@yield('og_description', 'Discover viral tech, smart home devices, and premium gadgets with fast 3-7 day shipping across the United States.')">
+    <meta property="og:url" content="@yield('og_url', url()->current())">
+    <meta property="og:image" content="@yield('og_image', asset('brand/atoz-logo.png'))">
+
+    <!-- Twitter / X Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('og_title', 'AtoZGadgets - Trending Tech & Viral Gadgets Store')">
+    <meta name="twitter:description" content="@yield('og_description', 'Discover viral tech, smart home devices, and premium gadgets with fast 3-7 day shipping across the United States.')">
+    <meta name="twitter:image" content="@yield('og_image', asset('brand/atoz-logo.png'))">
+
+    <!-- Global Schema.org Structured Data (Organization & Sitelinks SearchBox) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://atozgadgetz.com/#organization",
+          "name": "AtoZGadgets",
+          "url": "https://atozgadgetz.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://atozgadgetz.com/brand/atoz-logo.png",
+            "caption": "AtoZGadgets Logo"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Service",
+            "email": "support@atozgadgetz.com",
+            "availableLanguage": ["English"]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://atozgadgetz.com/#website",
+          "url": "https://atozgadgetz.com",
+          "name": "AtoZGadgets",
+          "description": "Premium trending electronics and smart gadgets boutique serving the United States.",
+          "publisher": {
+            "@id": "https://atozgadgetz.com/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://atozgadgetz.com/shop?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
 
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
