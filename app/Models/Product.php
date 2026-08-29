@@ -99,42 +99,49 @@ class Product extends Model
      */
     public function getThumbnailUrlAttribute(): string
     {
-        // 1. Direct thumbnail_image
+        // 1. Direct thumbnail_image (if remote URL or existing local file)
         if (!empty($this->thumbnail_image)) {
-            $norm = \App\Services\Cj\CjProductService::normalizeImageUrl($this->thumbnail_image);
-            if (!empty($norm)) {
-                return $norm;
-            }
-            if (str_starts_with($this->thumbnail_image, '/storage/') || str_starts_with($this->thumbnail_image, 'storage/')) {
-                return asset(ltrim($this->thumbnail_image, '/'));
+            $raw = trim($this->thumbnail_image);
+            if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://') || str_starts_with($raw, '//')) {
+                $norm = \App\Services\Cj\CjProductService::normalizeImageUrl($raw);
+                if (!empty($norm)) {
+                    return $norm;
+                }
+            } elseif (str_starts_with($raw, '/storage/') || str_starts_with($raw, 'storage/')) {
+                $storageSub = substr(ltrim($raw, '/'), 8);
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($storageSub)) {
+                    return asset(ltrim($raw, '/'));
+                }
             }
         }
 
         // 2. Fallback to supplier cj_image
         if ($this->cjProduct && !empty($this->cjProduct->cj_image)) {
             $cjNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($this->cjProduct->cj_image);
-            if (!empty($cjNorm)) {
+            if (!empty($cjNorm) && (str_starts_with($cjNorm, 'http://') || str_starts_with($cjNorm, 'https://'))) {
                 return $cjNorm;
             }
         }
 
         // 3. Fallback to primary media gallery
-        $media = $this->relationLoaded('media') ? $this->media->first() : $this->media()->first();
-        if ($media && !empty($media->url)) {
-            $mNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($media->url);
-            if (!empty($mNorm)) {
-                return $mNorm;
+        $media = $this->relationLoaded('media') ? $this->media : $this->media()->get();
+        foreach ($media as $m) {
+            if (!empty($m->url)) {
+                $mNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($m->url);
+                if (!empty($mNorm) && (str_starts_with($mNorm, 'http://') || str_starts_with($mNorm, 'https://'))) {
+                    return $mNorm;
+                }
             }
         }
 
         // 4. Fallback to first variant image
-        $variant = $this->relationLoaded('variants') 
-            ? $this->variants->whereNotNull('image_url')->first() 
-            : $this->variants()->whereNotNull('image_url')->first();
-        if ($variant && !empty($variant->image_url)) {
-            $vNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($variant->image_url);
-            if (!empty($vNorm)) {
-                return $vNorm;
+        $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+        foreach ($variants as $v) {
+            if (!empty($v->image_url)) {
+                $vNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($v->image_url);
+                if (!empty($vNorm) && (str_starts_with($vNorm, 'http://') || str_starts_with($vNorm, 'https://'))) {
+                    return $vNorm;
+                }
             }
         }
 

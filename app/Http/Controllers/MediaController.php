@@ -22,10 +22,10 @@ class MediaController extends Controller
             return $this->fallbackImage();
         }
 
-        $imagePath = \App\Services\Cj\CjProductService::normalizeImageUrl($product->thumbnail_image) ?: trim($product->thumbnail_image ?? '');
+        $imagePath = trim($product->thumbnail_image ?? '');
 
         // 1. If it's a local storage path (/storage/products/xyz.jpg), check if file exists directly on disk
-        if (!empty($imagePath) && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
+        if (!empty($imagePath) && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://') && !str_starts_with($imagePath, '//')) {
             $cleaned = ltrim($imagePath, '/');
             if (str_starts_with($cleaned, 'storage/')) {
                 $storageSub = substr($cleaned, 8);
@@ -43,47 +43,39 @@ class MediaController extends Controller
             }
         }
 
-        // 2. If thumbnail_image is a remote URL, serve or proxy and cache it
-        if (!empty($imagePath) && (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://'))) {
-            $res = $this->serveOrProxyImage($imagePath, "product_thumb_{$productId}");
-            if ($res->getStatusCode() === 200) {
-                return $res;
-            }
+        // 2. Resolve remote image URL via multi-tier fallback
+        $targetUrl = '';
+        if (!empty($imagePath) && (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://') || str_starts_with($imagePath, '//'))) {
+            $targetUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($imagePath);
         }
 
-        // 3. Fallback 1: Check primary or first product media gallery record
-        $primaryMedia = $product->media->where('is_primary', true)->first() ?: $product->media->first();
-        if ($primaryMedia && !empty($primaryMedia->url)) {
-            $mediaUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($primaryMedia->url) ?: trim($primaryMedia->url);
-            if (str_starts_with($mediaUrl, 'http://') || str_starts_with($mediaUrl, 'https://')) {
-                $res = $this->serveOrProxyImage($mediaUrl, "product_media_fb_{$productId}_{$primaryMedia->id}");
-                if ($res->getStatusCode() === 200) {
-                    return $res;
+        // Fallback 1: Supplier record (cjProduct->cj_image)
+        if (empty($targetUrl) && $product->cjProduct && !empty($product->cjProduct->cj_image)) {
+            $targetUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($product->cjProduct->cj_image);
+        }
+
+        // Fallback 2: Product media gallery
+        if (empty($targetUrl)) {
+            foreach ($product->media as $m) {
+                if (!empty($m->url) && (str_starts_with($m->url, 'http://') || str_starts_with($m->url, 'https://') || str_starts_with($m->url, '//'))) {
+                    $targetUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($m->url);
+                    if (!empty($targetUrl)) break;
                 }
             }
         }
 
-        // 4. Fallback 2: Retrieve from supplier record (cjProduct->cj_image)
-        if ($product->cjProduct && !empty($product->cjProduct->cj_image)) {
-            $cjImg = \App\Services\Cj\CjProductService::normalizeImageUrl($product->cjProduct->cj_image) ?: trim($product->cjProduct->cj_image);
-            if (str_starts_with($cjImg, 'http://') || str_starts_with($cjImg, 'https://')) {
-                $res = $this->serveOrProxyImage($cjImg, "product_thumb_cj_{$productId}");
-                if ($res->getStatusCode() === 200) {
-                    return $res;
+        // Fallback 3: Product variant image
+        if (empty($targetUrl)) {
+            foreach ($product->variants as $v) {
+                if (!empty($v->image_url) && (str_starts_with($v->image_url, 'http://') || str_starts_with($v->image_url, 'https://') || str_starts_with($v->image_url, '//'))) {
+                    $targetUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($v->image_url);
+                    if (!empty($targetUrl)) break;
                 }
             }
         }
 
-        // 5. Fallback 3: Retrieve from first variant image
-        $firstVariant = $product->variants->whereNotNull('image_url')->first();
-        if ($firstVariant && !empty($firstVariant->image_url)) {
-            $vImg = \App\Services\Cj\CjProductService::normalizeImageUrl($firstVariant->image_url) ?: trim($firstVariant->image_url);
-            if (str_starts_with($vImg, 'http://') || str_starts_with($vImg, 'https://')) {
-                $res = $this->serveOrProxyImage($vImg, "product_var_fb_{$productId}");
-                if ($res->getStatusCode() === 200) {
-                    return $res;
-                }
-            }
+        if (!empty($targetUrl)) {
+            return $this->serveOrProxyImage($targetUrl, "product_thumb_{$productId}");
         }
 
         return $this->fallbackImage();
