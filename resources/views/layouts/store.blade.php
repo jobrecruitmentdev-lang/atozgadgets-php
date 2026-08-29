@@ -90,6 +90,9 @@
     }
     </script>
 
+    @yield('schema')
+    @yield('meta')
+
     <link rel="icon" type="image/png" href="{{ asset('brand/atoz-icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
     
@@ -352,13 +355,19 @@
                     @endif
 
                     <div class="mega-dropdown">
-                        <a href="{{ route('store.shop', ['sort' => 'price_asc']) }}" class="cat-link" style="{{ request('sort') == 'price_asc' || request('sort') == 'discount_desc' || request()->has('max_price') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">Deals <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
+                        <a href="{{ route('seo.price_hub', 50) }}" class="cat-link" style="{{ request()->routeIs('seo.price_hub') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.05);' : '' }}">Deals <i data-lucide="chevron-down" style="width:14px;height:14px;"></i></a>
                         <div class="mega-menu">
-                            <a href="{{ route('store.shop', ['max_price' => 10]) }}" style="{{ request('max_price') == 10 ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Under $10</a>
-                            <a href="{{ route('store.shop', ['max_price' => 50]) }}" style="{{ request('max_price') == 50 ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Under $50</a>
-                            <a href="{{ route('store.shop', ['sort' => 'discount_desc']) }}" style="{{ request('sort') == 'discount_desc' ? 'color: var(--text-primary); background: rgba(255, 255, 255, 0.05);' : '' }}">Limited Offers</a>
+                            <a href="{{ route('seo.price_hub', 10) }}">Under $10</a>
+                            <a href="{{ route('seo.price_hub', 20) }}">Under $20</a>
+                            <a href="{{ route('seo.price_hub', 50) }}">Under $50</a>
+                            <a href="{{ route('seo.price_hub', 100) }}">Under $100</a>
                         </div>
                     </div>
+
+                    <a href="{{ route('seo.usa_national') }}" class="cat-link {{ request()->routeIs('seo.usa*') ? 'active' : '' }}">🇺🇸 USA Delivery</a>
+                    <a href="{{ route('seo.gifts_index') }}" class="cat-link {{ request()->routeIs('seo.gift*') ? 'active' : '' }}">Gifts</a>
+                    <a href="{{ route('seo.guides_index') }}" class="cat-link {{ request()->routeIs('seo.guide*') ? 'active' : '' }}">Guides</a>
+                    <a href="{{ route('seo.faq_master') }}" class="cat-link {{ request()->routeIs('seo.faq*') ? 'active' : '' }}">FAQ</a>
                 </nav>
             </div>
         </div>
@@ -369,6 +378,10 @@
         <button class="mobile-menu-close" id="closeMenuBtn" aria-label="Close Menu"><i data-lucide="x"></i></button>
         <div class="mobile-nav-list">
             <a href="{{ route('store.shop') }}" class="mobile-nav-link">All Products</a>
+            <a href="{{ route('seo.usa_national') }}" class="mobile-nav-link" style="color: var(--accent);">🇺🇸 USA 50-State Delivery Hub</a>
+            <a href="{{ route('seo.gifts_index') }}" class="mobile-nav-link">Tech Gifts Guide</a>
+            <a href="{{ route('seo.guides_index') }}" class="mobile-nav-link">Buying Guides & Reviews</a>
+            <a href="{{ route('seo.faq_master') }}" class="mobile-nav-link">FAQ & Help Center</a>
             @if(isset($globalCategories))
                 @foreach($globalCategories as $cat)
                     @if($cat->children->count() > 0)
@@ -397,7 +410,7 @@
                     @endif
                 @endforeach
             @endif
-            <a href="{{ route('store.shop', ['max_price' => 50]) }}" class="mobile-nav-link" style="color: var(--accent);">Under $50 Deals</a>
+            <a href="{{ route('seo.price_hub', 50) }}" class="mobile-nav-link" style="color: var(--accent);">Under $50 Deals</a>
             @auth
                 @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
                     <a href="{{ route('admin.dashboard') }}" class="mobile-nav-link">Admin Dashboard</a>
@@ -436,34 +449,36 @@
                 </div>
 
                 <div class="footer-col">
-                    <h4>Shop</h4>
+                    <h4>Shop Categories</h4>
                     <ul>
                         <li><a href="{{ route('store.shop') }}">All Products</a></li>
-                        <li><a href="{{ route('store.shop', ['category' => 'electronics']) }}">Electronics</a></li>
-                        <li><a href="{{ route('store.shop', ['category' => 'smart-home']) }}">Smart Home</a></li>
-                        <li><a href="{{ route('store.shop', ['category' => 'gaming']) }}">Gaming</a></li>
+                        <li><a href="{{ route('seo.price_hub', 10) }}">Gadgets Under $10</a></li>
+                        <li><a href="{{ route('seo.price_hub', 20) }}">Gadgets Under $20</a></li>
+                        <li><a href="{{ route('seo.price_hub', 50) }}">Gadgets Under $50</a></li>
+                        <li><a href="{{ route('seo.price_hub', 100) }}">Gadgets Under $100</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
-                    <h4>Shop by Price</h4>
+                    <h4>Collections & USA Delivery</h4>
                     <ul>
-                        <li><a href="{{ route('store.shop', ['max_price' => 10]) }}">Under $10</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 20]) }}">Under $20</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 50]) }}">Under $50</a></li>
-                        <li><a href="{{ route('store.shop', ['max_price' => 100]) }}">Under $100</a></li>
+                        <li><a href="{{ route('seo.usa_national') }}">USA 50-State Hub</a></li>
+                        <li><a href="{{ route('seo.gifts_index') }}">Tech Gifts Guide</a></li>
+                        <li><a href="{{ route('seo.use_case', 'travel-gadgets') }}">Travel Tech</a></li>
+                        <li><a href="{{ route('seo.use_case', 'car-gadgets') }}">Car Accessories</a></li>
+                        <li><a href="{{ route('seo.use_case', 'home-office-gadgets') }}">Desk & Home Office</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-col">
-                    <h4>Support & Legal</h4>
+                    <h4>Guides & Support</h4>
                     <ul>
-                        <li><a href="{{ route('store.about') }}">About Us</a></li>
-                        <li><a href="{{ route('store.contact') }}">Contact Us</a></li>
+                        <li><a href="{{ route('seo.guides_index') }}">Buying Guides & Reviews</a></li>
+                        <li><a href="{{ route('seo.faq_master') }}">FAQ & Help Center</a></li>
                         <li><a href="{{ route('store.shipping') }}">Shipping & Payment Policy</a></li>
-                        <li><a href="{{ route('store.privacy') }}">Privacy Policy</a></li>
-                        <li><a href="{{ route('store.returns') }}">Return & Refund Policy</a></li>
-                        <li><a href="{{ route('store.terms') }}">Terms & Conditions</a></li>
+                        <li><a href="{{ route('store.returns') }}">30-Day Return Policy</a></li>
+                        <li><a href="{{ route('store.about') }}">About Us</a></li>
+                        <li><a href="{{ route('store.contact') }}">Contact Customer Care</a></li>
                     </ul>
                 </div>
             </div>

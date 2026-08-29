@@ -1,6 +1,6 @@
 # AtoZGadgets (https://atozgadgetz.com)
 
-> Premium viral tech, smart home devices, and innovative consumer electronics boutique serving the United States, United Kingdom, Canada, Australia, and worldwide.
+> Premium viral tech, smart home devices, automotive accessories, and innovative consumer electronics boutique serving the United States, United Kingdom, Canada, Australia, and worldwide.
 
 ## About AtoZGadgets
 AtoZGadgets is a curated online electronics and viral gadgets retailer specializing in verified high-quality tech accessories, smart kitchen utilities, modern home automation gadgets, personal care devices, and creative tools. All orders are fulfilled with expedited domestic and international priority courier services.
@@ -8,18 +8,64 @@ AtoZGadgets is a curated online electronics and viral gadgets retailer specializ
 ## Key Capabilities & Highlights
 - **Fast US Shipping:** 3 to 7 business days delivery across all 50 US States via USPS Priority Mail & UPS Express Direct.
 - **Global Shipping:** Tier-1 delivery corridors to Canada, UK, Australia, European Union, and UAE.
-- **30-Day Money-Back Guarantee:** Hassle-free 30-day returns and exchanges on all items.
-- **Secure Multi-Gateway Checkout:** End-to-end buyer protection via PayPal and all major Credit/Debit Cards (Visa, Mastercard, American Express).
-- **24/7 Dedicated Support:** Live order tracking and email support at support@atozgadgetz.com.
+- **30-Day Money-Back Guarantee:** Hassle-free 30-day returns and replacements on all items.
+- **Secure Multi-Gateway Checkout:** End-to-end buyer protection via PayPal (Pay in 4 available) and all major Credit/Debit Cards (Visa, Mastercard, American Express, Discover).
+- **24/7 Dedicated Support:** Live order tracking and customer support at support@atozgadgetz.com.
 
 ## Main Product Categories
 - [All Products](https://atozgadgetz.com/shop): Complete catalog of trending electronics and innovative tools.
-- [Tech & Gadgets](https://atozgadgetz.com/shop?category=tech): High-performance accessories, phone gadgets, audio equipment, and wireless chargers.
+- [Tech & Gadgets](https://atozgadgetz.com/shop?category=electronics): High-performance accessories, phone gadgets, audio equipment, and wireless chargers.
 - [Smart Home](https://atozgadgetz.com/shop?category=smart-home): Automated LED lighting, cleaning devices, kitchen gadgets, and home comfort tech.
-- [Personal Care & Wellness](https://atozgadgetz.com/shop?category=wellness): Massagers, electric grooming tools, and health lifestyle tech.
+- [Gaming Accessories](https://atozgadgetz.com/shop?category=gaming): Headset stands, RGB lighting, and desk battle-station gear.
+- [Car Accessories](https://atozgadgetz.com/use-case/car-gadgets): High-power cordless vacuums, MagSafe phone mounts, and dual USB-C fast car chargers.
 
-## Sitemaps & Technical Resources
-- XML Sitemap: https://atozgadgetz.com/sitemap.xml
+## Curated Budget Collections
+- [Gadgets Under $10](https://atozgadgetz.com/gadgets-under-10): Ultra-budget tech essentials, adapters, and cable organizers.
+- [Gadgets Under $20](https://atozgadgetz.com/gadgets-under-20): High-value smart utilities and daily mobile tools.
+- [Gadgets Under $50](https://atozgadgetz.com/gadgets-under-50): Top-rated portable vacuums, wireless chargers, and desk accessories.
+- [Gadgets Under $100](https://atozgadgetz.com/gadgets-under-100): Premium electronics, smart home devices, and audio gear.
+
+## Curated Gift Collections
+- [Tech Gifts Guide](https://atozgadgetz.com/gifts): Curated gift ideas for birthdays, holidays, and celebrations.
+- [Gifts For Gamers](https://atozgadgetz.com/gifts/for-gamers): Battlestation accessories and gaming tech.
+- [Gifts For Tech Lovers](https://atozgadgetz.com/gifts/for-tech-lovers): Cool gadget gifts and innovative smart home tools.
+- [Tech Gifts Under $50](https://atozgadgetz.com/gifts/under-50): High-value, affordable gift picks.
+- [Tech Gifts Under $100](https://atozgadgetz.com/gifts/under-100): Premium electronic gifts.
+
+## Lifestyle & Use-Case Tech Hubs
+- [Travel Gadgets](https://atozgadgetz.com/use-case/travel-gadgets): TSA-friendly travel tech, GaN chargers, and luggage accessories.
+- [Work-From-Home Desk Tech](https://atozgadgetz.com/use-case/home-office-gadgets): Multi-device charging docks and ergonomic desk tools.
+- [Car & Commuter Tech](https://atozgadgetz.com/use-case/car-gadgets): Handheld car vacuums, phone mounts, and road trip tech.
+- [Fitness & Wellness](https://atozgadgetz.com/use-case/fitness-gadgets): Smartwatch bands, massagers, and workout tech.
+- [Kitchen Utilities](https://atozgadgetz.com/use-case/kitchen-gadgets): Touchless sensors and smart food prep utilities.
+
+## USA 50-State & City Delivery Hubs
+- [USA Delivery Hub](https://atozgadgetz.com/usa): Nationwide shipping coverage and transit estimates.
+- [New York City Delivery](https://atozgadgetz.com/usa/new-york/new-york-city): Fast 2-4 day delivery to NYC and Manhattan.
+- [Los Angeles Delivery](https://atozgadgetz.com/usa/california/los-angeles): Fast 2-4 day delivery to LA County.
+- [Chicago Delivery](https://atozgadgetz.com/usa/illinois/chicago): Fast 2-4 day delivery to Greater Chicago.
+- [Houston Delivery](https://atozgadgetz.com/usa/texas/houston): Fast 2-4 day delivery to Houston metro.
+- [Dallas Delivery](https://atozgadgetz.com/usa/texas/dallas): Fast 2-4 day delivery to DFW metroplex.
+- [Phoenix Delivery](https://atozgadgetz.com/usa/arizona/phoenix): Fast 2-4 day delivery to Phoenix & Maricopa County.
+- [Miami Delivery](https://atozgadgetz.com/usa/florida/miami): Fast 2-4 day delivery to South Florida.
+- [Seattle Delivery](https://atozgadgetz.com/usa/washington/seattle): Fast 3-4 day delivery to Puget Sound.
+
+## In-Depth Buying Guides & Reviews
+- [All Buying Guides](https://atozgadgetz.com/guides): Expert reviews and product buying guides.
+- [Best Smart Home Gadgets](https://atozgadgetz.com/guides/best-smart-home-gadgets): Automation lighting, security, and cleaning review.
+- [Must-Have Car Gadgets](https://atozgadgetz.com/guides/must-have-car-gadgets-road-trips): Road trip tools and commuter gear.
+- [Work-From-Home Desk Setup](https://atozgadgetz.com/guides/essential-work-from-home-desk-setup): Ergonomics, lighting, and wireless charging.
+- [Best Tech Gadgets Under $50](https://atozgadgetz.com/guides/best-tech-gadgets-under-50): Top 10 budget electronics worth buying.
+- [Travel Packing Tech Guide](https://atozgadgetz.com/guides/travel-gadgets-packing-guide): Compact travel accessories and chargers.
+- [Smartwatch Accessories Review](https://atozgadgetz.com/guides/best-smartwatch-accessories): Bands, docks, and screen protectors.
+
+## Customer Support & Sitemaps
+- Master FAQ & Help Center: https://atozgadgetz.com/faq
+- XML Sitemap Index: https://atozgadgetz.com/sitemap.xml
+- Products Sitemap: https://atozgadgetz.com/sitemap-products.xml
+- Categories Sitemap: https://atozgadgetz.com/sitemap-categories.xml
+- Locations Sitemap: https://atozgadgetz.com/sitemap-locations.xml
+- Guides Sitemap: https://atozgadgetz.com/sitemap-guides.xml
 - Robots.txt: https://atozgadgetz.com/robots.txt
 - Shipping Information: https://atozgadgetz.com/shipping
 - Returns & Refunds: https://atozgadgetz.com/returns

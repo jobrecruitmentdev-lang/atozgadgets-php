@@ -110,6 +110,25 @@
               "item": "{{ url()->current() }}"
             }
           ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "{{ url()->current() }}#faq",
+          "mainEntity": [
+            @php
+              $prodFaqs = \App\Services\Seo\FaqDataService::getProductFaqs($product);
+            @endphp
+            @foreach($prodFaqs as $index => $faq)
+            {
+              "@type": "Question",
+              "name": "{{ addslashes($faq['q']) }}",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ addslashes($faq['a']) }}"
+              }
+            }@if(!$loop->last),@endif
+            @endforeach
+          ]
         }
       ]
     }
@@ -389,7 +408,8 @@
     <div class="tabs-header">
         <button class="tab-btn active" onclick="showTab('tab-desc', this)">Product Description</button>
         <button class="tab-btn" onclick="showTab('tab-specs', this)">Technical Specifications</button>
-        <button class="tab-btn" onclick="showTab('tab-shipping', this)">Shipping & Guarantee</button>
+        <button class="tab-btn" onclick="showTab('tab-shipping', this)">US Shipping & 30-Day Guarantee</button>
+        <button class="tab-btn" onclick="showTab('tab-faqs', this)">Product FAQs</button>
         <button class="tab-btn" onclick="showTab('tab-reviews', this)">Customer Reviews ({{ $product->review_count }})</button>
     </div>
 
@@ -435,17 +455,33 @@
         @endif
     </div>
 
-    <!-- Tab 3: Shipping & Returns (Pillar 5) -->
+    <!-- Tab 3: Shipping & Returns -->
     <div id="tab-shipping" class="tab-pane">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Shipping Details</h4>
-        <p>All orders are processed and dispatched within 1–3 business days. You will receive an automated shipping confirmation with your tracking link as soon as your package leaves our fulfillment center.</p>
+        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Fast USA Delivery</h4>
+        <p>All orders are processed and dispatched within 1–2 business days. Direct delivery across all 50 US States is fulfilled via USPS Priority Mail & UPS Express.</p>
         <ul style="padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li><strong>Standard Delivery:</strong> 7–15 Business Days</li>
-            <li><strong>Order Tracking:</strong> Live online tracking accessible 24/7</li>
-            <li><strong>Secure Handover:</strong> Verified delivery confirmation</li>
+            <li><strong>Standard US Delivery:</strong> 3–7 Business Days</li>
+            <li><strong>Live Tracking:</strong> Real-time USPS / UPS GPS tracking provided upon dispatch</li>
+            <li><strong>Coverage:</strong> Residential, apartments, and commercial addresses in all 50 states</li>
         </ul>
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Return & Replacement Policy</h4>
-        <p>We provide a 7-day hassle-free return and replacement policy for any defective or damaged products upon arrival. Contact customer support with your order number to initiate a return.</p>
+        <h4 style="color: var(--text-primary); margin-bottom: 10px;">30-Day Money-Back Guarantee</h4>
+        <p>We provide a 30-day hassle-free return and replacement policy. If your product is defective or does not meet your expectations, contact our 24/7 support team for an immediate replacement or full refund.</p>
+    </div>
+
+    <!-- Tab: Product FAQs -->
+    <div id="tab-faqs" class="tab-pane">
+        <h4 style="color: var(--text-primary); margin-bottom: 15px;">Frequently Asked Questions</h4>
+        <div style="display: grid; gap: 12px;">
+            @php
+              $tabFaqs = \App\Services\Seo\FaqDataService::getProductFaqs($product);
+            @endphp
+            @foreach($tabFaqs as $tf)
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px;">
+                    <strong style="color: var(--text-primary); font-size: 15px; display: block; margin-bottom: 5px;">{{ $tf['q'] }}</strong>
+                    <p style="color: var(--text-secondary); font-size: 14px; margin: 0; line-height: 1.5;">{{ $tf['a'] }}</p>
+                </div>
+            @endforeach
+        </div>
     </div>
 
     <!-- Tab 4: Customer Reviews (Pillar 3 Authentic Reviews) -->

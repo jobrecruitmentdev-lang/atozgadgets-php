@@ -10,7 +10,14 @@ Route::get('/admin-strategy-hub.html', function () {
     return redirect()->route('admin.strategy_hub');
 });
 
+// Multi-Sitemap Index & Sub-Sitemaps
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+Route::get('/sitemap-main.xml', [\App\Http\Controllers\SitemapController::class, 'main'])->name('sitemap.main');
+Route::get('/sitemap-products.xml', [\App\Http\Controllers\SitemapController::class, 'products'])->name('sitemap.products');
+Route::get('/sitemap-categories.xml', [\App\Http\Controllers\SitemapController::class, 'categories'])->name('sitemap.categories');
+Route::get('/sitemap-locations.xml', [\App\Http\Controllers\SitemapController::class, 'locations'])->name('sitemap.locations');
+Route::get('/sitemap-guides.xml', [\App\Http\Controllers\SitemapController::class, 'guides'])->name('sitemap.guides');
+
 Route::get('/llms.txt', function () {
     $path = public_path('llms.txt');
     return file_exists($path)
@@ -24,6 +31,18 @@ Route::middleware('storefront')->group(function () {
     Route::get('/shop', [\App\Http\Controllers\StorefrontController::class, 'shop'])->name('store.shop');
     Route::get('/product/{slug}', [\App\Http\Controllers\StorefrontController::class, 'product'])->name('store.product');
     Route::post('/product/{slug}/review', [\App\Http\Controllers\StorefrontController::class, 'submitReview'])->name('store.product.review');
+
+    // ── SEO & Geo-Targeting Hub Routes ─────────────────────────────────────────────
+    Route::get('/gadgets-under-{budget}', [\App\Http\Controllers\SeoHubController::class, 'priceHub'])->where('budget', '10|20|50|100')->name('seo.price_hub');
+    Route::get('/use-case/{slug}', [\App\Http\Controllers\SeoHubController::class, 'useCase'])->name('seo.use_case');
+    Route::get('/gifts', [\App\Http\Controllers\SeoHubController::class, 'giftsIndex'])->name('seo.gifts_index');
+    Route::get('/gifts/{slug}', [\App\Http\Controllers\SeoHubController::class, 'giftCategory'])->name('seo.gift_category');
+    Route::get('/usa', [\App\Http\Controllers\SeoHubController::class, 'usaNational'])->name('seo.usa_national');
+    Route::get('/usa/{state}', [\App\Http\Controllers\SeoHubController::class, 'usaState'])->name('seo.usa_state');
+    Route::get('/usa/{state}/{city}', [\App\Http\Controllers\SeoHubController::class, 'usaCity'])->name('seo.usa_city');
+    Route::get('/guides', [\App\Http\Controllers\SeoHubController::class, 'guidesIndex'])->name('seo.guides_index');
+    Route::get('/guides/{slug}', [\App\Http\Controllers\SeoHubController::class, 'guideDetail'])->name('seo.guide_detail');
+    Route::get('/faq', [\App\Http\Controllers\SeoHubController::class, 'faqMaster'])->name('seo.faq_master');
 
     // Secure Media Proxy Routes (White-labels external supplier CDNs)
     Route::get('/media/products/{product}/thumbnail', [\App\Http\Controllers\MediaController::class, 'thumbnail'])->name('media.product.thumbnail');
