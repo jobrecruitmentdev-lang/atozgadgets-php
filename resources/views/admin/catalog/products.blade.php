@@ -487,7 +487,7 @@
                             <td>
                                 <div class="product-info-cell">
                                     <div class="product-thumb-box">
-                                        <img src="{{ $product->customer_thumbnail }}" class="product-img" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('favicon.png') }}';">
+                                        <img src="{{ $product->thumbnail_url }}" class="product-img" alt="{{ $product->name }}" onerror="this.onerror=null;this.src='{{ asset('favicon.png') }}';">
                                     </div>
                                     <div class="product-meta">
                                         <span class="product-title" title="{{ $product->name }}">{{ $product->name }}</span>

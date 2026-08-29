@@ -142,41 +142,53 @@ class MediaController extends Controller
             return $this->fallbackImage();
         }
 
-        // Cache image binary for 7 days
-        $cached = Cache::remember("media_bin_{$cacheKey}", 604800, function () use ($targetUrl) {
-            try {
-                $response = Http::timeout(10)
-                    ->withOptions([
-                        'allow_redirects' => [
-                            'max' => 5,
-                            'strict' => false,
-                            'referer' => true,
-                            'protocols' => ['http', 'https']
-                        ]
-                    ])
-                    ->withHeaders([
-                        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-                        'Referer' => 'https://cjdropshipping.com/'
-                    ])
-                    ->get($targetUrl);
-
-                if ($response->successful() && !empty($response->body())) {
-                    return [
-                        'body' => base64_encode($response->body()),
-                        'mime' => $response->header('Content-Type') ?: 'image/jpeg',
-                    ];
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Media proxy fetch error for {$targetUrl}: " . $e->getMessage());
+        // If cached in memory/file, serve immediately
+        if (Cache::has("media_bin_{$cacheKey}")) {
+            $cached = Cache::get("media_bin_{$cacheKey}");
+            if ($cached && !empty($cached['body'])) {
+                return response(base64_decode($cached['body']))
+                    ->header('Content-Type', $cached['mime'] ?? 'image/jpeg')
+                    ->header('Cache-Control', 'public, max-age=604800, immutable');
             }
-            return null;
-        });
+        }
 
-        if ($cached && !empty($cached['body'])) {
-            return response(base64_decode($cached['body']))
-                ->header('Content-Type', $cached['mime'])
-                ->header('Cache-Control', 'public, max-age=604800, immutable');
+        try {
+            $response = Http::timeout(4)
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => 5,
+                        'strict' => false,
+                        'referer' => true,
+                        'protocols' => ['http', 'https']
+                    ]
+                ])
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                    'Referer' => 'https://cjdropshipping.com/'
+                ])
+                ->get($targetUrl);
+
+            if ($response->successful() && !empty($response->body())) {
+                $mime = $response->header('Content-Type') ?: 'image/jpeg';
+                Cache::put("media_bin_{$cacheKey}", [
+                    'body' => base64_encode($response->body()),
+                    'mime' => $mime,
+                ], 604800);
+
+                return response($response->body())
+                    ->header('Content-Type', $mime)
+                    ->header('Cache-Control', 'public, max-age=604800, immutable');
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("Media proxy fetch error for {$targetUrl}: " . $e->getMessage());
+        }
+
+        // Bulletproof Fallback: Redirect browser directly to the image URL so it ALWAYS displays real product photo
+        if (str_starts_with($targetUrl, 'http://') || str_starts_with($targetUrl, 'https://')) {
+            return redirect()->away($targetUrl, 302, [
+                'Cache-Control' => 'public, max-age=86400'
+            ]);
         }
 
         return $this->fallbackImage();

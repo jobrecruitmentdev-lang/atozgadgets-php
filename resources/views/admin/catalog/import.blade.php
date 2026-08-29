@@ -253,7 +253,7 @@
                     @foreach($stagedProducts as $prod)
                         <tr>
                             <td style="display: flex; align-items: center; gap: 12px;">
-                                <img src="{{ $prod->customer_thumbnail }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);" alt="{{ $prod->name }}" onerror="this.src='{{ asset('favicon.png') }}'">
+                                <img src="{{ $prod->thumbnail_url }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);" alt="{{ $prod->name }}" onerror="this.onerror=null;this.src='{{ asset('favicon.png') }}'">
                                 <div style="display:flex; flex-direction:column;">
                                     <span style="font-weight: 600;">{{ $prod->name }}</span>
                                     <a href="{{ route('store.product', $prod->slug) }}" target="_blank" style="font-size: 11px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; margin-top: 2px;">

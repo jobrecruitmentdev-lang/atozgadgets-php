@@ -95,6 +95,53 @@ class Product extends Model
     }
 
     /**
+     * Direct resolved product image URL (for Admin and direct rendering)
+     */
+    public function getThumbnailUrlAttribute(): string
+    {
+        // 1. Direct thumbnail_image
+        if (!empty($this->thumbnail_image)) {
+            $norm = \App\Services\Cj\CjProductService::normalizeImageUrl($this->thumbnail_image);
+            if (!empty($norm)) {
+                return $norm;
+            }
+            if (str_starts_with($this->thumbnail_image, '/storage/') || str_starts_with($this->thumbnail_image, 'storage/')) {
+                return asset(ltrim($this->thumbnail_image, '/'));
+            }
+        }
+
+        // 2. Fallback to supplier cj_image
+        if ($this->cjProduct && !empty($this->cjProduct->cj_image)) {
+            $cjNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($this->cjProduct->cj_image);
+            if (!empty($cjNorm)) {
+                return $cjNorm;
+            }
+        }
+
+        // 3. Fallback to primary media gallery
+        $media = $this->relationLoaded('media') ? $this->media->first() : $this->media()->first();
+        if ($media && !empty($media->url)) {
+            $mNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($media->url);
+            if (!empty($mNorm)) {
+                return $mNorm;
+            }
+        }
+
+        // 4. Fallback to first variant image
+        $variant = $this->relationLoaded('variants') 
+            ? $this->variants->whereNotNull('image_url')->first() 
+            : $this->variants()->whereNotNull('image_url')->first();
+        if ($variant && !empty($variant->image_url)) {
+            $vNorm = \App\Services\Cj\CjProductService::normalizeImageUrl($variant->image_url);
+            if (!empty($vNorm)) {
+                return $vNorm;
+            }
+        }
+
+        return asset('favicon.png');
+    }
+
+    /**
      * Customer-safe Merchant SKU (guarantees no raw supplier ID or "CJ" leakage)
      */
     public function getMerchantSkuAttribute(): string
