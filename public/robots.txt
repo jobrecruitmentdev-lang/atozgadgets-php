@@ -48,4 +48,4 @@ User-agent: Meta-ExternalAgent
 Allow: /
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
-Sitemap: https://atozgadgets.com/sitemap.xml
+Sitemap: https://atozgadgetz.com/sitemap.xml

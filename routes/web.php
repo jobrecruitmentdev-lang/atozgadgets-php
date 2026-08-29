@@ -10,6 +10,8 @@ Route::get('/admin-strategy-hub.html', function () {
     return redirect()->route('admin.strategy_hub');
 });
 
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+
 
 Route::middleware('storefront')->group(function () {
     Route::get('/', [\App\Http\Controllers\StorefrontController::class, 'home'])->name('store.home');

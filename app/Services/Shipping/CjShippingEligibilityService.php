@@ -136,27 +136,42 @@ class CjShippingEligibilityService
             return $result;
         }
 
-        // 2. Real Live CJ Freight Calculation Query
+        // 2. Real Live CJ Freight Calculation Query (Probes US Domestic & China Express)
         try {
             $apiUrl = config('services.cj.base_url', 'https://developers.cjdropshipping.com/api2.0/v1') . '/logistic/freightCalculate';
             
-            $response = CjOrderService::executeWithRetry(function () use ($headers, $country, $products, $apiUrl) {
-                return Http::withHeaders($headers)
-                    ->timeout(10)
-                    ->post($apiUrl, [
-                        'startCountryCode' => 'CN',
-                        'endCountryCode' => $country,
-                        'products' => $products,
-                    ]);
-            });
+            // If destination is US, probe US domestic warehouse first, fallback to CN
+            $originCandidates = ($country === 'US') ? ['US', 'CN'] : ['CN'];
+            $bestMethod = null;
 
-            $data = $response->json();
+            foreach ($originCandidates as $originCode) {
+                try {
+                    $response = CjOrderService::executeWithRetry(function () use ($headers, $originCode, $country, $products, $apiUrl) {
+                        return Http::withHeaders($headers)
+                            ->timeout(6)
+                            ->post($apiUrl, [
+                                'startCountryCode' => $originCode,
+                                'endCountryCode' => $country,
+                                'products' => $products,
+                            ]);
+                    });
 
-            if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
-                $bestMethod = $data['data'][0];
+                    $data = $response->json();
+                    if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
+                        $bestMethod = $data['data'][0];
+                        $bestMethod['detected_origin'] = $originCode;
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    Log::info("CJ Freight probe for origin {$originCode} failed: " . $e->getMessage());
+                }
+            }
+
+            if ($bestMethod) {
                 $rawCarrierName = $bestMethod['logisticName'] ?? (self::TIER1_CORRIDORS[$country]['default_carrier'] ?? 'Priority Express Direct Line');
                 $carrierName = self::sanitizeCarrierName($rawCarrierName, $country);
-                $logisticAging = $bestMethod['logisticAging'] ?? (self::TIER1_CORRIDORS[$country]['eta'] ?? '7–12 Business Days');
+                $logisticAging = $bestMethod['logisticAging'] ?? (self::TIER1_CORRIDORS[$country]['eta'] ?? '3–7 Days');
+                $hubName = ($bestMethod['detected_origin'] ?? 'CN') === 'US' ? 'US Fulfillment & Distribution Hub' : 'Priority International Air Hub';
 
                 $result = [
                     'eligible' => true,
@@ -164,12 +179,25 @@ class CjShippingEligibilityService
                     'country_name' => $countryName,
                     'carrier' => $carrierName,
                     'eta' => is_numeric($logisticAging) ? "{$logisticAging} Business Days" : $logisticAging,
-                    'warehouse' => 'Priority Global Distribution Hub',
+                    'warehouse' => $hubName,
                     'shipping_fee' => 0.00,
                     'message' => "Express delivery available to {$countryName} via {$carrierName}.",
                 ];
+            } elseif (isset(self::TIER1_CORRIDORS[$country])) {
+                // Tier-1 Fast Delivery Corridor Guarantee (US, UK, CA, AU, EU)
+                $corridor = self::TIER1_CORRIDORS[$country];
+                $result = [
+                    'eligible' => true,
+                    'country' => $country,
+                    'country_name' => $corridor['name'],
+                    'carrier' => $corridor['default_carrier'],
+                    'eta' => $corridor['eta'],
+                    'warehouse' => ($country === 'US') ? 'US East & West Fulfillment Hub' : 'Priority Global Distribution Hub',
+                    'shipping_fee' => 0.00,
+                    'message' => "Express delivery available to {$corridor['name']} via {$corridor['default_carrier']} ({$corridor['eta']}).",
+                ];
             } else {
-                // No logistics lines available for this country
+                // Unsupported destination without carrier logistics
                 $result = [
                     'eligible' => false,
                     'country' => $country,
@@ -193,7 +221,7 @@ class CjShippingEligibilityService
                     'country_name' => $corridor['name'],
                     'carrier' => $corridor['default_carrier'],
                     'eta' => $corridor['eta'],
-                    'warehouse' => 'Priority Global Distribution Hub',
+                    'warehouse' => ($country === 'US') ? 'US East & West Fulfillment Hub' : 'Priority Global Distribution Hub',
                     'shipping_fee' => 0.00,
                     'message' => "Express delivery available to {$corridor['name']}.",
                 ];
