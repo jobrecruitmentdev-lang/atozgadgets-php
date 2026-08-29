@@ -17,12 +17,12 @@ class MediaController extends Controller
      */
     public function thumbnail($productId)
     {
-        $product = Product::with('cjProduct')->find($productId);
+        $product = Product::with(['cjProduct', 'media', 'variants'])->find($productId);
         if (!$product) {
             return $this->fallbackImage();
         }
 
-        $imagePath = $product->thumbnail_image;
+        $imagePath = \App\Services\Cj\CjProductService::normalizeImageUrl($product->thumbnail_image) ?: trim($product->thumbnail_image ?? '');
 
         // 1. If it's a local storage path (/storage/products/xyz.jpg), check if file exists directly on disk
         if (!empty($imagePath) && !str_starts_with($imagePath, 'http://') && !str_starts_with($imagePath, 'https://')) {
@@ -45,12 +45,45 @@ class MediaController extends Controller
 
         // 2. If thumbnail_image is a remote URL, serve or proxy and cache it
         if (!empty($imagePath) && (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://'))) {
-            return $this->serveOrProxyImage($imagePath, "product_thumb_{$productId}");
+            $res = $this->serveOrProxyImage($imagePath, "product_thumb_{$productId}");
+            if ($res->getStatusCode() === 200) {
+                return $res;
+            }
         }
 
-        // 3. Fallback: If local file not found on disk, retrieve from supplier record (cjProduct->cj_image)
+        // 3. Fallback 1: Check primary or first product media gallery record
+        $primaryMedia = $product->media->where('is_primary', true)->first() ?: $product->media->first();
+        if ($primaryMedia && !empty($primaryMedia->url)) {
+            $mediaUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($primaryMedia->url) ?: trim($primaryMedia->url);
+            if (str_starts_with($mediaUrl, 'http://') || str_starts_with($mediaUrl, 'https://')) {
+                $res = $this->serveOrProxyImage($mediaUrl, "product_media_fb_{$productId}_{$primaryMedia->id}");
+                if ($res->getStatusCode() === 200) {
+                    return $res;
+                }
+            }
+        }
+
+        // 4. Fallback 2: Retrieve from supplier record (cjProduct->cj_image)
         if ($product->cjProduct && !empty($product->cjProduct->cj_image)) {
-            return $this->serveOrProxyImage($product->cjProduct->cj_image, "product_thumb_cj_{$productId}");
+            $cjImg = \App\Services\Cj\CjProductService::normalizeImageUrl($product->cjProduct->cj_image) ?: trim($product->cjProduct->cj_image);
+            if (str_starts_with($cjImg, 'http://') || str_starts_with($cjImg, 'https://')) {
+                $res = $this->serveOrProxyImage($cjImg, "product_thumb_cj_{$productId}");
+                if ($res->getStatusCode() === 200) {
+                    return $res;
+                }
+            }
+        }
+
+        // 5. Fallback 3: Retrieve from first variant image
+        $firstVariant = $product->variants->whereNotNull('image_url')->first();
+        if ($firstVariant && !empty($firstVariant->image_url)) {
+            $vImg = \App\Services\Cj\CjProductService::normalizeImageUrl($firstVariant->image_url) ?: trim($firstVariant->image_url);
+            if (str_starts_with($vImg, 'http://') || str_starts_with($vImg, 'https://')) {
+                $res = $this->serveOrProxyImage($vImg, "product_var_fb_{$productId}");
+                if ($res->getStatusCode() === 200) {
+                    return $res;
+                }
+            }
         }
 
         return $this->fallbackImage();
@@ -73,8 +106,9 @@ class MediaController extends Controller
         }
 
         if (!empty($media->url)) {
-            if (!str_starts_with($media->url, 'http://') && !str_starts_with($media->url, 'https://')) {
-                $cleaned = ltrim($media->url, '/');
+            $normUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($media->url) ?: trim($media->url);
+            if (!str_starts_with($normUrl, 'http://') && !str_starts_with($normUrl, 'https://')) {
+                $cleaned = ltrim($normUrl, '/');
                 if (str_starts_with($cleaned, 'storage/')) {
                     $storageSub = substr($cleaned, 8);
                     if (Storage::disk('public')->exists($storageSub)) {
@@ -90,7 +124,7 @@ class MediaController extends Controller
                     ]);
                 }
             } else {
-                return $this->serveOrProxyImage($media->url, "product_media_{$productId}_{$mediaId}");
+                return $this->serveOrProxyImage($normUrl, "product_media_{$productId}_{$mediaId}");
             }
         }
 
@@ -103,15 +137,23 @@ class MediaController extends Controller
      */
     private function serveOrProxyImage(string $url, string $cacheKey): Response
     {
-        $targetUrl = trim($url);
-        if (str_starts_with($targetUrl, '//')) {
-            $targetUrl = 'https:' . $targetUrl;
+        $targetUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($url) ?: trim($url);
+        if (empty($targetUrl)) {
+            return $this->fallbackImage();
         }
 
         // Cache image binary for 7 days
         $cached = Cache::remember("media_bin_{$cacheKey}", 604800, function () use ($targetUrl) {
             try {
-                $response = Http::timeout(8)
+                $response = Http::timeout(10)
+                    ->withOptions([
+                        'allow_redirects' => [
+                            'max' => 5,
+                            'strict' => false,
+                            'referer' => true,
+                            'protocols' => ['http', 'https']
+                        ]
+                    ])
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                         'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',

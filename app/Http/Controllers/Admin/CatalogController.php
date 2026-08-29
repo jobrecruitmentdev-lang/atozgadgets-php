@@ -134,6 +134,10 @@ class CatalogController extends Controller
             $rawDesc = $cjDetails['description'] ?? $data['title'];
             $cleanDescription = ProductContentService::normalizeDescription($rawDesc, $cleanTitle, $categoryName);
 
+            // Clean & normalize source image with fallback to details main image
+            $sourceImage = \App\Services\Cj\CjProductService::normalizeImageUrl($data['image'] ?? '')
+                ?: ($cjDetails['mainImage'] ?? ($cjDetails['images'][0] ?? ''));
+
             // Generate clean customer-safe Merchant SKU (Pillar 6)
             $merchantSku = ProductContentService::generateMerchantSku($categoryName);
 
@@ -142,7 +146,7 @@ class CatalogController extends Controller
                 'name' => $cleanTitle,
                 'description' => $cleanDescription,
                 'category_id' => $categoryId,
-                'thumbnail_image' => $data['image'],
+                'thumbnail_image' => $sourceImage,
                 'price' => $pricing['selling_price'],
                 'sku' => $merchantSku,
             ]);
@@ -152,10 +156,11 @@ class CatalogController extends Controller
             $isActive = ($status === 'active');
 
             // Eagerly download media to local disk to avoid runtime proxy latency & cache stampedes
-            $localThumbnail = ProductContentService::downloadAndStoreMedia($data['image']);
+            $localThumbnail = ProductContentService::downloadAndStoreMedia($sourceImage);
+            $effectiveThumbnail = !empty($localThumbnail) ? $localThumbnail : $sourceImage;
 
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
-            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $localThumbnail) {
+            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $effectiveThumbnail, $sourceImage) {
                 $product = Product::create([
                     'category_id' => $categoryId,
                     'brand_id' => $brandId,
@@ -165,7 +170,7 @@ class CatalogController extends Controller
                     'price' => $pricing['selling_price'],
                     'discount_price' => round($pricing['selling_price'] * 0.85, 2),
                     'description' => $cleanDescription,
-                    'thumbnail_image' => $localThumbnail,
+                    'thumbnail_image' => $effectiveThumbnail,
                     'stock_quantity' => 100,
                     'status' => $status,
                     'is_active' => $isActive,
@@ -180,7 +185,7 @@ class CatalogController extends Controller
                         'internal_product_id' => $product->id,
                         'title' => $cleanTitle,
                         'sell_price' => $data['price'],
-                        'cj_image' => $data['image'],
+                        'cj_image' => $sourceImage,
                         'category_name' => $data['category'] ?? 'General',
                         'status' => 'imported'
                     ]
@@ -190,8 +195,8 @@ class CatalogController extends Controller
                 \App\Models\ProductMedia::create([
                     'product_id' => $product->id,
                     'type' => 'image',
-                    'url' => $localThumbnail,
-                    'storage_path' => str_starts_with($localThumbnail, '/storage/') ? ltrim(str_replace('/storage/', '', $localThumbnail), '/') : null,
+                    'url' => $effectiveThumbnail,
+                    'storage_path' => str_starts_with($effectiveThumbnail, '/storage/') ? ltrim(str_replace('/storage/', '', $effectiveThumbnail), '/') : null,
                     'alt_text' => $cleanTitle,
                     'sort_order' => 0,
                     'is_primary' => true,

@@ -186,17 +186,18 @@ class ProductContentService
      */
     public static function downloadAndStoreMedia(?string $remoteUrl, string $folder = 'products'): string
     {
-        if (empty($remoteUrl) || !filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
-            return $remoteUrl ?: '';
+        $cleanUrl = \App\Services\Cj\CjProductService::normalizeImageUrl($remoteUrl);
+        if (empty($cleanUrl)) {
+            return '';
         }
 
-        $parsed = parse_url($remoteUrl);
+        $parsed = parse_url($cleanUrl);
         $scheme = strtolower($parsed['scheme'] ?? '');
         $host = strtolower($parsed['host'] ?? '');
 
         // 1. Strict Scheme Validation
         if (!in_array($scheme, ['http', 'https']) || empty($host)) {
-            return $remoteUrl;
+            return $cleanUrl;
         }
 
         // 2. SSRF Protection: Reject localhost, loopback, and cloud metadata names
@@ -207,20 +208,16 @@ class ProductContentService
 
         // 3. DNS Resolution and Private/Reserved IP Filtering
         $ip = gethostbyname($host);
-        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            \Illuminate\Support\Facades\Log::warning("SSRF Protection: Host '{$host}' resolved to non-public/private IP '{$ip}'. Request aborted.");
-            return '';
-        }
-
-        // Reject link-local / cloud metadata IP range (169.254.0.0/16)
-        if (str_starts_with($ip, '169.254.') || str_starts_with($ip, '127.') || str_starts_with($ip, '10.') || str_starts_with($ip, '192.168.')) {
-            \Illuminate\Support\Facades\Log::warning("SSRF Protection: Blocked private IP '{$ip}' in media import.");
-            return '';
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            if (str_starts_with($ip, '169.254.') || str_starts_with($ip, '127.') || str_starts_with($ip, '10.') || str_starts_with($ip, '192.168.')) {
+                \Illuminate\Support\Facades\Log::warning("SSRF Protection: Blocked private IP '{$ip}' in media import.");
+                return '';
+            }
         }
 
         $ext = pathinfo($parsed['path'] ?? '', PATHINFO_EXTENSION);
-        $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif']) ? strtolower($ext) : 'jpg';
-        $filename = md5($remoteUrl) . '.' . $ext;
+        $ext = in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg']) ? strtolower($ext) : 'jpg';
+        $filename = md5($cleanUrl) . '.' . $ext;
         $storagePath = "{$folder}/{$filename}";
 
         // Fast path: avoid redundant HTTP downloads if media already stored
@@ -229,28 +226,40 @@ class ProductContentService
         }
 
         try {
-            // Disable arbitrary redirect chasing to prevent DNS rebinding redirects
-            $response = \Illuminate\Support\Facades\Http::timeout(5)
-                ->withOptions(['allow_redirects' => false])
-                ->get($remoteUrl);
+            // Allow CDN redirects (e.g. Alibaba Cloud OSS / CJ CDN regional 302 redirects)
+            $response = \Illuminate\Support\Facades\Http::timeout(8)
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => 5,
+                        'strict' => false,
+                        'referer' => true,
+                        'protocols' => ['http', 'https']
+                    ]
+                ])
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Referer' => 'https://cjdropshipping.com/',
+                    'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                ])
+                ->get($cleanUrl);
 
             if ($response->successful() && !empty($response->body())) {
                 $contentType = strtolower($response->header('Content-Type') ?? '');
                 
-                // Validate that response is genuinely an image
-                if (!empty($contentType) && !str_starts_with($contentType, 'image/')) {
-                    \Illuminate\Support\Facades\Log::warning("Media import rejected non-image Content-Type '{$contentType}' from {$remoteUrl}");
-                    return '';
+                // Validate that response is genuinely an image if Content-Type provided
+                if (!empty($contentType) && !str_starts_with($contentType, 'image/') && !str_starts_with($contentType, 'application/octet-stream')) {
+                    \Illuminate\Support\Facades\Log::warning("Media import rejected non-image Content-Type '{$contentType}' from {$cleanUrl}");
+                    return $cleanUrl;
                 }
 
                 \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $response->body());
                 return '/storage/' . $storagePath;
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning("Media download failed for {$remoteUrl}: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning("Media download failed for {$cleanUrl}: " . $e->getMessage());
         }
 
-        // Non-blocking fallback
-        return $remoteUrl;
+        // Non-blocking reliable remote fallback
+        return $cleanUrl;
     }
 }

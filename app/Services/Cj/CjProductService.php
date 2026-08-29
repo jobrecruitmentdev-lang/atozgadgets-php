@@ -192,14 +192,14 @@ class CjProductService
             $total = $rawData['total'] ?? (is_array($list) ? count($list) : 0);
 
             if (is_array($list) && count($list) > 0) {
-                // Normalize keys for frontend
                 $normalizedList = array_map(function($item) {
+                    $rawImg = $item['productImage'] ?? ($item['bigImage'] ?? ($item['image'] ?? ''));
                     return [
                         'pid' => $item['pid'] ?? ($item['id'] ?? ($item['productId'] ?? '')),
                         'productNameEn' => $item['productNameEn'] ?? ($item['productName'] ?? ($item['nameEn'] ?? '')),
                         'productSku' => $item['productSku'] ?? ($item['sku'] ?? ''),
                         'sellPrice' => (float)($item['sellPrice'] ?? ($item['price'] ?? 0)),
-                        'productImage' => $item['productImage'] ?? ($item['bigImage'] ?? ($item['image'] ?? '')),
+                        'productImage' => self::normalizeImageUrl($rawImg),
                         'categoryName' => $item['categoryName'] ?? 'Uncategorized',
                         'productWeight' => $item['productWeight'] ?? null,
                     ];
@@ -295,6 +295,30 @@ class CjProductService
     }
 
     /**
+     * Clean and normalize any raw image URL from external suppliers.
+     * Handles protocol-relative URLs (//...), escaped slashes, HTML entities, and formatting.
+     */
+    public static function normalizeImageUrl(?string $url): string
+    {
+        if (empty($url) || !is_string($url)) {
+            return '';
+        }
+
+        $clean = trim($url, " \t\n\r\0\x0B\"'\\");
+        $clean = str_replace(['\/', '&amp;'], ['/', '&'], $clean);
+
+        if (str_starts_with($clean, '//')) {
+            $clean = 'https:' . $clean;
+        }
+
+        if (!empty($clean) && (str_starts_with($clean, 'http://') || str_starts_with($clean, 'https://') || str_starts_with($clean, '/storage/'))) {
+            return $clean;
+        }
+
+        return '';
+    }
+
+    /**
      * Parse and extract all valid image URLs from any input format:
      * - JSON string array (e.g. '["https://...1.jpg", "https://...2.jpg"]')
      * - Comma or whitespace separated string
@@ -330,13 +354,9 @@ class CjProductService
         // Clean, validate and deduplicate URLs
         $clean = [];
         foreach ($list as $item) {
-            if (is_string($item)) {
-                $url = trim($item, " \t\n\r\0\x0B\"'\\");
-                if (!empty($url) && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://') || str_starts_with($url, '/storage/'))) {
-                    if (!in_array($url, $clean)) {
-                        $clean[] = $url;
-                    }
-                }
+            $normalized = self::normalizeImageUrl(is_string($item) ? $item : '');
+            if (!empty($normalized) && !in_array($normalized, $clean)) {
+                $clean[] = $normalized;
             }
         }
 
@@ -364,6 +384,16 @@ class CjProductService
             $item = $data['data'] ?? ($data['result'] ?? []);
 
             if (!empty($item)) {
+                // Extract all gallery images using robust extractor
+                $rawImgField = $item['productImages'] ?? ($item['productImageSet'] ?? ($item['images'] ?? $item['productImage'] ?? ''));
+                $extractedImages = self::extractImageList($rawImgField);
+                
+                // Ensure primary image is always included
+                $mainImg = self::normalizeImageUrl($item['productImage'] ?? ($item['bigImage'] ?? ($extractedImages[0] ?? '')));
+                if (!empty($mainImg) && !in_array($mainImg, $extractedImages)) {
+                    array_unshift($extractedImages, $mainImg);
+                }
+
                 $variants = [];
                 $rawVariants = $item['variants'] ?? ($item['variantList'] ?? []);
                 foreach ($rawVariants as $v) {
@@ -373,6 +403,8 @@ class CjProductService
                         $rawName = !empty($values) ? implode(' · ', $values) : '';
                     }
 
+                    $vImg = self::normalizeImageUrl($v['variantImage'] ?? ($v['image'] ?? ($mainImg ?: '')));
+
                     $variants[] = [
                         'vid' => $v['vid'] ?? ($v['variantId'] ?? ('VID-' . uniqid())),
                         'variantSku' => $v['variantSku'] ?? ($v['sku'] ?? ''),
@@ -380,23 +412,13 @@ class CjProductService
                         'variantKey' => $v['variantKey'] ?? null,
                         'variantStandard' => $v['variantStandard'] ?? null,
                         'costPrice' => (float)($v['variantSellPrice'] ?? ($v['price'] ?? ($item['sellPrice'] ?? 10.00))),
-                        'image' => $v['variantImage'] ?? ($item['productImage'] ?? ''),
+                        'image' => $vImg ?: $mainImg,
                         'inventory' => (int)($v['inventory'] ?? 100),
                         'option1_name' => $v['option1Name'] ?? ($v['option1_name'] ?? null),
                         'option1_value' => $v['option1Value'] ?? ($v['option1_value'] ?? null),
                         'option2_name' => $v['option2Name'] ?? ($v['option2_name'] ?? null),
                         'option2_value' => $v['option2Value'] ?? ($v['option2_value'] ?? null),
                     ];
-                }
-
-                // Extract all gallery images using robust extractor
-                $rawImgField = $item['productImages'] ?? ($item['productImageSet'] ?? ($item['images'] ?? $item['productImage'] ?? ''));
-                $extractedImages = self::extractImageList($rawImgField);
-                
-                // Ensure primary image is always included
-                $mainImg = $item['productImage'] ?? ($item['bigImage'] ?? ($extractedImages[0] ?? ''));
-                if (!empty($mainImg) && !in_array($mainImg, $extractedImages)) {
-                    array_unshift($extractedImages, $mainImg);
                 }
 
                 return [
