@@ -125,6 +125,7 @@
                             <option value="SG">Singapore (SG)</option>
                             <option value="IE">Ireland (IE)</option>
                             <option value="JP">Japan (JP)</option>
+                            <option value="CN">China (CN)</option>
                             <option value="IN">India (IN)</option>
                         </select>
                     </div>
