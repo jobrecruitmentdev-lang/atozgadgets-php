@@ -20,6 +20,8 @@
     <php>
         <env name="APP_ENV" value="testing" force="true"/>
         <server name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_KEY" value="base64:7K5E4b9P6s8V2x1W3q0Z8m4N5y2K7d9X1a3B5c7E9g0=" force="true"/>
+        <server name="APP_KEY" value="base64:7K5E4b9P6s8V2x1W3q0Z8m4N5y2K7d9X1a3B5c7E9g0=" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
         <env name="CACHE_DRIVER" value="array" force="true"/>
         <server name="CACHE_DRIVER" value="array" force="true"/>
