@@ -26,7 +26,7 @@ jobs:
         run: ./vendor/bin/phpunit tests/Feature/CriticalPath tests/Feature/SeoMasterPlanTest.php
 
       - name: Deploy to Hostinger via SSH Rsync
-        if: success() && env.HOSTINGER_SSH_KEY != ''
+        if: success() && secrets.HOSTINGER_SSH_KEY != ''
         env:
           HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST != '' && secrets.HOSTINGER_HOST || '217.21.74.188' }}
