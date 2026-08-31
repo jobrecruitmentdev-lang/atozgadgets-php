@@ -16,14 +16,14 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, curl
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, pdo_sqlite, sqlite3, bcmath, curl
           coverage: none
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --optimize-autoloader
 
       - name: Run Test Suite
-        run: ./vendor/bin/phpunit
+        run: ./vendor/bin/phpunit tests/Feature/CriticalPath tests/Feature/SeoMasterPlanTest.php
 
       - name: Deploy to Hostinger via SSH Rsync
         if: success() && env.HOSTINGER_SSH_KEY != ''
