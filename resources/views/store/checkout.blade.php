@@ -354,16 +354,19 @@
                     body: formData
                 });
                 
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
                 
-                if(data.success) {
+                if(res.status === 429) {
+                    document.getElementById('shipping-error').innerText = 'Too many requests. Please wait 30 seconds before trying again.';
+                    document.getElementById('shipping-error').style.display = 'block';
+                } else if(data.success) {
                     document.getElementById('display-email').innerText = document.getElementById('user-email').value;
                     if(data.dev_otp) {
                         const otpInput = document.getElementById('otp-input');
                         if (otpInput) otpInput.value = data.dev_otp;
                         const resendMsg = document.getElementById('resend-msg');
                         if (resendMsg) {
-                            resendMsg.innerText = `[DEV Mode: Test OTP ${data.dev_otp} Auto-Filled (or use 123456)]`;
+                            resendMsg.innerText = `[DEV Mode: Test OTP ${data.dev_otp} Auto-Filled]`;
                             resendMsg.style.color = 'var(--accent)';
                             resendMsg.style.display = 'block';
                         }
@@ -373,7 +376,7 @@
                     btnStep1.classList.remove('active');
                     btnStep15.classList.add('active');
                 } else {
-                    document.getElementById('shipping-error').innerText = data.error || 'Failed to generate OTP';
+                    document.getElementById('shipping-error').innerText = data.error || data.message || 'Failed to generate OTP. Please check your information.';
                     document.getElementById('shipping-error').style.display = 'block';
                 }
             } catch (e) {

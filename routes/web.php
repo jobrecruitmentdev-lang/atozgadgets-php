@@ -60,7 +60,7 @@ Route::middleware('storefront')->group(function () {
     Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'addToCart'])->name('store.cart.add');
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('store.checkout');
     Route::post('/checkout', [\App\Http\Controllers\CartController::class, 'processCheckout'])->name('store.checkout.process');
-    Route::post('/checkout/send-otp', [\App\Http\Controllers\CartController::class, 'sendOtp'])->middleware('throttle:3,1')->name('store.checkout.send-otp');
+    Route::post('/checkout/send-otp', [\App\Http\Controllers\CartController::class, 'sendOtp'])->middleware('throttle:10,1')->name('store.checkout.send-otp');
     Route::post('/checkout/verify-otp', [\App\Http\Controllers\CartController::class, 'verifyOtp'])->name('store.checkout.verify-otp');
     Route::post('/checkout/check-eligibility', [\App\Http\Controllers\CartController::class, 'checkShippingEligibility'])->name('store.checkout.eligibility');
     
