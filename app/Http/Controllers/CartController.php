@@ -97,15 +97,19 @@ class CartController extends Controller
         session(['checkout_shipping' => $validated]);
 
         $otp = (string)rand(100000, 999999);
-        session(['checkout_otp' => $otp, 'checkout_otp_expires_at' => time() + 1800]); // 30 minutes validity
+        session([
+            'checkout_otp' => $otp,
+            'checkout_otp_expires_at' => time() + 600, // Strict 10 minutes expiry
+            'checkout_otp_attempts' => 0
+        ]);
         session()->save();
 
-        $isLocalOrTesting = app()->environment(['local', 'testing']) || config('app.debug');
+        $isLocalOrTesting = app()->environment(['local', 'testing']) && !app()->isProduction();
 
         try {
-            Mail::raw("Your AtoZGadgets verification OTP is: {$otp}. Valid for 30 minutes.", function ($m) use ($validated) {
+            Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes. For your security, do not share this code with anyone.", function ($m) use ($validated) {
                 $m->to($validated['email'])
-                  ->subject("AtoZGadgets Checkout Verification Code");
+                  ->subject("AtoZGadgets Checkout Verification Code: {$otp}");
             });
         } catch (\Exception $e) {
             Log::error("Failed to send OTP to {$validated['email']}: " . $e->getMessage());
@@ -115,14 +119,10 @@ class CartController extends Controller
                 return response()->json([
                     'success' => true,
                     'dev_otp' => (string)$otp,
-                    'message' => 'OTP generated & logged. Master code 123456 ready.'
+                    'message' => 'OTP generated & logged in local dev.'
                 ]);
             }
-            // On production if mail server is slow/fails, fallback gracefully with test code
-            return response()->json([
-                'success' => true,
-                'message' => 'Verification code ready. Please check your email or enter 123456 to verify.'
-            ]);
+            return response()->json(['success' => false, 'error' => 'Failed to send OTP email. Please verify your email address and try again.']);
         }
 
         return response()->json([
@@ -137,32 +137,48 @@ class CartController extends Controller
 
         $enteredOtp = trim((string)$request->otp);
         $sessionOtp = (string)session('checkout_otp');
-        $expiresAt = session('checkout_otp_expires_at');
+        $expiresAt = (int)session('checkout_otp_expires_at', 0);
+        $attempts = (int)session('checkout_otp_attempts', 0);
+        $isLocalOrTesting = app()->environment(['local', 'testing']) && !app()->isProduction();
 
-        // 1. If already verified, allow progression immediately
+        // 1. If already verified in this session, proceed
         if (session('checkout_otp_verified')) {
             return response()->json(['success' => true]);
         }
 
-        // 2. Master Verification Code & Bypass (123456)
-        if ($enteredOtp === '123456') {
-            session()->forget(['checkout_otp', 'checkout_otp_expires_at']);
+        // 2. Strict Expiration Check (10 Minutes)
+        if (!$sessionOtp || !$expiresAt || time() > $expiresAt) {
+            session()->forget(['checkout_otp', 'checkout_otp_expires_at', 'checkout_otp_attempts']);
+            session()->save();
+            return response()->json(['success' => false, 'error' => 'OTP has expired (10 minutes limit). Please go back and resend.']);
+        }
+
+        // 3. Brute-Force Rate Limiting (Max 5 attempts per OTP)
+        if ($attempts >= 5) {
+            session()->forget(['checkout_otp', 'checkout_otp_expires_at', 'checkout_otp_attempts']);
+            session()->save();
+            return response()->json(['success' => false, 'error' => 'Too many invalid attempts. For your security, this OTP has been invalidated. Please resend a new OTP.']);
+        }
+
+        // 4. Developer / Test Bypass ONLY in local non-production environment
+        if ($isLocalOrTesting && $enteredOtp === '123456') {
+            session()->forget(['checkout_otp', 'checkout_otp_expires_at', 'checkout_otp_attempts']);
             session(['checkout_otp_verified' => true]);
             session()->save();
-            return response()->json(['success' => true, 'message' => 'Verified successfully.']);
+            return response()->json(['success' => true]);
         }
 
-        // 3. Normal OTP Verification
-        if (!$sessionOtp || !$expiresAt || time() > $expiresAt) {
-            return response()->json(['success' => false, 'error' => 'OTP has expired. Please click "Resend" or enter 123456.']);
-        }
-
+        // 5. Strict Match Check
         if ($enteredOtp !== $sessionOtp) {
-            return response()->json(['success' => false, 'error' => 'Invalid OTP code. Please check your email or use 123456.']);
+            $attempts++;
+            session(['checkout_otp_attempts' => $attempts]);
+            session()->save();
+            $remaining = 5 - $attempts;
+            return response()->json(['success' => false, 'error' => "Invalid OTP code. {$remaining} attempts remaining before expiration."]);
         }
 
-        // OTP Validated
-        session()->forget(['checkout_otp', 'checkout_otp_expires_at']);
+        // 6. Valid OTP Confirmed -> Purge OTP and set Verified state
+        session()->forget(['checkout_otp', 'checkout_otp_expires_at', 'checkout_otp_attempts']);
         session(['checkout_otp_verified' => true]);
         session()->save();
 
