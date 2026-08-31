@@ -106,23 +106,35 @@ class CartController extends Controller
 
         $isLocalOrTesting = app()->environment(['local', 'testing']) && !app()->isProduction();
 
+        $mailSent = false;
         try {
-            Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes. For your security, do not share this code with anyone.", function ($m) use ($validated) {
+            Mail::raw("Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes. For your security, do not share this code with anyone.", function ($m) use ($validated, $otp) {
                 $m->to($validated['email'])
                   ->subject("AtoZGadgets Checkout Verification Code: {$otp}");
             });
-        } catch (\Exception $e) {
-            Log::error("Failed to send OTP to {$validated['email']}: " . $e->getMessage());
+            $mailSent = true;
+        } catch (\Throwable $e) {
+            Log::warning("Primary Mailer failed for {$validated['email']}: " . $e->getMessage() . ". Trying PHP native mail fallback...");
 
-            if ($isLocalOrTesting) {
-                Log::info("[DEV/LOCAL OTP FALLBACK] Email: {$validated['email']}, OTP: {$otp}");
-                return response()->json([
-                    'success' => true,
-                    'dev_otp' => (string)$otp,
-                    'message' => 'OTP generated & logged in local dev.'
-                ]);
+            // Secondary Fallback: Native PHP mail() for Hostinger MTA
+            if (function_exists('mail')) {
+                $to = $validated['email'];
+                $subject = "AtoZGadgets Checkout Verification Code: {$otp}";
+                $body = "Your AtoZGadgets checkout verification code is: {$otp}\n\nThis code is valid for 10 minutes. For your security, do not share this code with anyone.";
+                $headers = "From: AtoZGadgets <noreply@atozgadgetz.com>\r\n" .
+                           "Reply-To: support@atozgadgetz.com\r\n" .
+                           "X-Mailer: PHP/" . phpversion();
+
+                $mailSent = @mail($to, $subject, $body, $headers);
             }
-            return response()->json(['success' => false, 'error' => 'Failed to send OTP email. Please verify your email address and try again.']);
+        }
+
+        if (!$mailSent && !$isLocalOrTesting) {
+            Log::error("Failed to deliver OTP to {$validated['email']} via both SMTP and native mail.");
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to send OTP email. Please ensure your email address is correct or configure SMTP in .env.'
+            ]);
         }
 
         return response()->json([
