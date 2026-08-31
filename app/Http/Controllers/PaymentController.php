@@ -59,7 +59,11 @@ class PaymentController extends Controller
                 'total_amount' => $order->total_amount,
             ]);
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'Payment Intent Error: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\Log::warning('PayPal Create Order Rejected: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 

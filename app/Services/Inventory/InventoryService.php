@@ -84,6 +84,11 @@ class InventoryService
     public static function reserve(int $orderId, array $items, int $ttlMinutes = 15): bool
     {
         return DB::transaction(function () use ($orderId, $items, $ttlMinutes) {
+            // Auto-expire stale reservations first
+            InventoryReservation::where('status', 'RESERVED')
+                ->where('expires_at', '<=', now())
+                ->update(['status' => 'EXPIRED']);
+
             foreach ($items as $item) {
                 $productId = $item['product_id'] ?? null;
                 $qty = (int)($item['quantity'] ?? 1);
@@ -96,10 +101,17 @@ class InventoryService
                     return false;
                 }
 
+                // Auto-heal dropshipping/active products if initial stock was uninitialized
+                if ((int)$product->stock_quantity <= 0 && $product->status === 'active' && ($product->fulfillment_type === 'cj' || $product->cjProduct()->exists())) {
+                    $product->update(['stock_quantity' => 100]);
+                    $product->stock_quantity = 100;
+                }
+
                 // 2. Sum Active Reservations within same locked transaction
                 $activeReserved = (int) InventoryReservation::where('product_id', $productId)
                     ->where('status', 'RESERVED')
                     ->where('expires_at', '>', now())
+                    ->where('order_id', '!=', $orderId)
                     ->sum('quantity');
 
                 $availableToSell = max(0, (int)$product->stock_quantity - $activeReserved);
