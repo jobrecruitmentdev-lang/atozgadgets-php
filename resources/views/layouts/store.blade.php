@@ -260,11 +260,15 @@
         .mobile-menu-btn { display: inline-flex; }
         @media (min-width: 768px) { .mobile-menu-btn { display: none; } }
 
+        :root {
+            --header-height: 160px;
+        }
+
         /* Categories Row */
         .categories-row { border-top: 1px solid var(--border-color); display: none; background: var(--bg-base); backdrop-filter: blur(12px); position: relative; z-index: 1001; }
         @media (min-width: 768px) { .categories-row { display: block; } }
-        .categories-nav { display: flex; justify-content: flex-start; align-items: center; gap: 8px; padding: 6px 0; overflow: visible; flex-wrap: wrap; }
-        .cat-link { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); padding: 8px 14px; min-height: 38px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+        .categories-nav { display: flex; justify-content: flex-start; align-items: center; gap: 4px; padding: 4px 0; overflow: visible; flex-wrap: wrap; }
+        .cat-link { font-size: 13px; font-weight: 500; color: var(--text-secondary); padding: 6px 10px; min-height: 34px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; white-space: nowrap; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
         .cat-link:hover { background: var(--hover-subtle); color: var(--text-primary); }
         .cat-link.active { color: var(--accent); background: var(--selection-bg); border-color: var(--focus-ring); font-weight: 600; }
         .mega-dropdown { position: relative; display: inline-block; }
@@ -275,7 +279,7 @@
         .mega-dropdown:hover .mega-menu,
         .mega-dropdown:focus-within .mega-menu { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
         
-        .mega-menu a { display: block; padding: 9px 14px; color: var(--text-secondary); font-size: 13.5px; font-weight: 500; border-radius: 8px; transition: background 0.15s, color 0.15s; white-space: nowrap; text-decoration: none; }
+        .mega-menu a { display: block; padding: 8px 12px; color: var(--text-secondary); font-size: 13px; font-weight: 500; border-radius: 8px; transition: background 0.15s, color 0.15s; white-space: nowrap; text-decoration: none; }
         .mega-menu a:hover, .mega-menu a:focus { color: var(--accent); background: rgba(201, 169, 98, 0.12); }
 
         /* Mobile Menu Drawer & Backdrop */
@@ -292,9 +296,9 @@
         .mobile-nav-link:hover { background: var(--hover-subtle); color: var(--accent); }
         .mobile-nav-link.active { background: var(--selection-bg); color: var(--accent); }
 
-        /* Main Content */
-        main { padding-top: 100px; min-height: 70vh; }
-        @media (min-width: 768px) { main { padding-top: 154px; } }
+        /* Main Content - Dynamically offsets below header */
+        main { padding-top: calc(var(--header-height, 100px) + 16px); min-height: 70vh; }
+        @media (min-width: 768px) { main { padding-top: calc(var(--header-height, 180px) + 24px); } }
 
         /* Buttons & Cards */
         .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.4s var(--ease-premium); border: none; letter-spacing: 0.5px; }
@@ -652,9 +656,15 @@
                     </div>
 
                     <a href="{{ route('seo.usa_national') }}" class="cat-link {{ request()->routeIs('seo.usa*') ? 'active' : '' }}">🇺🇸 USA Delivery</a>
-                    <a href="{{ route('seo.gifts_index') }}" class="cat-link {{ request()->routeIs('seo.gift*') ? 'active' : '' }}">Gifts</a>
-                    <a href="{{ route('seo.guides_index') }}" class="cat-link {{ request()->routeIs('seo.guide*') ? 'active' : '' }}">Guides</a>
-                    <a href="{{ route('seo.faq_master') }}" class="cat-link {{ request()->routeIs('seo.faq*') ? 'active' : '' }}">FAQ</a>
+
+                    <div class="mega-dropdown">
+                        <a href="#" class="cat-link {{ request()->routeIs('seo.gift*', 'seo.guide*', 'seo.faq*') ? 'active' : '' }}" onclick="return false;">Explore <i data-lucide="chevron-down" style="width:13px;height:13px;"></i></a>
+                        <div class="mega-menu">
+                            <a href="{{ route('seo.gifts_index') }}">Gift Guides</a>
+                            <a href="{{ route('seo.guides_index') }}">Buying Guides</a>
+                            <a href="{{ route('seo.faq_master') }}">FAQ & Help Center</a>
+                        </div>
+                    </div>
                 </nav>
             </div>
         </div>
@@ -926,8 +936,26 @@
 
             if (searchTrigger) searchTrigger.addEventListener('click', toggleMobileSearch);
             if (bottomNavSearch) bottomNavSearch.addEventListener('click', toggleMobileSearch);
-            if (closeSearchBtn) closeSearchBtn.addEventListener('click', () => searchBarWrap && searchBarWrap.classList.remove('active'));
         });
+
+        // Dynamic Header Height Synchronization (prevents header from ever covering page content)
+        function syncHeaderHeight() {
+            const header = document.getElementById('main-header');
+            if (header) {
+                const h = header.getBoundingClientRect().height || header.offsetHeight;
+                if (h > 0) {
+                    document.documentElement.style.setProperty('--header-height', h + 'px');
+                }
+            }
+        }
+        syncHeaderHeight();
+        window.addEventListener('DOMContentLoaded', syncHeaderHeight);
+        window.addEventListener('load', syncHeaderHeight);
+        window.addEventListener('resize', syncHeaderHeight);
+        if (window.ResizeObserver) {
+            const hdr = document.getElementById('main-header');
+            if (hdr) new ResizeObserver(syncHeaderHeight).observe(hdr);
+        }
 
         // Header Scroll Effect
         let lastScrollY = window.scrollY;

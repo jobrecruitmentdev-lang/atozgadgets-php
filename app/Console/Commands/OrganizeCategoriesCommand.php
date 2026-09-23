@@ -80,11 +80,15 @@ class OrganizeCategoriesCommand extends Command
             $this->info("   ✓ Re-categorized: {$updatedCount} products");
             $this->info("   ✓ Already in correct category: {$alreadyMappedCount} products");
 
-            // Deactivate empty legacy root categories with 0 children and 0 products
-            Category::whereNull('parent_id')
-                ->doesntHave('children')
-                ->doesntHave('products')
+            // Deactivate legacy or empty root categories that have 0 total products across all descendants
+            Category::whereIn('slug', ['watch', 'electronics', 'tech', 'tech-test-slug', 'mobile-phones'])
                 ->update(['status' => 'inactive']);
+
+            foreach (Category::whereNull('parent_id')->get() as $rootCat) {
+                if (\App\Models\Product::whereIn('category_id', $rootCat->getAllDescendantIds())->count() === 0) {
+                    $rootCat->update(['status' => 'inactive']);
+                }
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             $this->error("❌ Error organizing products: " . $e->getMessage());

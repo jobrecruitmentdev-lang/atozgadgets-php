@@ -137,7 +137,7 @@
 
 @section('content')
 <style>
-    .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; flex-wrap: wrap; }
+    .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); margin-top: 8px; margin-bottom: 24px; flex-wrap: wrap; }
     .breadcrumb a { transition: color 0.3s; color: var(--text-secondary); text-decoration: none; }
     .breadcrumb a:hover { color: var(--accent); }
 
@@ -148,7 +148,7 @@
     }
     
     /* Gallery - Fixed Square Aspect Ratio to Prevent Image Zoom Distortion */
-    .gallery-container { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 14px; min-width: 0; width: 100%; }
+    .gallery-container { position: sticky; top: calc(var(--header-height, 160px) + 20px); display: flex; flex-direction: column; gap: 14px; min-width: 0; width: 100%; }
     .main-image-wrap {
         width: 100%;
         aspect-ratio: 1 / 1;

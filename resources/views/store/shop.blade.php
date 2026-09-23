@@ -80,7 +80,7 @@
     }
     @media (min-width: 768px) {
         .sidebar-backdrop, .sidebar-header-mobile { display: none !important; }
-        .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; }
+        .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: calc(var(--header-height, 160px) + 20px); max-height: calc(100vh - var(--header-height, 160px) - 40px); overflow-y: auto; }
         .sidebar-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
     }
     
