@@ -80,12 +80,12 @@
 <div class="hub-container">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
-        <span>/</span>
-        <a href="{{ route('store.shop') }}" style="color: inherit; text-decoration: none;">Shop</a>
-        <span>/</span>
-        <span style="color: var(--brand-primary); font-weight: 600;">Under ${{ $budget }}</span>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ route('store.home') }}">Home</a>
+        <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+        <a href="{{ route('store.shop') }}">Shop</a>
+        <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+        <span class="breadcrumb-current">Under ${{ $budget }}</span>
     </nav>
 
     <!-- Header Banner -->
@@ -130,10 +130,17 @@
                             <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.7rem;">
                                 {{ $product->name }}
                             </h3>
-                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
-                                <span style="font-size: 1.25rem; font-weight: 700; color: var(--brand-primary);">
-                                    ${{ number_format($product->price, 2) }}
-                                </span>
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 6px;">
+                                <div style="display: flex; align-items: baseline; gap: 8px;">
+                                    <span style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">
+                                        ${{ number_format($product->effective_price, 2) }}
+                                    </span>
+                                    @if($product->has_active_discount)
+                                        <span style="font-size: 0.85rem; text-decoration: line-through; color: var(--text-secondary);">
+                                            ${{ number_format($product->price, 2) }}
+                                        </span>
+                                    @endif
+                                </div>
                                 <span style="font-size: 0.75rem; color: #10B981; font-weight: 500;">
                                     ✓ Free US Shipping
                                 </span>

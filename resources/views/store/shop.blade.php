@@ -116,7 +116,7 @@
     @if(isset($currentCategory))
         <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; flex-wrap: wrap;">
             <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
-            <a href="{{ route('store.shop') }}" style="transition: color 0.3s;">Products</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+            <a href="{{ route('store.shop') }}" style="transition: color 0.3s;">Shop</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
             
             @php
                 $cat = $currentCategory;
@@ -202,13 +202,6 @@
         </div>
     </aside>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const openFilterBtn = document.getElementById('openShopFilterBtn');
-            const closeFilterBtn = document.getElementById('closeShopFilterBtn');
-            const filterBackdrop = document.getElementById('shopFilterBackdrop');
-            const shopSidebar = document.getElementById('shopSidebar');
-
     <div class="main-content">
         <div class="grid">
             @forelse($products as $index => $product)
@@ -238,12 +231,48 @@
             @empty
                 <div style="grid-column: 1 / -1; text-align: center; padding: 64px 24px; color: var(--text-secondary); background: rgba(128,128,128,0.03); border: 1px dashed var(--border-color); border-radius: 16px;">
                     <i data-lucide="package-search" style="width:48px; height:48px; stroke-width:1.5; color: var(--text-secondary); margin-bottom: 12px; display:inline-block;"></i>
-                    <p style="font-size: 16px; font-weight: 600; margin-bottom: 6px;">No products found</p>
-                    <p style="font-size: 14px;">Try adjusting your filters or selecting another category.</p>
+                    <p style="font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">No products found in this selection</p>
+                    <p style="font-size: 14px; margin-bottom: 16px;">Try adjusting your filters or browse our full trending catalog.</p>
+                    <a href="{{ route('store.shop') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 13px; font-weight: 600;">
+                        <i data-lucide="grid" style="width:15px;height:15px;"></i>
+                        <span>View All Products</span>
+                    </a>
                 </div>
             @endforelse
         </div>
         
+        @if($products->isEmpty() && isset($suggestedProducts) && $suggestedProducts->count() > 0)
+            <div style="margin-top: 40px;">
+                <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="flame" style="width:18px;height:18px;color:var(--accent);"></i>
+                    <span>Popular Trending Gadgets</span>
+                </h3>
+                <div class="grid">
+                    @foreach($suggestedProducts as $index => $product)
+                        @php $avail = $product->availability; @endphp
+                        <a href="{{ route('store.product', $product->slug) }}" class="card" data-aos="fade-up">
+                            <img loading="lazy" decoding="async" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}">
+                            <div class="card-meta-row">
+                                <span class="sku-chip" title="{{ $product->merchant_sku }}">{{ $product->merchant_sku }}</span>
+                                <span class="avail-indicator avail-{{ str_replace('_', '', $avail['status']) }}">
+                                    <i data-lucide="{{ $avail['icon'] }}" style="width:12px;height:12px;"></i>
+                                    <span>{{ $avail['status'] === 'confirming' ? 'Stock Verified' : $avail['label'] }}</span>
+                                </span>
+                            </div>
+                            <div class="card-title">{{ $product->name }}</div>
+                            <div class="price-row">
+                                <span class="price-main">${{ number_format($product->effective_price, 2) }}</span>
+                                @if($product->has_active_discount)
+                                    <span class="price-old">${{ number_format($product->price, 2) }}</span>
+                                @endif
+                            </div>
+                            <span class="btn btn-primary card-action-btn">View Product</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @if(method_exists($products, 'links') && $products->hasPages())
             {{ $products->links() }}
         @endif

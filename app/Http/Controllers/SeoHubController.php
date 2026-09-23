@@ -21,8 +21,10 @@ class SeoHubController extends Controller
             abort(404);
         }
 
+        $effectivePriceRaw = '(CASE WHEN discount_price > 0 AND discount_price < price THEN discount_price ELSE price END)';
+
         $products = Product::published()
-            ->where('price', '<=', $budget)
+            ->whereRaw("{$effectivePriceRaw} <= ?", [$budget])
             ->latest()
             ->paginate(12)
             ->withQueryString();
@@ -97,9 +99,10 @@ class SeoHubController extends Controller
      */
     public function giftsIndex()
     {
+        $effectivePriceRaw = '(CASE WHEN discount_price > 0 AND discount_price < price THEN discount_price ELSE price END)';
         $featuredGifts = Product::published()->latest()->limit(8)->get();
-        $under50 = Product::published()->where('price', '<=', 50)->latest()->limit(4)->get();
-        $under100 = Product::published()->where('price', '<=', 100)->latest()->limit(4)->get();
+        $under50 = Product::published()->whereRaw("{$effectivePriceRaw} <= ?", [50])->latest()->limit(4)->get();
+        $under100 = Product::published()->whereRaw("{$effectivePriceRaw} <= ?", [100])->latest()->limit(4)->get();
 
         return view('store.seo.gifts_index', compact('featuredGifts', 'under50', 'under100'));
     }
@@ -140,7 +143,8 @@ class SeoHubController extends Controller
         $query = Product::published();
 
         if (isset($meta['max_price'])) {
-            $query->where('price', '<=', $meta['max_price']);
+            $effectivePriceRaw = '(CASE WHEN discount_price > 0 AND discount_price < price THEN discount_price ELSE price END)';
+            $query->whereRaw("{$effectivePriceRaw} <= ?", [(float)$meta['max_price']]);
         }
 
         if (isset($meta['filter'])) {

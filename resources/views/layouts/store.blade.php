@@ -150,6 +150,13 @@
         .container { max-width: 1200px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
         @media (max-width: 480px) { .container { padding-left: 14px; padding-right: 14px; } }
         
+        /* Global Breadcrumb */
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px; flex-wrap: wrap; line-height: 1.4; }
+        .breadcrumb a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s ease; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .breadcrumb i, .breadcrumb svg { width: 13px; height: 13px; color: var(--text-muted); flex-shrink: 0; }
+        .breadcrumb .breadcrumb-current, .breadcrumb span:last-child { color: var(--accent); font-weight: 600; }
+        
         /* Header Ported from Next.js */
         header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; transition: transform 0.4s var(--ease-premium), background 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium); background: var(--bg-base); border-bottom: 1px solid var(--border-color); }
         header.scrolled { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--glass-shadow); }

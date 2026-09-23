@@ -322,22 +322,22 @@
     </div>
     
     <div class="price-grid">
-        <a href="{{ route('store.shop', ['max_price' => 10]) }}" class="price-card bg-green" data-aos="fade-up" data-aos-delay="0">
+        <a href="{{ route('seo.price_hub', 10) }}" class="price-card bg-green" data-aos="fade-up" data-aos-delay="0">
             <span class="pc-tag">Budget Buys</span>
             <span class="pc-title">Under $10</span>
             <span class="pc-link">Shop now &rarr;</span>
         </a>
-        <a href="{{ route('store.shop', ['max_price' => 20]) }}" class="price-card bg-blue" data-aos="fade-up" data-aos-delay="100">
+        <a href="{{ route('seo.price_hub', 20) }}" class="price-card bg-blue" data-aos="fade-up" data-aos-delay="100">
             <span class="pc-tag">Best Value</span>
             <span class="pc-title">Under $20</span>
             <span class="pc-link">Shop now &rarr;</span>
         </a>
-        <a href="{{ route('store.shop', ['max_price' => 50]) }}" class="price-card bg-purple" data-aos="fade-up" data-aos-delay="200">
+        <a href="{{ route('seo.price_hub', 50) }}" class="price-card bg-purple" data-aos="fade-up" data-aos-delay="200">
             <span class="pc-tag">Popular</span>
             <span class="pc-title">Under $50</span>
             <span class="pc-link">Shop now &rarr;</span>
         </a>
-        <a href="{{ route('store.shop', ['max_price' => 100]) }}" class="price-card bg-amber" data-aos="fade-up" data-aos-delay="300">
+        <a href="{{ route('seo.price_hub', 100) }}" class="price-card bg-amber" data-aos="fade-up" data-aos-delay="300">
             <span class="pc-tag">Premium</span>
             <span class="pc-title">Under $100</span>
             <span class="pc-link">Shop now &rarr;</span>

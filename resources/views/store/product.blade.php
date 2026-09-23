@@ -147,16 +147,49 @@
         .gallery-container { position: static !important; }
     }
     
-    /* Gallery */
-    .gallery-container { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 14px; }
-    .main-image-wrap { width: 100%; aspect-ratio: 1/1; border-radius: 18px; border: 1px solid var(--glass-border); background: #111; overflow: hidden; position: relative; box-shadow: 0 16px 36px rgba(0,0,0,0.4); }
-    .main-image { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
-    .main-image:hover { transform: scale(1.03); }
+    /* Gallery - Fixed Square Aspect Ratio to Prevent Image Zoom Distortion */
+    .gallery-container { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 14px; min-width: 0; width: 100%; }
+    .main-image-wrap {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        max-height: 480px;
+        min-height: 0;
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        background: #0d0d12;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .main-image {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        padding: 12px;
+        box-sizing: border-box;
+        transition: transform 0.3s ease;
+    }
+    .main-image:hover { transform: scale(1.02); }
     
     .thumbnails-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
-    .thumb-btn { width: 68px; height: 68px; border-radius: 12px; border: 2px solid var(--glass-border); background: #141414; padding: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+    .thumb-btn { width: 68px; height: 68px; border-radius: 12px; border: 2px solid var(--border-color); background: #141414; padding: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
     .thumb-btn.active, .thumb-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .thumb-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .thumb-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; background: #0d0d12; }
+    @media (max-width: 768px) {
+        .product-layout { grid-template-columns: 1fr; gap: 20px; }
+        .gallery-container { position: static !important; }
+        .main-image-wrap { max-height: 340px; border-radius: 14px; }
+        .main-image { padding: 8px; }
+        .thumb-btn { width: 54px; height: 54px; border-radius: 10px; }
+    }
+    @media (max-width: 380px) {
+        .main-image-wrap { max-height: 290px; }
+        .thumb-btn { width: 48px; height: 48px; }
+    }
 
     /* Product Info */
     .product-info h1 { font-size: clamp(22px, 3.2vw, 34px); font-weight: 800; line-height: 1.25; letter-spacing: -0.5px; margin-bottom: 12px; color: var(--text-primary); }
@@ -180,10 +213,13 @@
 
     /* Variants */
     .variant-section { margin-bottom: 24px; }
-    .variant-label { font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .variant-label { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
     .variant-options { display: flex; gap: 8px; flex-wrap: wrap; }
-    .variant-option { padding: 9px 14px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); color: var(--text-primary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .variant-option { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; white-space: nowrap; max-width: 100%; text-overflow: ellipsis; }
     .variant-option.active, .variant-option:hover { border-color: var(--accent); background: rgba(201, 169, 98, 0.15); color: var(--accent); }
+    @media (max-width: 480px) {
+        .variant-option { padding: 7px 11px; font-size: 12px; border-radius: 6px; }
+    }
 
     /* Actions */
     .action-row { display: flex; gap: 12px; margin-bottom: 26px; }
@@ -300,9 +336,9 @@
     }
 </style>
 
-<div class="breadcrumb" data-aos="fade-right">
-    <a href="{{ route('store.home') }}">Home</a> <i data-lucide="chevron-right" style="width:14px;"></i>
-    <a href="{{ route('store.shop') }}">Products</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+<nav class="breadcrumb" data-aos="fade-right" aria-label="Breadcrumb">
+    <a href="{{ route('store.home') }}">Home</a> <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
+    <a href="{{ route('store.shop') }}">Shop</a> <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
     
     @if(isset($product) && $product->category)
         @php
@@ -314,12 +350,12 @@
             }
         @endphp
         @foreach($hierarchy as $h)
-            <a href="{{ route('store.shop', ['category' => $h->slug]) }}">{{ $h->name }}</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+            <a href="{{ route('store.shop', ['category' => $h->slug]) }}">{{ $h->name }}</a> <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
         @endforeach
     @endif
     
-    <span style="color: var(--text-primary); font-weight: 500;" title="{{ $product->name }}">{{ \Illuminate\Support\Str::limit($product->name, 40) }}</span>
-</div>
+    <span style="color: var(--accent); font-weight: 600;" title="{{ $product->name }}">{{ \Illuminate\Support\Str::limit($product->name, 40) }}</span>
+</nav>
 
 <div class="product-layout">
     <!-- Pillar 1: Media Gallery -->

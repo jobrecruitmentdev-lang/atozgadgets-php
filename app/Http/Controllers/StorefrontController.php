@@ -32,15 +32,29 @@ class StorefrontController extends Controller
             if ($cat) {
                 $currentCategory = $cat;
                 $query->whereIn('category_id', $cat->getAllDescendantIds());
+            } else {
+                $term = str_replace(['-', '_'], ' ', $request->category);
+                $matchingCat = Category::where('name', 'like', "%{$term}%")->first();
+                if ($matchingCat) {
+                    $currentCategory = $matchingCat;
+                    $query->whereIn('category_id', $matchingCat->getAllDescendantIds());
+                } else {
+                    $query->where(function($q) use ($term) {
+                        $q->where('name', 'like', "%{$term}%")
+                          ->orWhere('description', 'like', "%{$term}%");
+                    });
+                }
             }
         }
 
+        $effectivePriceRaw = '(CASE WHEN discount_price > 0 AND discount_price < price THEN discount_price ELSE price END)';
+
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
+            $query->whereRaw("{$effectivePriceRaw} <= ?", [(float)$request->max_price]);
         }
 
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
+            $query->whereRaw("{$effectivePriceRaw} >= ?", [(float)$request->min_price]);
         }
 
         if ($request->filled('q')) {
@@ -65,10 +79,10 @@ class StorefrontController extends Controller
         if ($request->filled('sort')) {
             switch ($request->sort) {
                 case 'price_asc':
-                    $query->orderBy('price', 'asc');
+                    $query->orderByRaw("{$effectivePriceRaw} ASC");
                     break;
                 case 'price_desc':
-                    $query->orderBy('price', 'desc');
+                    $query->orderByRaw("{$effectivePriceRaw} DESC");
                     break;
                 default:
                     $query->latest();
@@ -78,8 +92,16 @@ class StorefrontController extends Controller
         }
         
         $products = $query->paginate(12)->withQueryString();
+
+        $suggestedProducts = collect();
+        if ($products->isEmpty()) {
+            $suggestedProducts = Product::published()
+                ->latest()
+                ->limit(8)
+                ->get();
+        }
         
-        return view('store.shop', compact('products', 'currentCategory'));
+        return view('store.shop', compact('products', 'currentCategory', 'suggestedProducts'));
     }
 
     public function product($slug)

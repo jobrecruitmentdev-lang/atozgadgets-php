@@ -68,10 +68,12 @@
 <div style="max-width: 1000px; margin: 0 auto; padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem);">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
-        <span>/</span>
-        <span style="color: var(--brand-primary); font-weight: 600;">FAQ & Help Center</span>
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ route('store.home') }}">Home</a>
+        <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+        <a href="{{ route('store.shop') }}">Shop</a>
+        <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+        <span class="breadcrumb-current">FAQ & Help Center</span>
     </nav>
 
     <!-- Header Banner -->
