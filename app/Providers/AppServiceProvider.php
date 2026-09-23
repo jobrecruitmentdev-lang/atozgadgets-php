@@ -37,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
                         ->where(function($q) {
                             $q->where('status', 'active')->orWhereNull('status');
                         })
+                        ->where(function($q) {
+                            $q->has('children')->orWhereHas('products');
+                        })
                         ->with(['children' => function($q) {
                             $q->where(function($cq) {
                                 $cq->where('status', 'active')->orWhereNull('status');

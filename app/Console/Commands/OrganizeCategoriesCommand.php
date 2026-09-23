@@ -79,6 +79,12 @@ class OrganizeCategoriesCommand extends Command
             DB::commit();
             $this->info("   ✓ Re-categorized: {$updatedCount} products");
             $this->info("   ✓ Already in correct category: {$alreadyMappedCount} products");
+
+            // Deactivate empty legacy root categories with 0 children and 0 products
+            Category::whereNull('parent_id')
+                ->doesntHave('children')
+                ->doesntHave('products')
+                ->update(['status' => 'inactive']);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->error("❌ Error organizing products: " . $e->getMessage());
