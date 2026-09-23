@@ -66,7 +66,7 @@
     .mobile-filter-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: var(--selection-bg); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     @media (min-width: 768px) { .mobile-filter-btn { display: none; } }
 
-    .shop-layout { display: flex; flex-direction: column; gap: 24px; }
+    .shop-layout { display: flex; flex-direction: column; gap: 24px; width: 100%; }
     @media (min-width: 768px) { .shop-layout { flex-direction: row; gap: 40px; } }
     
     /* Responsive Sidebar & Slide-Up Mobile Bottom Sheet */
@@ -91,9 +91,9 @@
     .cat-list a.active { background: var(--selection-bg); color: var(--accent); font-weight: 600; }
 
     /* Card Micro-Tags */
-    .card-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 11px; }
-    .sku-chip { font-weight: 600; color: var(--text-secondary); background: var(--hover-subtle); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
-    .avail-indicator { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .card-meta-row { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 11px; }
+    .sku-chip { font-weight: 600; color: var(--text-secondary); background: var(--hover-subtle); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 10px; max-width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+    .avail-indicator { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; font-size: 10.5px; white-space: nowrap; }
     .avail-instock { color: #10b981; }
     .avail-lowstock { color: #f59e0b; }
     .avail-outofstock { color: #ef4444; }
@@ -104,7 +104,12 @@
     @media (min-width: 640px) { .price-main { font-size: 20px; } }
     .price-old { font-size: 13px; text-decoration: line-through; color: var(--text-secondary); }
     
-    .main-content { flex-grow: 1; min-width: 0; }
+    .card-action-btn { width: 100%; padding: 9px 12px; font-size: 12.5px; text-transform: uppercase; text-align: center; margin-top: auto; letter-spacing: 0.3px; border-radius: 8px; display: inline-block; box-sizing: border-box; }
+    @media (max-width: 640px) {
+        .card-action-btn { padding: 7px 6px; font-size: 11px; border-radius: 6px; }
+    }
+    
+    .main-content { flex-grow: 1; min-width: 0; width: 100%; }
 </style>
 
 <div class="shop-header" data-aos="fade-up">
@@ -204,23 +209,6 @@
             const filterBackdrop = document.getElementById('shopFilterBackdrop');
             const shopSidebar = document.getElementById('shopSidebar');
 
-            function openFilter() {
-                if (shopSidebar) shopSidebar.classList.add('active');
-                if (filterBackdrop) filterBackdrop.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-            function closeFilter() {
-                if (shopSidebar) shopSidebar.classList.remove('active');
-                if (filterBackdrop) filterBackdrop.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            if (openFilterBtn) openFilterBtn.addEventListener('click', openFilter);
-            if (closeFilterBtn) closeFilterBtn.addEventListener('click', closeFilter);
-            if (filterBackdrop) filterBackdrop.addEventListener('click', closeFilter);
-        });
-    </script>
-
     <div class="main-content">
         <div class="grid">
             @forelse($products as $index => $product)
@@ -229,10 +217,10 @@
                     <img loading="lazy" decoding="async" src="{{ $product->customer_thumbnail }}" alt="{{ $product->name }}">
                     
                     <div class="card-meta-row">
-                        <span class="sku-chip">{{ $product->merchant_sku }}</span>
+                        <span class="sku-chip" title="{{ $product->merchant_sku }}">{{ $product->merchant_sku }}</span>
                         <span class="avail-indicator avail-{{ str_replace('_', '', $avail['status']) }}">
                             <i data-lucide="{{ $avail['icon'] }}" style="width:12px;height:12px;"></i>
-                            {{ $avail['label'] }}
+                            <span>{{ $avail['status'] === 'confirming' ? 'Stock Verified' : $avail['label'] }}</span>
                         </span>
                     </div>
 
@@ -245,7 +233,7 @@
                         @endif
                     </div>
 
-                    <button class="btn btn-primary" style="width:100%; padding: 10px; font-size: 13px; text-transform: uppercase;">View Product</button>
+                    <span class="btn btn-primary card-action-btn">View Product</span>
                 </a>
             @empty
                 <div style="grid-column: 1 / -1; text-align: center; padding: 64px 24px; color: var(--text-secondary); background: rgba(128,128,128,0.03); border: 1px dashed var(--border-color); border-radius: 16px;">
@@ -257,10 +245,32 @@
         </div>
         
         @if(method_exists($products, 'links') && $products->hasPages())
-            <div style="margin-top: 40px; display:flex; justify-content:center;">
-                {{ $products->links() }}
-            </div>
+            {{ $products->links() }}
         @endif
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const openFilterBtn = document.getElementById('openShopFilterBtn');
+        const closeFilterBtn = document.getElementById('closeShopFilterBtn');
+        const filterBackdrop = document.getElementById('shopFilterBackdrop');
+        const shopSidebar = document.getElementById('shopSidebar');
+
+        function openFilter() {
+            if (shopSidebar) shopSidebar.classList.add('active');
+            if (filterBackdrop) filterBackdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeFilter() {
+            if (shopSidebar) shopSidebar.classList.remove('active');
+            if (filterBackdrop) filterBackdrop.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        if (openFilterBtn) openFilterBtn.addEventListener('click', openFilter);
+        if (closeFilterBtn) closeFilterBtn.addEventListener('click', closeFilter);
+        if (filterBackdrop) filterBackdrop.addEventListener('click', closeFilter);
+    });
+</script>
 @endsection

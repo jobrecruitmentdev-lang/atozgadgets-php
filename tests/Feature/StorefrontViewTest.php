@@ -81,4 +81,60 @@ class StorefrontViewTest extends TestCase
         $idResponse->assertStatus(200);
         $idResponse->assertSee('Smart Watch');
     }
+
+    /**
+     * Test shop pagination and desktop navigation dropdown structure.
+     *
+     * @return void
+     */
+    public function test_shop_pagination_and_desktop_dropdown_menus()
+    {
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'admin@test.com'],
+            [
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'mobile' => '1234567890_' . time(),
+                'role_id' => 1,
+                'password' => 'secret',
+                'is_active' => true
+            ]
+        );
+        $category = \App\Models\Category::firstOrCreate(
+            ['slug' => 'electronics-test'],
+            ['name' => 'Electronics', 'status' => 'active']
+        );
+        $childCategory = \App\Models\Category::firstOrCreate(
+            ['slug' => 'gadgets-test'],
+            ['parent_id' => $category->id, 'name' => 'Smart Gadgets', 'status' => 'active']
+        );
+
+        // Create 25 products to trigger pagination (12 per page)
+        for ($i = 1; $i <= 25; $i++) {
+            \App\Models\Product::create([
+                'slug' => 'test-product-' . $i,
+                'name' => 'Test Product ' . $i,
+                'sku' => 'SKU-TEST-' . $i,
+                'price' => 10.00 + $i,
+                'category_id' => $childCategory->id,
+                'created_by' => $user->id,
+                'is_active' => true
+            ]);
+        }
+
+        $response = $this->get('/shop');
+        $response->assertStatus(200);
+        
+        // Verify desktop dropdown mega-menu exists in HTML
+        $response->assertSee('mega-dropdown');
+        $response->assertSee('mega-menu');
+        $response->assertSee('Deals');
+        $response->assertSee('Under $50');
+
+        // Verify custom responsive pagination is rendered
+        $response->assertSee('custom-pagination');
+        $response->assertSee('mobile-page-indicator');
+        $response->assertSee('desktop-page-numbers');
+    }
 }
+

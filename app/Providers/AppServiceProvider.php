@@ -26,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
         if (\Illuminate\Support\Facades\App::environment('production')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
+        \Illuminate\Pagination\Paginator::defaultView('partials.pagination');
+        \Illuminate\Pagination\Paginator::defaultSimpleView('partials.pagination');
         
         view()->composer('*', function ($view) {
             if (!isset($view->globalCategories)) {
