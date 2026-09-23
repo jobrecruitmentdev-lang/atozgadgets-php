@@ -26,13 +26,17 @@ jobs:
         run: ./vendor/bin/phpunit tests/Feature/CriticalPath tests/Feature/SeoMasterPlanTest.php
 
       - name: Deploy to Hostinger via SSH Rsync
-        if: success() && secrets.HOSTINGER_SSH_KEY != ''
+        if: success()
         env:
           HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST != '' && secrets.HOSTINGER_HOST || '217.21.74.188' }}
-          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER != '' && secrets.HOSTINGER_USER || 'u390470426' }}
-          HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH != '' && secrets.HOSTINGER_PATH || 'domains/atozgadgetz.com/public_html' }}
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST || '217.21.74.188' }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER || 'u390470426' }}
+          HOSTINGER_PATH: ${{ secrets.HOSTINGER_PATH || 'domains/atozgadgetz.com/public_html' }}
         run: |
+          if [ -z "$HOSTINGER_SSH_KEY" ]; then
+            echo "HOSTINGER_SSH_KEY is not set. Skipping SSH deployment."
+            exit 0
+          fi
           mkdir -p ~/.ssh
           echo "$HOSTINGER_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
