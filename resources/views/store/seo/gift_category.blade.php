@@ -48,10 +48,22 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<style>
+    .hub-container { max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .hub-banner { background: linear-gradient(135deg, rgba(201, 169, 98, 0.12) 0%, rgba(20, 20, 28, 0.85) 100%); border: 1px solid rgba(201, 169, 98, 0.3); border-radius: var(--radius-lg); padding: 2.5rem 2rem; margin-bottom: 2.5rem; text-align: center; }
+    .hub-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 1.5rem; margin-bottom: 3.5rem; }
+    @media (max-width: 640px) {
+        .hub-container { padding: 1.25rem 1rem; }
+        .hub-banner { padding: 1.75rem 1rem; margin-bottom: 1.5rem; }
+        .hub-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 2rem; }
+        .hub-products-grid .hub-card-pad { padding: 0.75rem !important; }
+        .hub-products-grid h3 { font-size: 0.85rem !important; height: 2.4rem !important; }
+    }
+</style>
+<div class="hub-container">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
         <span>/</span>
         <a href="{{ route('seo.gifts_index') }}" style="color: inherit; text-decoration: none;">Gifts</a>
@@ -60,7 +72,7 @@
     </nav>
 
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.12) 0%, rgba(20, 20, 28, 0.85) 100%); border: 1px solid rgba(201, 169, 98, 0.3); border-radius: var(--radius-lg); padding: 2.5rem 2rem; margin-bottom: 3rem; text-align: center;">
+    <div class="hub-banner">
         <div style="display: inline-block; padding: 0.35rem 1rem; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--brand-primary); border-radius: var(--radius-full); color: var(--brand-primary); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             Curated Gift Collection
         </div>
@@ -74,14 +86,14 @@
 
     <!-- Product Grid -->
     @if($products->count() > 0)
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3.5rem;">
+        <div class="hub-products-grid">
             @foreach($products as $product)
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column;">
                     <a href="{{ route('store.product', $product->slug) }}" style="text-decoration: none; color: inherit; display: block;">
                         <div style="position: relative; padding-top: 100%; background: #0a0a0f;">
-                            <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 1rem;">
+                            <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 0.75rem;">
                         </div>
-                        <div style="padding: 1.25rem;">
+                        <div class="hub-card-pad" style="padding: 1.25rem;">
                             <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.7rem;">
                                 {{ $product->name }}
                             </h3>

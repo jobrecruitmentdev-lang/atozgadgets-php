@@ -37,11 +37,45 @@
     .input-group input, .input-group select { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(15, 15, 20, 0.85); color: var(--text-primary); font-size: 16px; outline: none; transition: all 0.2s; box-sizing: border-box; }
     .input-group input:focus, .input-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201, 169, 98, 0.2); }
 
+    .mobile-order-summary-toggle { display: none; }
+
+    @media (max-width: 1023px) {
+        .checkout-layout { gap: 20px; margin-top: 16px; }
+        .order-summary {
+            order: -1;
+            margin-bottom: 8px;
+        }
+        .mobile-order-summary-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(20, 20, 28, 0.9);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .mobile-order-summary-toggle:active {
+            background: rgba(30, 30, 42, 0.95);
+        }
+        .summary-card {
+            display: none;
+            margin-top: 12px;
+        }
+        .summary-card.mobile-open {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+    }
+
     @media (max-width: 480px) {
-        .checkout-layout { gap: 28px; margin-top: 20px; }
+        .checkout-layout { gap: 20px; margin-top: 12px; }
         .summary-card { padding: 16px; }
-        .payment-option { padding: 16px; }
-        .step-indicator { gap: 8px; font-size: 13px; margin-bottom: 24px; }
+        .payment-option { padding: 14px; }
+        .step-indicator { gap: 6px; font-size: 12.5px; margin-bottom: 20px; }
+        #save-shipping-btn, #verify-otp-btn { width: 100%; justify-content: center; }
     }
 
     /* Payment Methods */
@@ -191,17 +225,35 @@
 
     <!-- Order Summary -->
     <div class="order-summary" data-aos="fade-left">
-        <div class="summary-card">
+        @php 
+            $subtotal = 0; 
+            foreach($cart as $id => $item) {
+                $subtotal += ((float)($item['price'] ?? 0) * (int)($item['quantity'] ?? 1));
+            }
+            $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
+            $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
+            $shippingCost = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0 : $stdRate;
+            $grandTotal = $subtotal + $shippingCost;
+            $itemCount = count($cart ?? []);
+        @endphp
+
+        <!-- Mobile Collapsible Summary Toggle -->
+        <div class="mobile-order-summary-toggle" id="mobileSummaryToggle" onclick="toggleMobileSummary()">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="shopping-cart" style="width:16px;height:16px;color:var(--accent);"></i>
+                <span id="mobileSummaryToggleText" style="font-weight:600; font-size:13.5px; color:var(--text-primary);">Order Summary ({{ $itemCount }} {{ Str::plural('item', $itemCount) }})</span>
+                <i data-lucide="chevron-down" id="mobileSummaryChevron" style="width:14px;height:14px;color:var(--text-secondary);transition:transform 0.2s;"></i>
+            </div>
+            <div style="font-weight:800; font-size:15px; color:var(--accent);">${{ number_format($grandTotal, 2) }}</div>
+        </div>
+
+        <div class="summary-card" id="checkoutSummaryCard">
             <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 24px;">Order Summary</h2>
             <div style="max-height: 300px; overflow-y: auto; padding-right: 8px;">
-                @php 
-                    $subtotal = 0; 
-                @endphp
                 @forelse($cart as $id => $item)
                     @php 
                         $itemPrice = (float)($item['price'] ?? 0);
                         $itemQty = (int)($item['quantity'] ?? 1);
-                        $subtotal += ($itemPrice * $itemQty);
                     @endphp
                     <div class="summary-item">
                         <img src="{{ $item['image'] ?? asset('favicon.png') }}" alt="{{ $item['name'] ?? 'Product' }}" onerror="this.src='{{ asset('favicon.png') }}'">
@@ -215,13 +267,6 @@
                     <p style="color:var(--text-secondary); font-size:14px; text-align:center; padding:20px 0;">No items in cart.</p>
                 @endforelse
             </div>
-
-            @php
-                $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
-                $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
-                $shippingCost = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0 : $stdRate;
-                $grandTotal = $subtotal + $shippingCost;
-            @endphp
 
             <div class="summary-totals">
                 <div class="total-row"><span style="color:var(--text-secondary);">Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
@@ -239,6 +284,15 @@
 </div>
 
 <script>
+    function toggleMobileSummary() {
+        const card = document.getElementById('checkoutSummaryCard');
+        const text = document.getElementById('mobileSummaryToggleText');
+        const chevron = document.getElementById('mobileSummaryChevron');
+        if (!card) return;
+        const isOpen = card.classList.toggle('mobile-open');
+        if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const step1 = document.getElementById('step-1');
         const step15 = document.getElementById('step-1-5');

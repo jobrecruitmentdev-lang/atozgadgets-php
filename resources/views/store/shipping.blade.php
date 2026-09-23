@@ -25,7 +25,7 @@
         margin-bottom: 1.5rem;
     }
     .policy-title {
-        font-size: 2.25rem;
+        font-size: clamp(1.75rem, 5vw, 3rem);
         line-height: 1.2;
         font-weight: 800;
         color: #fff;
@@ -38,7 +38,7 @@
         }
     }
     .policy-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         color: var(--text-secondary);
         line-height: 1.6;
     }
@@ -48,7 +48,7 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 1.25rem;
-        margin-bottom: 3.5rem;
+        margin-bottom: 3rem;
     }
     @media (min-width: 768px) {
         .features-grid {
@@ -59,7 +59,7 @@
         background: rgba(20, 20, 20, 0.6);
         border: 1px solid var(--glass-border);
         border-radius: 16px;
-        padding: 1.75rem;
+        padding: 1.5rem;
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         transition: all 0.3s var(--ease-premium);
@@ -101,8 +101,14 @@
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
     }
+    @media (max-width: 600px) {
+        .policy-section {
+            padding: 1.5rem 1.15rem;
+            border-radius: 14px;
+        }
+    }
     .section-heading {
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         font-weight: 700;
         color: #fff;
         margin-bottom: 1.25rem;
@@ -115,7 +121,7 @@
     }
     .policy-content {
         color: #d4d4d8;
-        font-size: 1rem;
+        font-size: 0.95rem;
         line-height: 1.75;
     }
     .policy-content p + p {
@@ -126,7 +132,8 @@
         background: rgba(10, 10, 10, 0.6);
         border: 1px solid var(--glass-border);
         border-radius: 12px;
-        overflow: hidden;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         margin-top: 1.5rem;
     }
     .policy-table {

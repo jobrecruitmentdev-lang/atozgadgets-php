@@ -57,53 +57,53 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<div style="max-width: 1280px; margin: 0 auto; padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem);">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
         <span>/</span>
         <span style="color: var(--brand-primary); font-weight: 600;">USA Delivery Hub</span>
     </nav>
 
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: 3rem 2rem; margin-bottom: 3.5rem; text-align: center;">
+    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: clamp(1.75rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem); margin-bottom: 2.5rem; text-align: center;">
         <div style="display: inline-block; padding: 0.35rem 1rem; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--brand-primary); border-radius: var(--radius-full); color: var(--brand-primary); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             🇺🇸 Nationwide Priority Fulfillment
         </div>
         <h1 style="font-size: clamp(1.85rem, 4vw, 3rem); font-weight: 700; color: var(--text-primary); margin-bottom: 1rem; line-height: 1.2;">
             Shop Trending Gadgets Online — Shipped Anywhere in the USA
         </h1>
-        <p style="font-size: 1.0625rem; color: var(--text-secondary); max-width: 760px; margin: 0 auto 2rem; line-height: 1.6;">
+        <p style="font-size: 1.0625rem; color: var(--text-secondary); max-width: 760px; margin: 0 auto 1.75rem; line-height: 1.6;">
             AtoZGadgets delivers premium viral electronics, smart home devices, and mobile accessories directly to your doorstep across all 50 US States with reliable 3–7 business day USPS & UPS delivery.
         </p>
 
         <!-- US Delivery Features Badges -->
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; max-width: 800px; margin: 0 auto;">
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-primary);">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; max-width: 800px; margin: 0 auto;">
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 1rem; border-radius: var(--radius-md); font-size: 0.8125rem; color: var(--text-primary);">
                 ⚡ <strong>3–7 Days</strong> USPS / UPS Transit
             </div>
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-primary);">
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 1rem; border-radius: var(--radius-md); font-size: 0.8125rem; color: var(--text-primary);">
                 🛡️ <strong>30-Day</strong> Money-Back Guarantee
             </div>
-            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-primary);">
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem 1rem; border-radius: var(--radius-md); font-size: 0.8125rem; color: var(--text-primary);">
                 📍 <strong>Live GPS</strong> Tracking on All Orders
             </div>
         </div>
     </div>
 
     <!-- Top US Commercial Metros -->
-    <div style="margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">
+    <div style="margin-bottom: 3.5rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.25rem;">
             Popular City Delivery Destinations
         </h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 0.85rem;">
             @foreach($topCities as $city)
                 <a href="{{ route('seo.usa_city', [$city['state_slug'], $city['slug']]) }}" 
-                   style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; flex-direction: column;"
+                   style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.1rem; text-decoration: none; color: inherit; transition: all 0.2s; display: flex; flex-direction: column;"
                    onmouseover="this.style.borderColor='var(--brand-primary)'; this.style.transform='translateY(-3px)'"
                    onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)'">
-                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1.05rem; margin-bottom: 0.25rem;">
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 1rem; margin-bottom: 0.25rem;">
                         {{ $city['name'] }}, {{ $city['state_code'] }}
                     </div>
                     <div style="font-size: 0.8125rem; color: var(--brand-primary); margin-bottom: 0.5rem; font-weight: 500;">
@@ -118,14 +118,14 @@
     </div>
 
     <!-- All 50 US States Directory -->
-    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2.5rem; margin-bottom: 4rem;">
-        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.5rem;">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: clamp(1.25rem, 3vw, 2.5rem); margin-bottom: 3.5rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-bottom: 1.25rem;">
             All 50 US States Coverage Directory
         </h2>
-        <p style="font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 2rem;">
+        <p style="font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
             Click on your state to view local shipping timelines, top-rated categories, and eligible delivery zones.
         </p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 0.65rem;">
             @foreach($states as $slug => $state)
                 <a href="{{ route('seo.usa_state', $slug) }}" 
                    style="padding: 0.6rem 0.85rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); font-size: 0.875rem; color: var(--text-secondary); text-decoration: none; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;"

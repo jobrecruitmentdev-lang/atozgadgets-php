@@ -7,7 +7,7 @@
   .about-hero {
     text-align: center;
     max-width: 800px;
-    margin: 0 auto 4rem;
+    margin: 0 auto 2.5rem;
   }
   .about-badge {
     display: inline-flex;
@@ -22,25 +22,20 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
   .about-title {
-    font-size: 2.25rem;
+    font-size: clamp(1.85rem, 5vw, 3.25rem);
     line-height: 1.2;
     font-weight: 800;
     color: #fff;
     letter-spacing: -0.02em;
-    margin-bottom: 1.25rem;
-  }
-  @media (min-width: 768px) {
-    .about-title {
-      font-size: 3.25rem;
-    }
+    margin-bottom: 1rem;
   }
   .about-subtitle {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
     color: var(--text-secondary);
-    line-height: 1.7;
+    line-height: 1.65;
   }
 
   /* Story Glass Card */
@@ -51,9 +46,15 @@
     padding: 2.5rem;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    margin-bottom: 3.5rem;
+    margin-bottom: 3rem;
     position: relative;
     overflow: hidden;
+  }
+  @media (max-width: 600px) {
+    .story-card {
+      padding: 1.5rem 1.25rem;
+      border-radius: 16px;
+    }
   }
   .story-card::before {
     content: '';

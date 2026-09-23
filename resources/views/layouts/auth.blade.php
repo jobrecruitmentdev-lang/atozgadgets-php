@@ -112,9 +112,21 @@
             border: 1px solid var(--glass-border);
             border-radius: 12px;
             color: var(--text-primary);
-            font-size: 15px;
+            font-size: 16px;
             transition: all 0.3s ease;
             outline: none;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .auth-container {
+                padding: 24px 18px;
+                margin: 3vh auto;
+                border-radius: 18px;
+            }
+            .auth-header { margin-bottom: 22px; }
+            .auth-header h1 { font-size: 24px; }
         }
 
         .form-input:focus {

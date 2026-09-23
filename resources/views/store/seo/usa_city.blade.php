@@ -63,10 +63,10 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<div style="max-width: 1280px; margin: 0 auto; padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem);">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
         <span>/</span>
         <a href="{{ route('seo.usa_national') }}" style="color: inherit; text-decoration: none;">USA Hub</a>
@@ -77,7 +77,7 @@
     </nav>
 
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: 3rem 2rem; margin-bottom: 3.5rem; text-align: center;">
+    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: clamp(1.75rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem); margin-bottom: 2.5rem; text-align: center;">
         <div style="display: inline-block; padding: 0.35rem 1rem; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--brand-primary); border-radius: var(--radius-full); color: var(--brand-primary); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             📍 {{ $cityData['name'] }}, {{ $stateData['code'] }} • Priority Delivery
         </div>
@@ -88,7 +88,7 @@
             Get verified trending smart electronics, mobile accessories, and {{ strtolower($cityData['focus']) }} delivered directly to your doorstep in <strong>{{ $cityData['name'] }}, {{ $stateData['name'] }}</strong> within <strong>{{ $cityData['transit_days'] }} business days</strong> via USPS Priority and UPS Express.
         </p>
 
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem;">
             <span style="background: rgba(255,255,255,0.05); padding: 0.4rem 0.9rem; border-radius: var(--radius-full); font-size: 0.8125rem; color: var(--text-primary); border: 1px solid rgba(255,255,255,0.1);">
                 ⚡ {{ $cityData['transit_days'] }} Days Doorstep Transit
             </span>
@@ -102,14 +102,14 @@
     </div>
 
     <!-- Curated Products Grid -->
-    <div style="margin-bottom: 4rem;">
-        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">
+    <div style="margin-bottom: 3.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 8px;">
+            <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">
                 Popular Gadgets Delivering to {{ $cityData['name'] }}
             </h2>
             <a href="{{ route('store.shop') }}" style="font-size: 0.875rem; color: var(--brand-primary); font-weight: 600; text-decoration: none;">View All Catalog →</a>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 1.25rem;">
             @foreach($products as $product)
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column;">
                     <a href="{{ route('store.product', $product->slug) }}" style="text-decoration: none; color: inherit; display: block;">

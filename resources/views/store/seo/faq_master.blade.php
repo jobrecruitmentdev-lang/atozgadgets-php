@@ -65,17 +65,17 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<div style="max-width: 1000px; margin: 0 auto; padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem);">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
         <span>/</span>
         <span style="color: var(--brand-primary); font-weight: 600;">FAQ & Help Center</span>
     </nav>
 
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: 3rem 2rem; margin-bottom: 3.5rem; text-align: center;">
+    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(20, 20, 28, 0.9) 100%); border: 1px solid rgba(201, 169, 98, 0.35); border-radius: var(--radius-lg); padding: clamp(1.75rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem); margin-bottom: 2rem; text-align: center;">
         <div style="display: inline-block; padding: 0.35rem 1rem; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--brand-primary); border-radius: var(--radius-full); color: var(--brand-primary); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             Customer Knowledge Base
         </div>
@@ -89,7 +89,7 @@
         <!-- Search Input Filter -->
         <div style="max-width: 500px; margin: 0 auto; position: relative;">
             <input type="text" id="faq-search-input" placeholder="Search questions (e.g. shipping, returns, PayPal)..." 
-                   style="width: 100%; padding: 0.85rem 1.25rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(201, 169, 98, 0.4); border-radius: var(--radius-full); color: #fff; font-size: 0.9375rem; outline: none;"
+                   style="width: 100%; padding: 0.85rem 1.25rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(201, 169, 98, 0.4); border-radius: var(--radius-full); color: #fff; font-size: 16px; outline: none; box-sizing: border-box;"
                    onkeyup="filterFaqs(this.value)">
         </div>
     </div>

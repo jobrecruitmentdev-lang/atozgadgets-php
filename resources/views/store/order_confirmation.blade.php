@@ -22,6 +22,10 @@
             padding: 24px 16px;
             border-radius: 16px;
         }
+        .action-btns a {
+            width: 100%;
+            text-align: center;
+        }
     }
     .success-icon-wrap {
         width: 72px;

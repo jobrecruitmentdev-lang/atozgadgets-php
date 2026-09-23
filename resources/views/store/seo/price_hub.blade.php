@@ -63,10 +63,24 @@
 @endsection
 
 @section('content')
-<div style="max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem;">
+<style>
+    .hub-container { max-width: 1280px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .hub-banner { background: linear-gradient(135deg, rgba(201, 169, 98, 0.12) 0%, rgba(20, 20, 28, 0.85) 100%); border: 1px solid rgba(201, 169, 98, 0.3); border-radius: var(--radius-lg); padding: 2.5rem 2rem; margin-bottom: 2.5rem; text-align: center; position: relative; overflow: hidden; }
+    .hub-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 1.5rem; margin-bottom: 3.5rem; }
+    .hub-faq-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2.5rem; margin-bottom: 3.5rem; }
+    @media (max-width: 640px) {
+        .hub-container { padding: 1.25rem 1rem; }
+        .hub-banner { padding: 1.75rem 1rem; margin-bottom: 1.5rem; }
+        .hub-products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 2rem; }
+        .hub-products-grid .hub-card-pad { padding: 0.75rem !important; }
+        .hub-products-grid h3 { font-size: 0.85rem !important; height: 2.4rem !important; }
+        .hub-faq-card { padding: 1.25rem; margin-bottom: 2rem; }
+    }
+</style>
+<div class="hub-container">
 
     <!-- Breadcrumb -->
-    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+    <nav style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem; flex-wrap: wrap;">
         <a href="{{ url('/') }}" style="color: inherit; text-decoration: none;">Home</a>
         <span>/</span>
         <a href="{{ route('store.shop') }}" style="color: inherit; text-decoration: none;">Shop</a>
@@ -75,7 +89,7 @@
     </nav>
 
     <!-- Header Banner -->
-    <div style="background: linear-gradient(135deg, rgba(201, 169, 98, 0.12) 0%, rgba(20, 20, 28, 0.85) 100%); border: 1px solid rgba(201, 169, 98, 0.3); border-radius: var(--radius-lg); padding: 2.5rem 2rem; margin-bottom: 3rem; text-align: center; position: relative; overflow: hidden;">
+    <div class="hub-banner">
         <div style="display: inline-block; padding: 0.35rem 1rem; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--brand-primary); border-radius: var(--radius-full); color: var(--brand-primary); font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">
             Budget Value Collection
         </div>
@@ -99,17 +113,17 @@
 
     <!-- Product Grid -->
     @if($products->count() > 0)
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 3.5rem;">
+        <div class="hub-products-grid">
             @foreach($products as $product)
                 <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.borderColor='var(--brand-primary)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='var(--border-color)'; this.style.transform='translateY(0)'">
                     <a href="{{ route('store.product', $product->slug) }}" style="text-decoration: none; color: inherit; display: block;">
                         <div style="position: relative; padding-top: 100%; background: #0a0a0f; overflow: hidden;">
-                            <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 1rem;">
-                            <div style="position: absolute; top: 0.75rem; left: 0.75rem; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: var(--brand-primary); padding: 0.25rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600;">
+                            <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; padding: 0.75rem;">
+                            <div style="position: absolute; top: 0.5rem; left: 0.5rem; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); color: var(--brand-primary); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 600;">
                                 Under ${{ $budget }}
                             </div>
                         </div>
-                        <div style="padding: 1.25rem; display: flex; flex-direction: column; flex-grow: 1;">
+                        <div class="hub-card-pad" style="padding: 1.25rem; display: flex; flex-direction: column; flex-grow: 1;">
                             <div style="font-size: 0.75rem; color: var(--brand-primary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.35rem;">
                                 {{ $product->category->name ?? 'Gadget' }}
                             </div>

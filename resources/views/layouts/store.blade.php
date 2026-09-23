@@ -148,21 +148,22 @@
         
         /* Utility */
         .container { max-width: 1200px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+        @media (max-width: 480px) { .container { padding-left: 14px; padding-right: 14px; } }
         
         /* Header Ported from Next.js */
         header { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; transition: transform 0.4s var(--ease-premium), background 0.3s var(--ease-premium), box-shadow 0.3s var(--ease-premium); background: var(--bg-base); border-bottom: 1px solid var(--border-color); }
         header.scrolled { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--glass-shadow); }
         header.header-hidden { transform: translateY(-100%) !important; }
         
-        .top-banner { background: var(--selection-bg); text-align: center; padding: 6px 0; font-size: 12px; font-weight: 500; color: var(--text-secondary); display: none; }
-        @media (min-width: 768px) { .top-banner { display: block; } }
+        .top-banner { background: var(--selection-bg); text-align: center; padding: 7px 12px; font-size: 11px; font-weight: 600; color: var(--accent); display: block; border-bottom: 1px solid var(--border-color); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; letter-spacing: 0.2px; }
+        @media (min-width: 768px) { .top-banner { display: block; padding: 6px 0; font-size: 12px; color: var(--text-secondary); font-weight: 500; } }
         
-        .nav-main { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 12px; }
+        .nav-main { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 8px; }
         @media (min-width: 768px) { .nav-main { height: 90px; gap: 20px; } }
         
-        .logo-container { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.5px; }
-        .logo-container img { width: auto; height: 44px; border-radius: 0; filter: none; mix-blend-mode: screen; }
-        @media (min-width: 768px) { .logo-container img { height: 68px; } }
+        .logo-container { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+        .logo-container img { width: auto; height: 38px; border-radius: 0; filter: none; mix-blend-mode: screen; max-width: 140px; object-fit: contain; }
+        @media (min-width: 768px) { .logo-container img { height: 68px; max-width: none; } }
         
         .search-bar { flex: 1; max-width: 600px; position: relative; display: none; }
         @media (min-width: 768px) { .search-bar { display: block; } }
@@ -172,12 +173,81 @@
         .search-bar button.search-btn:hover { color: var(--accent); }
         .search-bar button.search-btn svg, .search-bar button.search-btn i { width: 18px; height: 18px; }
 
-        .nav-icons { display: flex; align-items: center; gap: 6px; }
+        /* Slide-down Mobile Search Bar */
+        .mobile-search-bar-wrap {
+            display: none;
+            background: var(--bg-surface-elevated);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--accent);
+            padding: 10px 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .mobile-search-bar-wrap.active {
+            display: block;
+            animation: slideDownSearch 0.25s var(--ease-premium);
+        }
+        @keyframes slideDownSearch {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .mobile-search-form {
+            display: flex;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+        .mobile-search-form input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 38px 10px 36px;
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .mobile-search-form input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--focus-ring);
+        }
+        .mobile-search-form .search-icon-btn {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+        }
+        .mobile-search-form .search-close-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .nav-icons { display: flex; align-items: center; gap: 4px; }
         @media (min-width: 768px) { .nav-icons { gap: 10px; } }
-        .icon-btn { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--text-primary); transition: all 0.3s; position: relative; border: none; background: transparent; cursor: pointer; }
+        .icon-btn { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--text-primary); transition: all 0.3s; position: relative; border: none; background: transparent; cursor: pointer; }
         @media (min-width: 768px) { .icon-btn { width: 44px; height: 44px; } }
         .icon-btn:hover { background: var(--hover-subtle); color: var(--accent); }
-        .badge { position: absolute; top: 6px; right: 6px; background: var(--accent); color: var(--text-inverse); font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .mobile-search-btn { display: inline-flex; }
+        @media (min-width: 768px) { .mobile-search-btn { display: none; } }
+        .badge { position: absolute; top: 4px; right: 4px; background: var(--accent); color: var(--text-inverse); font-size: 10px; font-weight: bold; width: 17px; height: 17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .badge-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
         
         .mobile-menu-btn { display: inline-flex; }
@@ -201,16 +271,23 @@
         .mega-menu a { display: block; padding: 10px 12px; color: var(--text-secondary); font-size: 14px; border-radius: 8px; transition: all 0.2s; }
         .mega-menu a:hover, .mega-menu a:focus { color: var(--text-primary); background: var(--hover-subtle); }
 
-        /* Mobile Menu Overlay */
-        .mobile-menu-overlay { position: fixed; inset: 0; background: var(--bg-base); z-index: 2000; transform: translateX(-100%); transition: transform 0.4s var(--ease-premium); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        /* Mobile Menu Drawer & Backdrop */
+        .mobile-menu-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 1999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .mobile-menu-backdrop.active { opacity: 1; visibility: visible; }
+        .mobile-menu-overlay { position: fixed; top: 0; bottom: 0; left: 0; width: 85%; max-width: 320px; background: var(--bg-surface-elevated); border-right: 1px solid var(--border-color); z-index: 2000; transform: translateX(-100%); transition: transform 0.35s var(--ease-premium); display: flex; flex-direction: column; padding: 0; overflow-y: auto; box-shadow: 20px 0 50px rgba(0,0,0,0.6); }
         .mobile-menu-overlay.active { transform: translateX(0); }
-        .mobile-menu-close { align-self: flex-end; background: transparent; border: none; color: var(--text-primary); cursor: pointer; padding: 10px; }
-        .mobile-nav-list { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
-        .mobile-nav-link { font-size: 18px; font-weight: 600; color: var(--text-primary); padding: 10px 0; border-bottom: 1px solid var(--border-color); display: block; }
+        .mobile-menu-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-base); }
+        .mobile-menu-header img { height: 36px; width: auto; mix-blend-mode: screen; }
+        .mobile-menu-close { background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; }
+        .mobile-menu-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+        .mobile-nav-list { display: flex; flex-direction: column; gap: 3px; }
+        .mobile-nav-link { font-size: 15px; font-weight: 600; color: var(--text-primary); padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; transition: background 0.2s, color 0.2s; border-bottom: none; }
+        .mobile-nav-link:hover { background: var(--hover-subtle); color: var(--accent); }
+        .mobile-nav-link.active { background: var(--selection-bg); color: var(--accent); }
 
         /* Main Content */
-        main { padding-top: 86px; min-height: 70vh; }
-        @media (min-width: 768px) { main { padding-top: 150px; } }
+        main { padding-top: 100px; min-height: 70vh; }
+        @media (min-width: 768px) { main { padding-top: 154px; } }
 
         /* Buttons & Cards */
         .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.4s var(--ease-premium); border: none; letter-spacing: 0.5px; }
@@ -227,6 +304,94 @@
         .card:hover img { transform: scale(1.05); }
         .card-title { font-size: 17px; font-weight: 600; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; letter-spacing: -0.2px; line-height: 1.4; color: var(--text-primary); }
         .card-price { font-size: 24px; font-weight: 700; color: var(--accent); margin-bottom: 20px; }
+
+        /* Responsive 2-Column Product Grid on Mobile Devices */
+        @media (max-width: 640px) {
+            .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .card { padding: 12px 10px; border-radius: 14px; }
+            .card img { height: 150px; margin-bottom: 10px; border-radius: 8px; }
+            .card-title { font-size: 13px; margin-bottom: 6px; line-height: 1.35; height: 35px; -webkit-line-clamp: 2; }
+            .card-price { font-size: 17px; margin-bottom: 10px; font-weight: 800; }
+            .card .btn-primary { padding: 8px 6px; font-size: 11.5px; border-radius: 6px; letter-spacing: 0; }
+        }
+        @media (max-width: 360px) {
+            .grid { gap: 6px; }
+            .card { padding: 8px; }
+            .card img { height: 130px; }
+            .card-price { font-size: 15px; }
+        }
+
+        /* App-Like Mobile Bottom Navigation Bar */
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(56px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: rgba(14, 14, 18, 0.96);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 1050;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+        @media (min-width: 768px) {
+            .mobile-bottom-nav { display: none !important; }
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex: 1;
+            height: 100%;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10.5px;
+            font-weight: 500;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.15s;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav-item i, .bottom-nav-item svg {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .bottom-nav-item:active { transform: scale(0.92); }
+        .bottom-nav-item.active, .bottom-nav-item:hover { color: var(--accent); }
+        .bottom-nav-item.active i, .bottom-nav-item.active svg { stroke-width: 2.3; color: var(--accent); }
+        .bottom-nav-badge {
+            position: absolute;
+            top: 5px;
+            right: 50%;
+            transform: translateX(14px);
+            background: var(--accent);
+            color: #000;
+            font-size: 9.5px;
+            font-weight: 800;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        @media (max-width: 767px) {
+            body { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+            footer { padding: 40px 0 calc(90px + env(safe-area-inset-bottom, 0px)); }
+        }
 
         /* Pagination CSS Fixes for Tailwind Default View */
         nav[role="navigation"] { display: flex; align-items: center; justify-content: space-between; font-size: 14px; margin-top: 40px; }
@@ -269,10 +434,10 @@
         
         <div class="container">
             <div class="nav-main">
-                <button class="icon-btn mobile-menu-btn" aria-label="Toggle Menu"><i data-lucide="menu"></i></button>
+                <button class="icon-btn mobile-menu-btn" id="mobileMenuToggleBtn" aria-label="Toggle Menu"><i data-lucide="menu"></i></button>
                 
                 <a href="{{ route('store.home') }}" class="logo-container">
-                    <img src="{{ asset('brand/atoz-logo.png') }}" alt="AtoZ Gadgetz Logo" style="width: auto; height: 80px; border-radius: 0; filter: none; mix-blend-mode: screen;">
+                    <img src="{{ asset('brand/atoz-logo.png') }}" alt="AtoZ Gadgetz Logo">
                 </a>
 
                 <form action="{{ route('store.shop') }}" method="GET" class="search-bar">
@@ -284,6 +449,10 @@
                 </form>
 
                 <div class="nav-icons">
+                    <button type="button" class="icon-btn mobile-search-btn" id="mobileSearchTrigger" aria-label="Search Catalog">
+                        <i data-lucide="search"></i>
+                    </button>
+
                     @auth
                         @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
                             <a href="{{ route('admin.dashboard') }}" class="icon-btn" aria-label="Admin Dashboard" title="Admin Dashboard" style="{{ request()->routeIs('admin.dashboard') ? 'color: var(--accent); background: rgba(255, 255, 255, 0.1);' : '' }}">
@@ -321,6 +490,15 @@
                     @endauth
                 </div>
             </div>
+        </div>
+
+        <!-- Slide-down Mobile Search Bar -->
+        <div id="mobileSearchBar" class="mobile-search-bar-wrap">
+            <form action="{{ route('store.shop') }}" method="GET" class="mobile-search-form">
+                <button type="submit" class="search-icon-btn" aria-label="Submit Search"><i data-lucide="search"></i></button>
+                <input type="text" id="mobileSearchInput" name="q" value="{{ request('q') }}" placeholder="Search trending gadgets, smart devices..." aria-label="Search Catalog" autocomplete="off">
+                <button type="button" class="search-close-btn" id="closeMobileSearch" aria-label="Close Search"><i data-lucide="x"></i></button>
+            </form>
         </div>
 
         <div class="categories-row">
@@ -373,55 +551,101 @@
         </div>
     </header>
 
-    <!-- Mobile Menu Container -->
+    <!-- Mobile Menu Drawer & Backdrop -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
     <div class="mobile-menu-overlay" id="mobileMenu">
-        <button class="mobile-menu-close" id="closeMenuBtn" aria-label="Close Menu"><i data-lucide="x"></i></button>
-        <div class="mobile-nav-list">
-            <a href="{{ route('store.shop') }}" class="mobile-nav-link">All Products</a>
-            <a href="{{ route('seo.usa_national') }}" class="mobile-nav-link" style="color: var(--accent);">🇺🇸 USA 50-State Delivery Hub</a>
-            <a href="{{ route('seo.gifts_index') }}" class="mobile-nav-link">Tech Gifts Guide</a>
-            <a href="{{ route('seo.guides_index') }}" class="mobile-nav-link">Buying Guides & Reviews</a>
-            <a href="{{ route('seo.faq_master') }}" class="mobile-nav-link">FAQ & Help Center</a>
-            @if(isset($globalCategories))
-                @foreach($globalCategories as $cat)
-                    @if($cat->children->count() > 0)
-                        <div style="border-bottom: 1px solid var(--glass-border); padding: 4px 0;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link" style="border-bottom: none; padding: 8px 0; flex: 1;">{{ $cat->name }}</a>
-                                <button type="button" onclick="const sm = document.getElementById('sub-mobile-{{ $cat->id }}'); const open = sm.style.display !== 'none'; sm.style.display = open ? 'none' : 'block'; this.querySelector('svg, i').style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 8px; display: flex; align-items: center;" aria-label="Toggle {{ $cat->name }} subcategories">
-                                    <i data-lucide="chevron-down" style="width: 18px; height: 18px; transition: transform 0.2s;"></i>
-                                </button>
-                            </div>
-                            <div id="sub-mobile-{{ $cat->id }}" style="display: none; padding-left: 16px; margin-bottom: 8px; border-left: 2px solid var(--accent);">
-                                @foreach($cat->children as $child)
-                                    <a href="{{ route('store.shop', ['category' => $child->slug]) }}" class="mobile-nav-link" style="font-size: 15px; font-weight: 500; border-bottom: none; padding: 6px 0; color: var(--text-secondary);">{{ $child->name }}</a>
-                                    @if($child->children->count() > 0)
-                                        <div style="padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.1);">
-                                            @foreach($child->children as $grandchild)
-                                                <a href="{{ route('store.shop', ['category' => $grandchild->slug]) }}" class="mobile-nav-link" style="font-size: 13px; font-weight: 400; border-bottom: none; padding: 4px 0; color: var(--text-secondary); opacity: 0.85;">- {{ $grandchild->name }}</a>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
-                    @else
-                        <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link">{{ $cat->name }}</a>
-                    @endif
-                @endforeach
-            @endif
-            <a href="{{ route('seo.price_hub', 50) }}" class="mobile-nav-link" style="color: var(--accent);">Under $50 Deals</a>
-            @auth
-                @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
-                    <a href="{{ route('admin.dashboard') }}" class="mobile-nav-link">Admin Dashboard</a>
-                @else
-                    <a href="{{ route('account.dashboard') }}" class="mobile-nav-link">My Account</a>
+        <div class="mobile-menu-header">
+            <a href="{{ route('store.home') }}" class="logo-container">
+                <img src="{{ asset('brand/atoz-logo.png') }}" alt="AtoZ Gadgetz Logo">
+            </a>
+            <button class="mobile-menu-close" id="closeMenuBtn" aria-label="Close Menu"><i data-lucide="x"></i></button>
+        </div>
+        <div class="mobile-menu-body">
+            <form action="{{ route('store.shop') }}" method="GET" class="mobile-search-form">
+                <button type="submit" class="search-icon-btn" aria-label="Search"><i data-lucide="search"></i></button>
+                <input type="text" name="q" value="{{ request('q') }}" placeholder="Search products..." aria-label="Search products">
+            </form>
+
+            <div class="mobile-nav-list">
+                <a href="{{ route('store.shop') }}" class="mobile-nav-link {{ request()->routeIs('store.shop') && !request()->hasAny(['category', 'max_price', 'q']) ? 'active' : '' }}">
+                    <span><i data-lucide="grid" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:8px;color:var(--accent);"></i> All Products</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+                <a href="{{ route('seo.usa_national') }}" class="mobile-nav-link {{ request()->routeIs('seo.usa*') ? 'active' : '' }}">
+                    <span>🇺🇸 USA 50-State Hub</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+                <a href="{{ route('seo.price_hub', 50) }}" class="mobile-nav-link {{ request()->routeIs('seo.price_hub') ? 'active' : '' }}">
+                    <span>⚡ Under $50 Deals</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+                <a href="{{ route('seo.gifts_index') }}" class="mobile-nav-link {{ request()->routeIs('seo.gift*') ? 'active' : '' }}">
+                    <span>🎁 Tech Gifts Guide</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+                <a href="{{ route('seo.guides_index') }}" class="mobile-nav-link {{ request()->routeIs('seo.guide*') ? 'active' : '' }}">
+                    <span>📖 Buying Guides & Reviews</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+                <a href="{{ route('seo.faq_master') }}" class="mobile-nav-link {{ request()->routeIs('seo.faq*') ? 'active' : '' }}">
+                    <span>❓ FAQ & Help Center</span>
+                    <i data-lucide="chevron-right" style="width:16px;height:16px;color:var(--text-secondary);"></i>
+                </a>
+
+                @if(isset($globalCategories))
+                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                        <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; padding-left: 8px; margin-bottom: 8px;">Categories</div>
+                        @foreach($globalCategories as $cat)
+                            @if($cat->children->count() > 0)
+                                <div style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 4px; background: rgba(255,255,255,0.015);">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 2px 0;">
+                                        <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link" style="flex: 1; padding: 8px 10px;">{{ $cat->name }}</a>
+                                        <button type="button" onclick="const sm = document.getElementById('sub-mobile-{{ $cat->id }}'); const open = sm.style.display !== 'none'; sm.style.display = open ? 'none' : 'block'; this.querySelector('svg, i').style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 8px 10px; display: flex; align-items: center;" aria-label="Toggle {{ $cat->name }}">
+                                            <i data-lucide="chevron-down" style="width: 16px; height: 16px; transition: transform 0.2s;"></i>
+                                        </button>
+                                    </div>
+                                    <div id="sub-mobile-{{ $cat->id }}" style="display: none; padding-left: 14px; margin: 0 10px 8px 10px; border-left: 2px solid var(--accent);">
+                                        @foreach($cat->children as $child)
+                                            <a href="{{ route('store.shop', ['category' => $child->slug]) }}" style="font-size: 13.5px; font-weight: 500; display: block; padding: 6px 0; color: var(--text-secondary); text-decoration: none;">{{ $child->name }}</a>
+                                            @if($child->children->count() > 0)
+                                                <div style="padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.08); margin: 2px 0 6px 0;">
+                                                    @foreach($child->children as $grandchild)
+                                                        <a href="{{ route('store.shop', ['category' => $grandchild->slug]) }}" style="font-size: 12.5px; font-weight: 400; display: block; padding: 3px 0; color: var(--text-muted); text-decoration: none;">• {{ $grandchild->name }}</a>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('store.shop', ['category' => $cat->slug]) }}" class="mobile-nav-link" style="padding: 8px 10px;">{{ $cat->name }}</a>
+                            @endif
+                        @endforeach
+                    </div>
                 @endif
-                <a href="#" onclick="event.preventDefault(); document.getElementById('mobile-logout').submit();" class="mobile-nav-link" style="color: #ef4444;">Logout</a>
-                <form id="mobile-logout" method="POST" action="{{ route('logout') }}" style="display:none;">@csrf</form>
-            @else
-                <a href="{{ route('login') }}" class="mobile-nav-link" style="color: var(--accent);">Login / Register</a>
-            @endauth
+
+                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                    @auth
+                        @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+                            <a href="{{ route('admin.dashboard') }}" class="mobile-nav-link">
+                                <span><i data-lucide="shield" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:8px;color:var(--brand-admin);"></i> Admin Dashboard</span>
+                            </a>
+                        @else
+                            <a href="{{ route('account.dashboard') }}" class="mobile-nav-link">
+                                <span><i data-lucide="user" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:8px;color:var(--accent);"></i> My Account</span>
+                            </a>
+                        @endif
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('mobile-logout').submit();" class="mobile-nav-link" style="color: #ef4444;">
+                            <span><i data-lucide="log-out" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:8px;"></i> Logout</span>
+                        </a>
+                        <form id="mobile-logout" method="POST" action="{{ route('logout') }}" style="display:none;">@csrf</form>
+                    @else
+                        <a href="{{ route('login') }}" class="mobile-nav-link" style="color: var(--accent); font-weight: 700;">
+                            <span><i data-lucide="log-in" style="width:16px;height:16px;display:inline;vertical-align:middle;margin-right:8px;"></i> Login / Register</span>
+                        </a>
+                    @endauth
+                </div>
+            </div>
         </div>
     </div>
 
@@ -504,33 +728,96 @@
         </div>
     </footer>
     
+    <!-- App-Like Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <a href="{{ route('store.home') }}" class="bottom-nav-item {{ request()->routeIs('store.home') ? 'active' : '' }}">
+            <i data-lucide="home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ route('store.shop') }}" class="bottom-nav-item {{ request()->routeIs('store.shop') && !request('q') ? 'active' : '' }}">
+            <i data-lucide="grid"></i>
+            <span>Shop</span>
+        </a>
+        <button type="button" class="bottom-nav-item" id="bottomNavSearchBtn" aria-label="Search Catalog">
+            <i data-lucide="search"></i>
+            <span>Search</span>
+        </button>
+        <a href="{{ route('store.cart') }}" class="bottom-nav-item {{ request()->routeIs('store.cart') ? 'active' : '' }}" style="position: relative;">
+            <i data-lucide="shopping-cart"></i>
+            <span>Cart</span>
+            @if(session('cart') && count(session('cart')) > 0)
+                <span class="bottom-nav-badge">{{ count(session('cart')) }}</span>
+            @endif
+        </a>
+        @auth
+            @if(auth()->user()->role_id == 1 || auth()->user()->role_id == 2)
+                <a href="{{ route('admin.dashboard') }}" class="bottom-nav-item {{ request()->routeIs('admin.*') ? 'active' : '' }}">
+                    <i data-lucide="shield"></i>
+                    <span>Admin</span>
+                </a>
+            @else
+                <a href="{{ route('account.dashboard') }}" class="bottom-nav-item {{ request()->routeIs('account.*') ? 'active' : '' }}">
+                    <i data-lucide="user"></i>
+                    <span>Account</span>
+                </a>
+            @endif
+        @else
+            <a href="{{ route('login') }}" class="bottom-nav-item {{ request()->routeIs('login') ? 'active' : '' }}">
+                <i data-lucide="user"></i>
+                <span>Account</span>
+            </a>
+        @endauth
+    </nav>
+    
     <script>
         // Wait for DOM and Lucide (deferred load)
         document.addEventListener('DOMContentLoaded', () => {
             if(typeof lucide !== 'undefined') {
                 lucide.createIcons();
             } else {
-                // If deferred script is still loading
                 window.addEventListener('load', () => lucide.createIcons());
             }
 
-            // Mobile Menu Logic
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            // Mobile Menu Drawer Logic
+            const mobileBtn = document.getElementById('mobileMenuToggleBtn');
             const closeBtn = document.getElementById('closeMenuBtn');
             const mobileMenu = document.getElementById('mobileMenu');
+            const menuBackdrop = document.getElementById('mobileMenuBackdrop');
             
-            if(mobileBtn && mobileMenu) {
-                mobileBtn.addEventListener('click', () => {
-                    mobileMenu.classList.add('active');
-                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
-                });
+            function openMobileDrawer() {
+                if (mobileMenu) mobileMenu.classList.add('active');
+                if (menuBackdrop) menuBackdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
-            if(closeBtn && mobileMenu) {
-                closeBtn.addEventListener('click', () => {
-                    mobileMenu.classList.remove('active');
-                    document.body.style.overflow = '';
-                });
+            function closeMobileDrawer() {
+                if (mobileMenu) mobileMenu.classList.remove('active');
+                if (menuBackdrop) menuBackdrop.classList.remove('active');
+                document.body.style.overflow = '';
             }
+
+            if(mobileBtn) mobileBtn.addEventListener('click', openMobileDrawer);
+            if(closeBtn) closeBtn.addEventListener('click', closeMobileDrawer);
+            if(menuBackdrop) menuBackdrop.addEventListener('click', closeMobileDrawer);
+
+            // Mobile Slide-down Search Bar Logic
+            const searchTrigger = document.getElementById('mobileSearchTrigger');
+            const bottomNavSearch = document.getElementById('bottomNavSearchBtn');
+            const searchBarWrap = document.getElementById('mobileSearchBar');
+            const closeSearchBtn = document.getElementById('closeMobileSearch');
+            const searchInput = document.getElementById('mobileSearchInput');
+
+            function toggleMobileSearch(e) {
+                if (e) e.preventDefault();
+                if (!searchBarWrap) return;
+                const isOpen = searchBarWrap.classList.toggle('active');
+                if (isOpen && searchInput) {
+                    setTimeout(() => searchInput.focus(), 120);
+                }
+            }
+
+            if (searchTrigger) searchTrigger.addEventListener('click', toggleMobileSearch);
+            if (bottomNavSearch) bottomNavSearch.addEventListener('click', toggleMobileSearch);
+            if (closeSearchBtn) closeSearchBtn.addEventListener('click', () => searchBarWrap && searchBarWrap.classList.remove('active'));
         });
 
         // Header Scroll Effect
@@ -601,11 +888,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Intercept Search Form
-            const searchForm = document.querySelector('.search-bar');
-            if (searchForm) {
-                searchForm.addEventListener('submit', requireAuth);
-            }
+            // Intercept Search Forms
+            const searchForms = document.querySelectorAll('.search-bar, .mobile-search-form');
+            searchForms.forEach(form => {
+                form.addEventListener('submit', requireAuth);
+            });
             
             // Intercept Add to Cart Forms
             const cartForms = document.querySelectorAll('form[action*="cart/add"]');

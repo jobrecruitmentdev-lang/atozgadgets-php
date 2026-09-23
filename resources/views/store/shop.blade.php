@@ -44,34 +44,49 @@
 
 @section('content')
 <style>
-    .shop-header { margin-bottom: 32px; border-bottom: 1px solid var(--border-color); padding-bottom: 24px; }
-    .shop-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; color: var(--text-primary); }
+    .shop-header { margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 18px; }
+    @media (min-width: 768px) { .shop-header { margin-bottom: 32px; padding-bottom: 24px; } }
+    .shop-header h1 { font-size: clamp(24px, 4vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; color: var(--text-primary); }
     
-    .shop-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-    .filter-pills { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .filter-pill { font-size: 13px; padding: 6px 14px; border-radius: 50px; background: var(--hover-subtle); border: 1px solid var(--border-color); color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+    .shop-toolbar { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+    @media (min-width: 768px) { .shop-toolbar { flex-direction: row; justify-content: space-between; align-items: center; } }
+    
+    /* Horizontal Swipeable Price Pills */
+    .filter-pills { display: flex; gap: 8px; align-items: center; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
+    .filter-pills::-webkit-scrollbar { display: none; }
+    .filter-pill { font-size: 12.5px; padding: 6px 14px; border-radius: 50px; background: var(--hover-subtle); border: 1px solid var(--border-color); color: var(--text-secondary); text-decoration: none; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
     .filter-pill.active, .filter-pill:hover { border-color: var(--accent); color: var(--accent); background: var(--selection-bg); }
 
-    .sort-select { padding: 8px 14px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; cursor: pointer; outline: none; }
+    .shop-actions-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
+    @media (min-width: 768px) { .shop-actions-row { width: auto; } }
+
+    .sort-select { padding: 8px 12px; border-radius: 8px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 13px; cursor: pointer; outline: none; width: 100%; max-width: 190px; }
     .sort-select:focus { border-color: var(--accent); }
     
-    .mobile-filter-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; background: var(--selection-bg); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; }
+    .mobile-filter-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: var(--selection-bg); border: 1px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     @media (min-width: 768px) { .mobile-filter-btn { display: none; } }
 
-    .shop-layout { display: flex; flex-direction: column; gap: 32px; }
+    .shop-layout { display: flex; flex-direction: column; gap: 24px; }
     @media (min-width: 768px) { .shop-layout { flex-direction: row; gap: 40px; } }
     
-    .sidebar { width: 100%; flex-shrink: 0; }
+    /* Responsive Sidebar & Slide-Up Mobile Bottom Sheet */
     @media (max-width: 767px) {
-        .sidebar { display: none; }
-        .sidebar.active { display: block; animation: fadeIn 0.2s ease; }
+        .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 2001; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .sidebar-backdrop.active { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; bottom: 0; left: 0; right: 0; max-height: 80vh; background: var(--bg-surface-elevated); border-top: 1px solid var(--border-color); border-radius: 20px 20px 0 0; z-index: 2002; padding: 20px 16px; overflow-y: auto; transform: translateY(100%); transition: transform 0.35s var(--ease-premium); box-shadow: 0 -10px 40px rgba(0,0,0,0.7); width: 100%; }
+        .sidebar.active { transform: translateY(0); }
+        .sidebar-header-mobile { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .sidebar-card { background: transparent !important; border: none !important; padding: 0 !important; margin: 0 !important; }
     }
-    @media (min-width: 768px) { .sidebar { width: 260px; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; } }
+    @media (min-width: 768px) {
+        .sidebar-backdrop, .sidebar-header-mobile { display: none !important; }
+        .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 100px; max-height: calc(100vh - 120px); overflow-y: auto; }
+        .sidebar-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+    }
     
-    .sidebar-card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
     .sidebar h3 { font-size: 16px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.3px; color: var(--text-primary); }
     .cat-list { display: flex; flex-direction: column; gap: 6px; }
-    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; min-height: 40px; }
+    .cat-list a { padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text-secondary); transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; text-decoration: none; min-height: 38px; }
     .cat-list a:hover { background: var(--hover-subtle); color: var(--text-primary); }
     .cat-list a.active { background: var(--selection-bg); color: var(--accent); font-weight: 600; }
 
@@ -85,18 +100,18 @@
     .avail-confirming { color: #3b82f6; }
 
     .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
-    .price-main { font-size: 20px; font-weight: 800; color: var(--accent); }
-    .price-old { font-size: 14px; text-decoration: line-through; color: var(--text-secondary); }
+    .price-main { font-size: 18px; font-weight: 800; color: var(--accent); }
+    @media (min-width: 640px) { .price-main { font-size: 20px; } }
+    .price-old { font-size: 13px; text-decoration: line-through; color: var(--text-secondary); }
     
     .main-content { flex-grow: 1; min-width: 0; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div class="shop-header" data-aos="fade-up">
     @if(isset($currentCategory))
-        <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; flex-wrap: wrap;">
-            <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:14px;"></i>
-            <a href="{{ route('store.shop') }}" style="transition: color 0.3s;">Products</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+        <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; flex-wrap: wrap;">
+            <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
+            <a href="{{ route('store.shop') }}" style="transition: color 0.3s;">Products</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
             
             @php
                 $cat = $currentCategory;
@@ -110,19 +125,19 @@
                 @if($loop->last)
                     <span style="color: var(--accent); font-weight: 600;">{{ $h->name }}</span>
                 @else
-                    <a href="{{ route('store.shop', ['category' => $h->slug]) }}" style="transition: color 0.3s;">{{ $h->name }}</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+                    <a href="{{ route('store.shop', ['category' => $h->slug]) }}" style="transition: color 0.3s;">{{ $h->name }}</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
                 @endif
             @endforeach
         </div>
         <h1>{{ $currentCategory->name }}</h1>
-        <p style="color: var(--text-secondary); font-size: 16px;">Curated selection of {{ strtolower($currentCategory->name) }} ready to ship worldwide.</p>
+        <p style="color: var(--text-secondary); font-size: 14.5px;">Curated selection of {{ strtolower($currentCategory->name) }} ready to ship worldwide.</p>
     @else
-        <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; flex-wrap: wrap;">
-            <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:14px;"></i>
+        <div class="breadcrumb" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; flex-wrap: wrap;">
+            <a href="{{ route('store.home') }}" style="transition: color 0.3s;">Home</a> <i data-lucide="chevron-right" style="width:13px;height:13px;"></i>
             <span style="color: var(--accent); font-weight: 600;">All Products</span>
         </div>
         <h1>All Products</h1>
-        <p style="color: var(--text-secondary); font-size: 16px;">Browse our complete catalog of innovative gadgets and electronics.</p>
+        <p style="color: var(--text-secondary); font-size: 14.5px;">Browse our complete catalog of innovative gadgets and electronics.</p>
     @endif
 </div>
 
@@ -134,18 +149,19 @@
         <a href="{{ route('store.shop', array_merge(request()->query(), ['min_price' => 50])) }}" class="filter-pill {{ request('min_price') == 50 ? 'active' : '' }}">$50+</a>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <button type="button" class="mobile-filter-btn" id="mobileFilterToggle" onclick="document.querySelector('.sidebar').classList.toggle('active'); this.innerText = document.querySelector('.sidebar').classList.contains('active') ? 'Hide Filters ✕' : 'Filter Categories ☰';">
-            Filter Categories ☰
+    <div class="shop-actions-row">
+        <button type="button" class="mobile-filter-btn" id="openShopFilterBtn">
+            <i data-lucide="sliders-horizontal" style="width:15px;height:15px;"></i>
+            <span>Filter Categories</span>
         </button>
 
-        <form method="GET" action="{{ route('store.shop') }}" id="sortForm">
+        <form method="GET" action="{{ route('store.shop') }}" id="sortForm" style="flex: 1; display:flex; justify-content: flex-end;">
             @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
             @if(request('q')) <input type="hidden" name="q" value="{{ request('q') }}"> @endif
             @if(request('min_price')) <input type="hidden" name="min_price" value="{{ request('min_price') }}"> @endif
             @if(request('max_price')) <input type="hidden" name="max_price" value="{{ request('max_price') }}"> @endif
             
-            <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()">
+            <select name="sort" class="sort-select" onchange="document.getElementById('sortForm').submit()" aria-label="Sort products">
                 <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>Sort by: Latest</option>
                 <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
                 <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
@@ -155,9 +171,19 @@
 </div>
 
 <div class="shop-layout">
-    <aside class="sidebar" data-aos="fade-right" data-aos-delay="100">
+    <!-- Mobile Filter Backdrop -->
+    <div class="sidebar-backdrop" id="shopFilterBackdrop"></div>
+
+    <aside class="sidebar" id="shopSidebar">
+        <div class="sidebar-header-mobile">
+            <h3 style="margin: 0; font-size: 17px;">Select Category</h3>
+            <button type="button" id="closeShopFilterBtn" style="background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 6px;">
+                <i data-lucide="x" style="width:20px;height:20px;"></i>
+            </button>
+        </div>
+
         <div class="sidebar-card">
-            <h3>Categories</h3>
+            <h3 class="desktop-only-heading">Categories</h3>
             <div class="cat-list">
                 <a href="{{ route('store.shop') }}" class="{{ !request('category') ? 'active' : '' }}">
                     <span>All Categories</span>
@@ -170,6 +196,30 @@
             </div>
         </div>
     </aside>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const openFilterBtn = document.getElementById('openShopFilterBtn');
+            const closeFilterBtn = document.getElementById('closeShopFilterBtn');
+            const filterBackdrop = document.getElementById('shopFilterBackdrop');
+            const shopSidebar = document.getElementById('shopSidebar');
+
+            function openFilter() {
+                if (shopSidebar) shopSidebar.classList.add('active');
+                if (filterBackdrop) filterBackdrop.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeFilter() {
+                if (shopSidebar) shopSidebar.classList.remove('active');
+                if (filterBackdrop) filterBackdrop.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            if (openFilterBtn) openFilterBtn.addEventListener('click', openFilter);
+            if (closeFilterBtn) closeFilterBtn.addEventListener('click', closeFilter);
+            if (filterBackdrop) filterBackdrop.addEventListener('click', closeFilter);
+        });
+    </script>
 
     <div class="main-content">
         <div class="grid">
