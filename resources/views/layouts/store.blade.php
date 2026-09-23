@@ -622,12 +622,14 @@
                                     </a>
                                     <div class="mega-menu">
                                         @foreach($cat->children as $child)
-                                            <div>
-                                                <a href="{{ route('store.shop', ['category' => $child->slug]) }}" style="padding: 10px 16px; font-weight: 700; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; display: block; text-decoration: none; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">{{ $child->name }}</a>
-                                                @if($child->children->count() > 0)
+                                            @if($child->children->count() > 0)
+                                                <div style="margin-bottom: 6px;">
+                                                    <a href="{{ route('store.shop', ['category' => $child->slug]) }}" style="font-weight: 700; color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">{{ $child->name }}</a>
                                                     @include('store.partials.mega_tree', ['categories' => $child->children, 'depth' => 0])
-                                                @endif
-                                            </div>
+                                                </div>
+                                            @else
+                                                <a href="{{ route('store.shop', ['category' => $child->slug]) }}">{{ $child->name }}</a>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </div>

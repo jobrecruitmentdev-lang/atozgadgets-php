@@ -98,8 +98,13 @@ class CatalogController extends Controller
                 ]);
             }
 
-            $category = (!empty($data['categoryId']) ? \App\Models\Category::find($data['categoryId']) : null)
-                ?: (\App\Models\Category::first() ?: \App\Models\Category::create(['name' => $data['category'] ?? 'General', 'slug' => 'cat-' . uniqid(), 'status' => 'active']));
+            // Intelligent Category Resolution & Auto-Discovery
+            $resolver = app(\App\Services\Catalog\CategoryResolverService::class);
+            $category = $resolver->resolveOrCreateCategory(
+                $data['category'] ?? null,
+                $data['title'] ?? null,
+                !empty($data['categoryId']) ? (int)$data['categoryId'] : null
+            );
             $categoryId = $category->id;
             $categoryName = $category->name;
 
