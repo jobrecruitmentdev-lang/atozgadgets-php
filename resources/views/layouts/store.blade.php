@@ -266,6 +266,7 @@
 
         /* Categories Row */
         .categories-row { border-top: 1px solid var(--border-color); display: none; background: var(--bg-base); backdrop-filter: blur(12px); position: relative; z-index: 1001; }
+        .categories-row .container { max-width: 1360px; }
         @media (min-width: 768px) { .categories-row { display: block; } }
         .categories-nav { display: flex; justify-content: flex-start; align-items: center; gap: 3px; padding: 3px 0; overflow: visible; flex-wrap: wrap; }
         .cat-link { font-size: 12.5px; font-weight: 500; color: var(--text-secondary); padding: 5px 8px; min-height: 32px; border-radius: 6px; transition: all 0.2s; display: flex; align-items: center; gap: 4px; white-space: nowrap; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
