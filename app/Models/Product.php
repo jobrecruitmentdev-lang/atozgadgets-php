@@ -194,10 +194,16 @@ class Product extends Model
      */
     public function getCjCostPriceAttribute(): ?float
     {
-        if ($this->relationLoaded('cjProduct') ? $this->cjProduct : $this->cjProduct()->first()) {
-            $cost = $this->cjProduct->original_price ?? null;
+        $cj = $this->relationLoaded('cjProduct') ? $this->cjProduct : $this->cjProduct()->first();
+        if ($cj) {
+            $cost = $cj->original_price ?? null;
             if (!is_null($cost) && (float)$cost > 0) {
                 return (float)$cost;
+            }
+            // Fallback for legacy imported items where raw CJ cost was stored in sell_price
+            $legacyCost = $cj->sell_price ?? null;
+            if (!is_null($legacyCost) && (float)$legacyCost > 0 && (float)$legacyCost < (float)$this->price) {
+                return (float)$legacyCost;
             }
         }
 
