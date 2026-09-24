@@ -230,9 +230,7 @@
             foreach($cart as $id => $item) {
                 $subtotal += ((float)($item['price'] ?? 0) * (int)($item['quantity'] ?? 1));
             }
-            $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
-            $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
-            $shippingCost = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0 : $stdRate;
+            $shippingCost = \App\Services\Shipping\ShippingService::calculateShipping($subtotal, ['country' => 'US'], $cart);
             $grandTotal = $subtotal + $shippingCost;
             $itemCount = count($cart ?? []);
         @endphp
@@ -244,7 +242,7 @@
                 <span id="mobileSummaryToggleText" style="font-weight:600; font-size:13.5px; color:var(--text-primary);">Order Summary ({{ $itemCount }} {{ Str::plural('item', $itemCount) }})</span>
                 <i data-lucide="chevron-down" id="mobileSummaryChevron" style="width:14px;height:14px;color:var(--text-secondary);transition:transform 0.2s;"></i>
             </div>
-            <div style="font-weight:800; font-size:15px; color:var(--accent);">${{ number_format($grandTotal, 2) }}</div>
+            <div style="font-weight:800; font-size:15px; color:var(--accent);" id="coMobileGrandTotal">${{ number_format($grandTotal, 2) }}</div>
         </div>
 
         <div class="summary-card" id="checkoutSummaryCard">
@@ -283,12 +281,9 @@
                 <div class="total-row"><span style="color:var(--text-secondary);">Subtotal</span><span>${{ number_format($subtotal, 2) }}</span></div>
                 <div class="total-row">
                     <span style="color:var(--text-secondary);">Shipping</span>
-                    @if($subtotal >= $freeThreshold) <span class="free-text">FREE</span>
-                    @elseif($subtotal > 0) <span>${{ number_format($stdRate, 2) }}</span>
-                    @else <span>$0.00</span>
-                    @endif
+                    <span id="coShippingVal">{{ $shippingCost == 0 ? 'FREE' : '$' . number_format($shippingCost, 2) }}</span>
                 </div>
-                <div class="total-row final"><span>Total</span><span style="color:var(--accent);">${{ number_format($grandTotal, 2) }}</span></div>
+                <div class="total-row final"><span>Total</span><span style="color:var(--accent);" id="coGrandTotal">${{ number_format($grandTotal, 2) }}</span></div>
             </div>
         </div>
     </div>
@@ -362,6 +357,16 @@
                 if (data.eligible) {
                     eligibilityBox.style.background = 'rgba(34, 197, 94, 0.08)';
                     eligibilityBox.style.border = '1px solid rgba(34, 197, 94, 0.25)';
+                    const fee = (data.shipping_fee !== undefined && data.shipping_fee !== null) ? parseFloat(data.shipping_fee) : 5.07;
+                    const shippingEl = document.getElementById('coShippingVal');
+                    const grandTotalEl = document.getElementById('coGrandTotal');
+                    const mobileTotalEl = document.getElementById('coMobileGrandTotal');
+                    const currentSubtotal = {{ (float)$subtotal }};
+
+                    if (shippingEl) shippingEl.innerText = fee > 0 ? '$' + fee.toFixed(2) : 'FREE';
+                    if (grandTotalEl) grandTotalEl.innerText = '$' + (currentSubtotal + fee).toFixed(2);
+                    if (mobileTotalEl) mobileTotalEl.innerText = '$' + (currentSubtotal + fee).toFixed(2);
+
                     eligibilityContent.innerHTML = `
                         <div style="display: flex; align-items: flex-start; gap: 10px;">
                             <div style="color: #22c55e; font-size: 16px; margin-top: 1px;">✓</div>
@@ -369,8 +374,8 @@
                                 <div style="font-weight: 600; color: #22c55e; margin-bottom: 2px;">Delivery Available to ${data.country_name || data.country}</div>
                                 <div style="color: var(--text-secondary); font-size: 12.5px;">
                                     <strong>Carrier:</strong> ${data.carrier || 'Express Direct Line'} · 
-                                    <strong>ETA:</strong> <span style="color: var(--accent); font-weight: 600;">${data.eta || '7–12 Business Days'}</span> · 
-                                    <strong>Hub:</strong> ${data.warehouse || 'Priority Distribution Hub'}
+                                    <strong>Live Freight:</strong> <span style="color:#10b981; font-weight:700;">$${fee.toFixed(2)}</span> · 
+                                    <strong>ETA:</strong> <span style="color: var(--accent); font-weight: 600;">${data.eta || '7–12 Business Days'}</span>
                                 </div>
                             </div>
                         </div>

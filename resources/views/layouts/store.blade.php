@@ -541,7 +541,11 @@
             $globalFreeThreshold = (int)\App\Models\Setting::get('free_shipping_threshold', 50);
         @endphp
         <div class="top-banner">
-            Free worldwide priority shipping on orders over ${{ $globalFreeThreshold }} · Express 3–7 Day Delivery · 100% Secure Checkout
+            @if($globalFreeThreshold >= 999 || $globalFreeThreshold <= 0)
+                Tracked Express Air Courier · Calculated Live at Checkout · 100% Insured Delivery
+            @else
+                Free worldwide priority shipping on orders over ${{ $globalFreeThreshold }} · Express 3–7 Day Delivery · 100% Secure Checkout
+            @endif
         </div>
         
         <div class="container">

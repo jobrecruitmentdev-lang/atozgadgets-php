@@ -48,7 +48,7 @@ class CheckoutService
             ];
         }
 
-        $shipping = ShippingService::calculateShipping($subtotal, $address);
+        $shipping = ShippingService::calculateShipping($subtotal, $address, $rawCart);
         $tax = TaxService::calculateTax($subtotal, $address);
         $grandTotal = round($subtotal + $shipping + $tax, 2);
 

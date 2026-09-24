@@ -116,7 +116,7 @@ class CjShippingEligibilityService
                     'carrier' => $corridor['default_carrier'],
                     'eta' => $corridor['eta'],
                     'warehouse' => ($country === 'US') ? 'US East & West Fulfillment Hub' : 'Priority International Air Hub',
-                    'shipping_fee' => 0.00,
+                    'shipping_fee' => ($country === 'US') ? 5.07 : 5.99,
                     'message' => "Express delivery available to {$corridor['name']} via {$corridor['default_carrier']} ({$corridor['eta']}).",
                 ];
             } else {
@@ -173,6 +173,11 @@ class CjShippingEligibilityService
                 $logisticAging = $bestMethod['logisticAging'] ?? (self::TIER1_CORRIDORS[$country]['eta'] ?? '3–7 Days');
                 $hubName = ($bestMethod['detected_origin'] ?? 'CN') === 'US' ? 'US Fulfillment & Distribution Hub' : 'Priority International Air Hub';
 
+                $rawFreight = $bestMethod['logisticPrice'] ?? ($bestMethod['logisticAgingDiscountPrice'] ?? null);
+                $freightFee = ($rawFreight !== null && is_numeric($rawFreight) && (float)$rawFreight > 0)
+                    ? (float)$rawFreight
+                    : ((in_array($country, ['US', 'CA', 'GB', 'DE', 'FR', 'AU'])) ? 5.07 : 8.99);
+
                 $result = [
                     'eligible' => true,
                     'country' => $country,
@@ -180,7 +185,7 @@ class CjShippingEligibilityService
                     'carrier' => $carrierName,
                     'eta' => is_numeric($logisticAging) ? "{$logisticAging} Business Days" : $logisticAging,
                     'warehouse' => $hubName,
-                    'shipping_fee' => 0.00,
+                    'shipping_fee' => round($freightFee, 2),
                     'message' => "Express delivery available to {$countryName} via {$carrierName}.",
                 ];
             } elseif (isset(self::TIER1_CORRIDORS[$country])) {
@@ -193,7 +198,7 @@ class CjShippingEligibilityService
                     'carrier' => $corridor['default_carrier'],
                     'eta' => $corridor['eta'],
                     'warehouse' => ($country === 'US') ? 'US East & West Fulfillment Hub' : 'Priority Global Distribution Hub',
-                    'shipping_fee' => 0.00,
+                    'shipping_fee' => ($country === 'US') ? 5.07 : 5.99,
                     'message' => "Express delivery available to {$corridor['name']} via {$corridor['default_carrier']} ({$corridor['eta']}).",
                 ];
             } else {
@@ -222,7 +227,7 @@ class CjShippingEligibilityService
                     'carrier' => $corridor['default_carrier'],
                     'eta' => $corridor['eta'],
                     'warehouse' => ($country === 'US') ? 'US East & West Fulfillment Hub' : 'Priority Global Distribution Hub',
-                    'shipping_fee' => 0.00,
+                    'shipping_fee' => ($country === 'US') ? 5.07 : 5.99,
                     'message' => "Express delivery available to {$corridor['name']}.",
                 ];
             } else {

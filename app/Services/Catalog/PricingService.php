@@ -15,11 +15,18 @@ class PricingService
     {
         $cost = max(0.01, $costPrice);
 
+        $pricingMode = \App\Models\Setting::get('pricing_mode', 'fixed_profit');
+
         if ($customMultiplier !== null && $customMultiplier > 0) {
             $rawPrice = round($cost * $customMultiplier, 2);
             $shippingAllowance = 0.00;
             $multiplier = $customMultiplier;
             $roundedPrice = $rawPrice;
+        } elseif ($pricingMode === 'fixed_profit') {
+            $fixedProfit = (float) \App\Models\Setting::get('fixed_profit_amount', 2.00);
+            $roundedPrice = round($cost + $fixedProfit, 2);
+            $shippingAllowance = 0.00;
+            $multiplier = round($roundedPrice / $cost, 2);
         } else {
             // Tiered dynamic pricing engine
             if ($cost < 10.00) {
