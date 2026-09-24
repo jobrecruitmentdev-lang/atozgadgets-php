@@ -23,9 +23,10 @@ class CatalogController extends Controller
     {
         $categories = \App\Models\Category::whereNull('parent_id')->with('children')->get();
         $cjCategories = CjProductService::getCategories();
+        $cjCategoryTree = CjProductService::getCategoriesTree();
         $brands = \App\Models\Brand::all();
         $stagedProducts = \App\Models\Product::where('fulfillment_type', 'cj')->get();
-        return view('admin.catalog.import', compact('categories', 'cjCategories', 'brands', 'stagedProducts'));
+        return view('admin.catalog.import', compact('categories', 'cjCategories', 'cjCategoryTree', 'brands', 'stagedProducts'));
     }
 
     public function getCjCategories()
@@ -43,6 +44,8 @@ class CatalogController extends Controller
     public function searchCjApi(Request $request)
     {
         $keyword = trim($request->query('keyword', ''));
+        $page = max(1, (int)$request->query('page', 1));
+        $size = max(10, min(100, (int)$request->query('size', 24)));
         $filters = [];
         
         if ($request->filled('categoryId')) {
@@ -58,17 +61,19 @@ class CatalogController extends Controller
             $filters['maxPrice'] = $request->query('maxPrice');
         }
 
-        $cacheKey = 'cj_search_' . md5($keyword . '_' . json_encode($filters));
-        $result = \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function () use ($keyword, $filters) {
-            return CjProductService::searchProducts($keyword, 1, 100, $filters);
+        $cacheKey = 'cj_search_v2_' . md5($keyword . '_' . json_encode($filters) . "_{$page}_{$size}");
+        $result = \Illuminate\Support\Facades\Cache::remember($cacheKey, 180, function () use ($keyword, $page, $size, $filters) {
+            return CjProductService::searchProducts($keyword, $page, $size, $filters);
         });
         
         return response()->json([
-            'result' => true,
-            'message' => 'Success',
+            'result' => $result['success'] ?? true,
+            'message' => $result['message'] ?? 'Success',
             'data' => [
                 'list' => $result['list'] ?? [],
                 'total' => $result['total'] ?? 0,
+                'page' => $page,
+                'size' => $size,
             ]
         ]);
     }

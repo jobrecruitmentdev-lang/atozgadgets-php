@@ -59,6 +59,33 @@
     .cat-item:hover, .cat-item.active { background: rgba(201, 169, 98, 0.15); color: var(--accent); }
     .cat-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(128,128,128,0.15); color: var(--text-secondary); }
 
+    /* CJ-Style Ship From Pills */
+    .warehouse-pills-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .warehouse-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-color); background: rgba(128,128,128,0.08); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .warehouse-pill:hover { border-color: var(--accent); color: var(--text-primary); }
+    .warehouse-pill.active { background: rgba(201, 169, 98, 0.2); border-color: var(--accent); color: var(--accent); font-weight: 700; box-shadow: 0 0 10px rgba(201, 169, 98, 0.15); }
+
+    /* CJ-Style Visual Category Navigation Bar (Screenshot 1149) */
+    .cj-cat-nav-wrapper { position: relative; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 14px; }
+    .cj-cat-scroll-container { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+    .cj-cat-scroll-container::-webkit-scrollbar { display: none; }
+    
+    .cj-cat-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500; border: 1px solid transparent; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .cj-cat-btn:hover { background: rgba(128,128,128,0.1); color: var(--text-primary); }
+    .cj-cat-btn.active { background: rgba(201, 169, 98, 0.15); color: var(--accent); font-weight: 700; border-color: rgba(201, 169, 98, 0.3); }
+
+    /* Floating Subcategory Dropdown */
+    .cj-mega-dropdown { position: absolute; top: 6px; left: 0; width: 100%; max-width: 960px; background: #141419; border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 18px 40px rgba(0,0,0,0.7); z-index: 1000; padding: 18px; display: none; max-height: 420px; overflow-y: auto; }
+    .cj-mega-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+    .cj-sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+    .cj-sub-group-title { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+    .cj-third-item { font-size: 12px; color: var(--text-secondary); padding: 4px 6px; border-radius: 4px; cursor: pointer; transition: all 0.15s; display: block; }
+    .cj-third-item:hover { color: #fff; background: rgba(201, 169, 98, 0.15); padding-left: 8px; }
+
+    /* Active Filter Badge */
+    .active-cat-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 16px; background: rgba(201, 169, 98, 0.2); border: 1px solid var(--accent); color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 10px; }
+    .active-cat-badge button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; display: inline-flex; align-items: center; }
+
     /* Quick Filter Chips */
     .quick-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
     .quick-chip { font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 16px; background: rgba(128,128,128,0.08); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; }
@@ -293,93 +320,152 @@
 <!-- FETCH FROM CJ TAB -->
 <div id="tab-fetch" class="tab-content">
     <div class="import-toolbar">
-        <div class="toolbar-header">
-            <i data-lucide="layers" style="width:18px; color:var(--accent);"></i>
-            Catalog Import & Pricing Parameters
+        <div class="toolbar-header" style="justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="layers" style="width:18px; color:var(--accent);"></i>
+                <span>CJ Supplier Live Catalog Search</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px;">
+                <i data-lucide="shield-check" style="width:14px; color:var(--accent);"></i>
+                Elasticsearch V2 & Tiered Pricing Active
+            </div>
         </div>        
-        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-            <div class="form-group">
-                <label><i data-lucide="filter"></i> CJ Supplier Category (680+ Types)</label>
-                <div class="cat-combo-wrapper" id="catComboWrapper">
-                    <div class="cat-input-box">
-                        <input type="text" id="cjCategorySearchInput" placeholder="Search 680+ categories..." autocomplete="off">
-                        <button type="button" class="cat-clear-btn" id="btnClearCategory" title="Clear category">&times;</button>
-                    </div>
-                    <input type="hidden" id="cjCategoryFilter" value="">
-                    <div class="cat-dropdown-panel" id="cjCategoryDropdown">
-                        <div class="cat-item active" data-id="" data-name="all cj categories">
-                            <span class="cat-item-name">All CJ Categories (Entire Catalog)</span>
-                            <span class="cat-badge">All</span>
-                        </div>
-                        @if(isset($cjCategories))
-                            @foreach($cjCategories as $cjCat)
-                                <div class="cat-item" data-id="{{ $cjCat['id'] }}" data-name="{{ strtolower($cjCat['name']) }}">
-                                    <span class="cat-item-name">{{ $cjCat['name'] }}</span>
-                                    <span class="cat-badge">{{ ($cjCat['level'] ?? 1) == 1 ? 'Main' : 'Sub' }}</span>
-                                </div>
-                            @endforeach
-                        @endif
-                    </div>
+
+        <!-- 1. Search Bar Area -->
+        <div class="search-area" style="margin-top: 0;">
+            <div class="search-input-wrapper">
+                <span class="search-icon"><i data-lucide="search"></i></span>
+                <input type="text" id="searchInput" placeholder="Search CJ Dropshipping catalog (e.g. whiteboard eraser, smartwatch, projector, drone)..." onkeypress="if(event.key === 'Enter') { searchCJ(); }">
+            </div>
+            <button class="btn-search" onclick="searchCJ()" id="searchBtn">
+                <i data-lucide="sparkles" id="searchIcon"></i> Fetch Products
+            </button>
+        </div>
+
+        <!-- 2. Ship From (Warehouses) Pills -->
+        <div class="warehouse-pills-row">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-right: 4px; display: flex; align-items: center; gap: 4px;">
+                <i data-lucide="map-pin" style="width:13px;"></i> Ship From:
+            </span>
+            <input type="hidden" id="countryFilter" value="">
+            <button type="button" class="warehouse-pill active" onclick="setWarehouse('', this)">🌐 All Global</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('US', this)">🇺🇸 United States</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('CN', this)">🇨🇳 China</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('DE', this)">🇩🇪 Germany</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('GB', this)">🇬🇧 United Kingdom</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('CA', this)">🇨🇦 Canada</button>
+            <button type="button" class="warehouse-pill" onclick="setWarehouse('MX', this)">🇲🇽 Mexico</button>
+        </div>
+
+        <!-- 3. CJ Visual Category Navigation Bar (Screenshot 1149) -->
+        <div class="cj-cat-nav-wrapper" id="cjCatNavWrapper">
+            <input type="hidden" id="cjCategoryFilter" value="">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="grid" style="width:13px;"></i> CJ Categories:
+                </span>
+                <span style="font-size: 11px; color: var(--text-secondary);">Click any category to browse</span>
+            </div>
+
+            <div class="cj-cat-scroll-container" id="cjCatScroll">
+                <button type="button" class="cj-cat-btn active" onclick="selectCjCategory('', 'All Categories', '')" data-cat-id="">
+                    All
+                </button>
+                @if(isset($cjCategoryTree) && is_array($cjCategoryTree))
+                    @foreach($cjCategoryTree as $idx => $first)
+                        @php
+                            $hasSubs = !empty($first['subcategories']);
+                        @endphp
+                        <button type="button" class="cj-cat-btn" onclick="toggleCatDropdown({{ $idx }}, event)" data-cat-id="{{ $first['id'] }}">
+                            <span>{{ $first['name'] }}</span>
+                            @if($hasSubs)
+                                <span style="font-size: 10px; opacity: 0.7;">▾</span>
+                            @endif
+                        </button>
+                    @endforeach
+                @endif
+            </div>
+
+            <!-- Active Category Filter Badge -->
+            <div id="activeCatBadgeWrapper" style="display: none;">
+                <div class="active-cat-badge">
+                    <span id="activeCatLabel">Category: All</span>
+                    <button type="button" onclick="clearCjCategory()" title="Remove category filter">&times;</button>
                 </div>
             </div>
-            <div class="form-group">
-                <label><i data-lucide="map-pin"></i> Warehouse / Country</label>
-                <select id="countryFilter">
-                    <option value="">All Global Warehouses</option>
-                    <option value="US">🇺🇸 US Warehouse (Fast Ship)</option>
-                    <option value="CN">🇨🇳 CN Central Warehouse</option>
-                    <option value="DE">🇩🇪 DE European Warehouse</option>
-                    <option value="GB">🇬🇧 GB United Kingdom</option>
-                </select>
+
+            <!-- Floating Subcategory Mega Dropdown Area -->
+            <div id="cjMegaDropdownArea" style="position: relative;">
+                @if(isset($cjCategoryTree) && is_array($cjCategoryTree))
+                    @foreach($cjCategoryTree as $idx => $first)
+                        @if(!empty($first['subcategories']))
+                            <div class="cj-mega-dropdown" id="cjDropdown-{{ $idx }}">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                                    <div style="font-weight: 700; font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="folder" style="width: 14px; color: var(--accent);"></i>
+                                        <span>{{ $first['name'] }}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <button type="button" class="quick-chip active" style="font-size: 11px; padding: 4px 10px;" onclick="selectCjCategory('{{ $first['id'] }}', '{{ addslashes($first['name']) }}', ''); closeAllCatDropdowns();">
+                                            Browse All in {{ $first['name'] }}
+                                        </button>
+                                        <button type="button" onclick="closeAllCatDropdowns()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 16px; padding: 2px 6px;">&times;</button>
+                                    </div>
+                                </div>
+                                <div class="cj-sub-grid">
+                                    @foreach($first['subcategories'] as $sub)
+                                        <div style="background: rgba(128,128,128,0.04); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                            <div class="cj-sub-group-title" onclick="selectCjCategory('{{ $sub['id'] }}', '{{ addslashes($sub['name']) }}', '{{ addslashes($first['name']) }}'); closeAllCatDropdowns();" style="cursor: pointer;" title="Browse {{ $sub['name'] }}">
+                                                <span>{{ $sub['name'] }}</span>
+                                                <span style="font-size: 10px; opacity: 0.6;">↳</span>
+                                            </div>
+                                            @if(!empty($sub['children']))
+                                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                    @foreach(array_slice($sub['children'], 0, 8) as $third)
+                                                        <span class="cj-third-item" onclick="selectCjCategory('{{ $third['id'] }}', '{{ addslashes($third['name']) }}', '{{ addslashes($first['name']) }} > {{ addslashes($sub['name']) }}'); closeAllCatDropdowns();">
+                                                            {{ $third['name'] }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                @endif
             </div>
+        </div>
+
+        <!-- 4. Parameter Settings Grid -->
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);">
             <div class="form-group">
                 <label><i data-lucide="dollar-sign"></i> Price Range ($)</label>
                 <div style="display:flex; gap:6px; align-items:center;">
                     <input type="number" id="minPrice" placeholder="Min" style="width:50%;" min="0">
                     <span style="color:var(--text-secondary);">-</span>
                     <input type="number" id="maxPrice" placeholder="Max" style="width:50%;" min="0">
+                    <button type="button" class="btn-import" style="width:auto; padding:0 14px; height:42px;" onclick="searchCJ()">Apply</button>
                 </div>
             </div>
             <div class="form-group">
-                <label><i data-lucide="tag"></i> Storefront Destination</label>
+                <label style="display: flex; align-items: center; justify-content: space-between;">
+                    <span><i data-lucide="download"></i> Storefront Destination</span>
+                    <span style="font-size: 10px; color: var(--accent);">Target Store Category</span>
+                </label>
                 <select id="importCategory">
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                     @endforeach
                 </select>
             </div>
-        </div>
-
-        <!-- Quick Filter Chips -->
-        <div class="quick-chips">
-            <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-right: 4px;">Quick Categories:</span>
-            <button type="button" class="quick-chip active" onclick="selectQuickCategory('', 'All Categories')">🌐 All</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('sweatshirt', 'Sweatshirts & Apparel')">👕 Sweatshirts</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('projector', 'Projectors')">📽️ Projectors</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('watch', 'Smart Watches')">⌚ Smart Watches</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('drone', 'Drones & Toys')">🚁 Drones</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('lamp', 'Smart Lamps')">💡 Smart Lamps</button>
-            <button type="button" class="quick-chip" onclick="selectQuickCategory('speaker', 'Audio & Speakers')">🔊 Speakers</button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border-color);">
-            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-primary); cursor:pointer;">
-                <input type="checkbox" id="publishNow" style="accent-color:var(--accent); width:16px; height:16px; cursor:pointer;">
-                <span>Publish Immediately to Live Store (Default: <strong>Draft / Review</strong>)</span>
-            </label>
-            <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:6px;">
-                <i data-lucide="shield-check" style="width:14px; color:var(--accent);"></i> PID vs VID Auto-Variant Splitting & Tiered Pricing Active
+            <div class="form-group" style="justify-content: flex-end; padding-bottom: 6px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-primary); cursor:pointer;">
+                    <input type="checkbox" id="publishNow" style="accent-color:var(--accent); width:16px; height:16px; cursor:pointer;">
+                    <span>Publish Immediately to Live Store</span>
+                </label>
             </div>
-        </div>
-        
-        <div class="search-area" style="margin-top:14px;">
-            <div class="search-input-wrapper">
-                <span class="search-icon"><i data-lucide="search"></i></span>
-                <input type="text" id="searchInput" placeholder="Search CJ Dropshipping catalog (e.g. smartwatch, projector, drone)..." onkeypress="if(event.key === 'Enter') { searchCJ(); }">
-            </div>
-            <button class="btn-search" onclick="searchCJ()" id="searchBtn">
-                <i data-lucide="sparkles" id="searchIcon"></i> Fetch Products
-            </button>
         </div>
     </div>
     
@@ -481,105 +567,69 @@
         if (maxPrice) maxPrice.addEventListener('input', debouncedSearch);
         if (country) country.addEventListener('change', () => searchCJ());
 
-        // Category Combobox Dropdown Logic
-        if (catSearchInput && catDropdown) {
-            catSearchInput.addEventListener('focus', () => {
-                catDropdown.classList.add('show');
-            });
-
-            catSearchInput.addEventListener('input', () => {
-                catDropdown.classList.add('show');
-                const term = catSearchInput.value.toLowerCase().trim();
-                if (term) {
-                    btnClearCat.style.display = 'block';
-                } else {
-                    btnClearCat.style.display = 'none';
-                    catHidden.value = '';
-                }
-
-                const items = catDropdown.querySelectorAll('.cat-item');
-                let matchCount = 0;
-                items.forEach(item => {
-                    const name = item.getAttribute('data-name') || '';
-                    if (name.includes(term) || !term) {
-                        item.style.display = 'flex';
-                        matchCount++;
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-
-                debouncedSearch();
-            });
-
-            // Click option in category dropdown
-            catDropdown.addEventListener('click', (e) => {
-                const item = e.target.closest('.cat-item');
-                if (!item) return;
-
-                const catId = item.getAttribute('data-id') || '';
-                const catName = item.querySelector('.cat-item-name').innerText;
-
-                catHidden.value = catId;
-                catSearchInput.value = catId ? catName : '';
-                btnClearCat.style.display = catId ? 'block' : 'none';
-
-                catDropdown.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
-                item.classList.add('active');
-                catDropdown.classList.remove('show');
-
-                searchCJ();
-            });
-
-            // Clear Category Button
-            if (btnClearCat) {
-                btnClearCat.addEventListener('click', () => {
-                    catHidden.value = '';
-                    catSearchInput.value = '';
-                    btnClearCat.style.display = 'none';
-                    catDropdown.querySelectorAll('.cat-item').forEach(el => {
-                        el.style.display = 'flex';
-                        el.classList.remove('active');
-                    });
-                    const allItem = catDropdown.querySelector('.cat-item[data-id=""]');
-                    if (allItem) allItem.classList.add('active');
-                    searchCJ();
-                });
-            }
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                const wrapper = document.getElementById('catComboWrapper');
-                if (wrapper && !wrapper.contains(e.target)) {
-                    catDropdown.classList.remove('show');
-                }
-            });
-        }
-    });
-
-    function selectQuickCategory(kw, label) {
-        document.querySelectorAll('.quick-chip').forEach(btn => btn.classList.remove('active'));
-        if (event && event.target) {
-            event.target.classList.add('active');
-        }
-
-        const catHidden = document.getElementById('cjCategoryFilter');
-        const catSearchInput = document.getElementById('cjCategorySearchInput');
-        const btnClearCat = document.getElementById('btnClearCategory');
-        const searchInput = document.getElementById('searchInput');
-
-        if (!kw) {
-            // All
-            if (catHidden) catHidden.value = '';
-            if (catSearchInput) catSearchInput.value = '';
-            if (btnClearCat) btnClearCat.style.display = 'none';
-            if (searchInput) searchInput.value = '';
-        } else {
-            if (searchInput) searchInput.value = kw;
-        }
-
+    function setWarehouse(code, btn) {
+        document.querySelectorAll('.warehouse-pill').forEach(el => el.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        const countryInput = document.getElementById('countryFilter');
+        if (countryInput) countryInput.value = code;
         searchCJ();
     }
+
+    function toggleCatDropdown(idx, event) {
+        if (event) event.stopPropagation();
+        const dropdown = document.getElementById(`cjDropdown-${idx}`);
+        const isShown = dropdown && dropdown.classList.contains('show');
+        closeAllCatDropdowns();
+        if (dropdown && !isShown) {
+            dropdown.classList.add('show');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+
+    function closeAllCatDropdowns() {
+        document.querySelectorAll('.cj-mega-dropdown').forEach(el => el.classList.remove('show'));
+    }
+
+    function selectCjCategory(id, name, parentName) {
+        const catHidden = document.getElementById('cjCategoryFilter');
+        if (catHidden) catHidden.value = id;
+
+        // Update button active styling
+        document.querySelectorAll('.cj-cat-btn').forEach(btn => {
+            if (btn.getAttribute('data-cat-id') === id) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update active category badge
+        const badgeWrapper = document.getElementById('activeCatBadgeWrapper');
+        const badgeLabel = document.getElementById('activeCatLabel');
+        if (badgeWrapper && badgeLabel) {
+            if (id) {
+                const fullLabel = parentName ? `${parentName} > ${name}` : name;
+                badgeLabel.innerText = `Active Category: ${fullLabel}`;
+                badgeWrapper.style.display = 'block';
+            } else {
+                badgeWrapper.style.display = 'none';
+            }
+        }
+
+        closeAllCatDropdowns();
+        searchCJ();
+    }
+
+    function clearCjCategory() {
+        selectCjCategory('', 'All Categories', '');
+    }
+
+    // Close category dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#cjCatNavWrapper')) {
+            closeAllCatDropdowns();
+        }
+    });
 
     function calculateTieredPrice(cost) {
         let mult = 2.0;

@@ -149,7 +149,7 @@ class CjProductService
             });
 
             $list = array_values(!empty($filtered) ? $filtered : $catalog);
-            return ['list' => $list, 'total' => count($list)];
+            return ['list' => $list, 'total' => count($list), 'success' => true];
         }
 
         try {
@@ -158,62 +158,112 @@ class CjProductService
             }
             
             $params = [
-                'pageNum' => $pageNum,
-                'pageSize' => $pageSize,
+                'page' => (int)$pageNum,
+                'size' => (int)$pageSize,
             ];
 
             if (!empty($keyword)) {
-                $params['productName'] = $keyword;
+                $params['keyWord'] = $keyword;
             }
             if (!empty($filters['categoryId']) && strpos($filters['categoryId'], 'cj_cat_') === false) {
                 $params['categoryId'] = $filters['categoryId'];
             }
-            // If neither keyword nor category is provided, default to 'gadget'
-            if (empty($params['productName']) && empty($params['categoryId'])) {
-                $params['productName'] = 'gadget';
-            }
             if (!empty($filters['countryCode'])) {
-                $params['countryCode'] = $filters['countryCode'];
+                $params['countryCode'] = strtoupper($filters['countryCode']);
             }
-            if (isset($filters['minPrice']) && $filters['minPrice'] !== '') {
+            if (isset($filters['minPrice']) && $filters['minPrice'] !== '' && (float)$filters['minPrice'] > 0) {
                 $params['startSellPrice'] = (float)$filters['minPrice'];
             }
-            if (isset($filters['maxPrice']) && $filters['maxPrice'] !== '') {
+            if (isset($filters['maxPrice']) && $filters['maxPrice'] !== '' && (float)$filters['maxPrice'] > 0) {
                 $params['endSellPrice'] = (float)$filters['maxPrice'];
             }
 
+            // CJ V2 Elasticsearch Endpoint
             $response = Http::withHeaders(CjAuthService::getAuthHeaders())
-                ->timeout(12)->retry(2, 200)
-                ->get(self::getApiBaseUrl() . '/product/list', $params);
+                ->timeout(15)->retry(2, 300)
+                ->get(self::getApiBaseUrl() . '/product/listV2', $params);
 
             $data = $response->json();
-            $rawData = $data['data'] ?? ($data['result'] ?? []);
-            $list = $rawData['list'] ?? [];
-            $total = $rawData['total'] ?? (is_array($list) ? count($list) : 0);
 
-            if (is_array($list) && count($list) > 0) {
-                $normalizedList = array_map(function($item) {
-                    $rawImg = $item['productImage'] ?? ($item['bigImage'] ?? ($item['image'] ?? ''));
+            if (isset($data['code']) && $data['code'] === 200 && !empty($data['data'])) {
+                $rawData = $data['data'];
+                $totalRecords = (int)($rawData['totalRecords'] ?? 0);
+                $content = $rawData['content'] ?? [];
+
+                $items = [];
+                if (is_array($content)) {
+                    foreach ($content as $block) {
+                        if (isset($block['productList']) && is_array($block['productList'])) {
+                            foreach ($block['productList'] as $p) {
+                                $items[] = $p;
+                            }
+                        }
+                    }
+                }
+
+                if (empty($items) && isset($rawData['list']) && is_array($rawData['list'])) {
+                    $items = $rawData['list'];
+                }
+
+                if (count($items) > 0) {
+                    $normalizedList = array_map(function($item) {
+                        $rawImg = $item['bigImage'] ?? ($item['productImage'] ?? ($item['image'] ?? ''));
+                        $rawPrice = $item['sellPrice'] ?? ($item['nowPrice'] ?? ($item['price'] ?? 0));
+                        if (is_string($rawPrice)) {
+                            if (str_contains($rawPrice, '--')) {
+                                $parts = explode('--', $rawPrice);
+                                $rawPrice = trim($parts[0]);
+                            } elseif (str_contains($rawPrice, '-')) {
+                                $parts = explode('-', $rawPrice);
+                                $rawPrice = trim($parts[0]);
+                            }
+                            $rawPrice = preg_replace('/[^0-9.]/', '', $rawPrice);
+                        }
+
+                        return [
+                            'pid' => (string)($item['id'] ?? ($item['pid'] ?? ($item['productId'] ?? ''))),
+                            'productNameEn' => $item['nameEn'] ?? ($item['productNameEn'] ?? ($item['productName'] ?? '')),
+                            'productSku' => $item['sku'] ?? ($item['productSku'] ?? ''),
+                            'sellPrice' => (float)$rawPrice,
+                            'productImage' => self::normalizeImageUrl($rawImg),
+                            'categoryName' => $item['categoryName'] ?? ($item['threeCategoryName'] ?? 'Uncategorized'),
+                            'productWeight' => $item['productWeight'] ?? null,
+                        ];
+                    }, $items);
+
+                    Log::info("[CjProductService] Successfully fetched " . count($normalizedList) . " live products from CJ V2 API!");
                     return [
-                        'pid' => $item['pid'] ?? ($item['id'] ?? ($item['productId'] ?? '')),
-                        'productNameEn' => $item['productNameEn'] ?? ($item['productName'] ?? ($item['nameEn'] ?? '')),
-                        'productSku' => $item['productSku'] ?? ($item['sku'] ?? ''),
-                        'sellPrice' => (float)($item['sellPrice'] ?? ($item['price'] ?? 0)),
-                        'productImage' => self::normalizeImageUrl($rawImg),
-                        'categoryName' => $item['categoryName'] ?? 'Uncategorized',
-                        'productWeight' => $item['productWeight'] ?? null,
+                        'list' => $normalizedList,
+                        'total' => $totalRecords > 0 ? $totalRecords : count($normalizedList),
+                        'success' => true
                     ];
-                }, $list);
+                }
 
-                Log::info("[CjProductService] Successfully fetched " . count($normalizedList) . " live products from CJ API!");
-                return ['list' => $normalizedList, 'total' => $total];
+                return [
+                    'list' => [],
+                    'total' => 0,
+                    'success' => true,
+                    'message' => 'No products found matching your filter criteria.'
+                ];
             }
 
-            return ['list' => self::getDemoCatalog(), 'total' => count(self::getDemoCatalog())];
+            $msg = $data['message'] ?? 'CJ Dropshipping returned no items.';
+            Log::warning('CJ Live Search Notice: ' . $msg, ['code' => $data['code'] ?? null]);
+            return [
+                'list' => [],
+                'total' => 0,
+                'message' => $msg,
+                'success' => false
+            ];
 
         } catch (\Exception $e) {
-            Log::warning('CJ Live Search Warning, returning fallback demo catalog: ' . $e->getMessage());
-            return ['list' => self::getDemoCatalog(), 'total' => count(self::getDemoCatalog())];
+            Log::warning('CJ Live Search Exception: ' . $e->getMessage());
+            return [
+                'list' => [],
+                'total' => 0,
+                'message' => 'Network error connecting to CJ API: ' . $e->getMessage(),
+                'success' => false
+            ];
         }
     }
 
@@ -278,6 +328,128 @@ class CjProductService
 
             return self::getDemoCategories();
         });
+    }
+
+    public static function getCategoriesTree(): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('cj_api_category_tree_v2', 86400, function () {
+            $token = CjAuthService::getAccessToken();
+            if ($token === 'SANDBOX_DEMO_TOKEN') {
+                return self::getDemoCategoryTree();
+            }
+
+            try {
+                $response = Http::withHeaders(CjAuthService::getAuthHeaders())
+                    ->timeout(14)->retry(2, 200)
+                    ->get(self::getApiBaseUrl() . '/product/getCategory');
+
+                $data = $response->json();
+                $list = $data['data'] ?? ($data['result'] ?? []);
+
+                if (is_array($list) && !empty($list)) {
+                    $tree = [];
+                    foreach ($list as $first) {
+                        $firstName = $first['categoryFirstName'] ?? ($first['categoryName'] ?? '');
+                        $firstId = $first['categoryFirstId'] ?? ($first['categoryId'] ?? '');
+                        if (empty($firstName) || empty($firstId)) continue;
+
+                        $subs = [];
+                        foreach ($first['categoryFirstList'] ?? [] as $second) {
+                            $secondName = $second['categorySecondName'] ?? '';
+                            $secondId = $second['categorySecondId'] ?? '';
+                            if (empty($secondName) || empty($secondId)) continue;
+
+                            $children = [];
+                            foreach ($second['categorySecondList'] ?? [] as $third) {
+                                $thirdName = $third['categoryName'] ?? '';
+                                $thirdId = $third['categoryId'] ?? '';
+                                if (!empty($thirdName) && !empty($thirdId)) {
+                                    $children[] = [
+                                        'id' => $thirdId,
+                                        'name' => $thirdName,
+                                    ];
+                                }
+                            }
+
+                            $subs[] = [
+                                'id' => $secondId,
+                                'name' => $secondName,
+                                'children' => $children,
+                            ];
+                        }
+
+                        $tree[] = [
+                            'id' => $firstId,
+                            'name' => $firstName,
+                            'subcategories' => $subs,
+                        ];
+                    }
+
+                    if (!empty($tree)) {
+                        return $tree;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('CJ Category Tree Fetch Error: ' . $e->getMessage());
+            }
+
+            return self::getDemoCategoryTree();
+        });
+    }
+
+    private static function getDemoCategoryTree(): array
+    {
+        return [
+            [
+                'id' => 'cj_cat_electronics',
+                'name' => 'Consumer Electronics',
+                'subcategories' => [
+                    [
+                        'id' => 'cj_sub_audio',
+                        'name' => 'Audio & Headphones',
+                        'children' => [
+                            ['id' => 'cj_sub_earbuds', 'name' => 'Wireless Earbuds'],
+                            ['id' => 'cj_sub_speakers', 'name' => 'Bluetooth Speakers']
+                        ]
+                    ],
+                    [
+                        'id' => 'cj_sub_wearables',
+                        'name' => 'Smart Wearables',
+                        'children' => [
+                            ['id' => 'cj_sub_smartwatches', 'name' => 'Smart Watches'],
+                            ['id' => 'cj_sub_fitnessbands', 'name' => 'Fitness Trackers']
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'id' => 'cj_cat_computer',
+                'name' => 'Computer & Office',
+                'subcategories' => [
+                    [
+                        'id' => 'cj_sub_accessories',
+                        'name' => 'Office Supplies',
+                        'children' => [
+                            ['id' => 'cj_sub_stationery', 'name' => 'Whiteboards & Erasers'],
+                            ['id' => 'cj_sub_mice', 'name' => 'Keyboards & Mice']
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'id' => 'cj_cat_smarthome',
+                'name' => 'Home, Garden & Furniture',
+                'subcategories' => [
+                    [
+                        'id' => 'cj_sub_lighting',
+                        'name' => 'Smart Lighting',
+                        'children' => [
+                            ['id' => 'cj_sub_lamps', 'name' => 'Desk & Night Lamps']
+                        ]
+                    ]
+                ]
+            ]
+        ];
     }
 
     private static function getDemoCategories(): array
