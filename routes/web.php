@@ -48,6 +48,20 @@ Route::middleware('storefront')->group(function () {
     Route::get('/media/products/{product}/thumbnail', [\App\Http\Controllers\MediaController::class, 'thumbnail'])->name('media.product.thumbnail');
     Route::get('/media/products/{product}/image/{mediaId}', [\App\Http\Controllers\MediaController::class, 'image'])->name('media.product.image');
 
+    // Direct Storage File Streaming for Hostinger (bypasses missing symlink)
+    Route::get('/storage/{path}', function ($path) {
+        $cleanPath = ltrim($path, '/');
+        if (str_contains($cleanPath, '..')) {
+            abort(404);
+        }
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($cleanPath)) {
+            return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($cleanPath), [
+                'Cache-Control' => 'public, max-age=604800, immutable'
+            ]);
+        }
+        abort(404);
+    })->where('path', '.*')->name('storage.local');
+
     Route::view('/about-us', 'store.about')->name('store.about');
     Route::view('/contact', 'store.contact')->name('store.contact');
     Route::view('/privacy-policy', 'store.privacy')->name('store.privacy');
