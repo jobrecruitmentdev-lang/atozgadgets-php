@@ -18,7 +18,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::query()->with(['category', 'brand', 'cjProduct', 'variants']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');

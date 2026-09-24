@@ -28,6 +28,8 @@ class Product extends Model
      */
     protected $hidden = [
         'cj_product_id',
+        'cj_cost_price',
+        'estimated_profit',
     ];
 
     /**
@@ -185,6 +187,41 @@ class Product extends Model
     public function getHasActiveDiscountAttribute(): bool
     {
         return PricingService::hasActiveDiscount($this);
+    }
+
+    /**
+     * Internal CJ Wholesale Base Cost (For Admin Panel view only)
+     */
+    public function getCjCostPriceAttribute(): ?float
+    {
+        if ($this->relationLoaded('cjProduct') ? $this->cjProduct : $this->cjProduct()->first()) {
+            $cost = $this->cjProduct->original_price ?? null;
+            if (!is_null($cost) && (float)$cost > 0) {
+                return (float)$cost;
+            }
+        }
+
+        $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+        if ($variants->isNotEmpty()) {
+            $cost = $variants->where('cost_price', '>', 0)->min('cost_price');
+            if ($cost && (float)$cost > 0) {
+                return (float)$cost;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Internal Net Profit margin (For Admin Panel view only)
+     */
+    public function getEstimatedProfitAttribute(): ?float
+    {
+        $cost = $this->cj_cost_price;
+        if ($cost !== null && $cost > 0) {
+            return round($this->effective_price - $cost, 2);
+        }
+        return null;
     }
 
     public function getAverageRatingAttribute(): float

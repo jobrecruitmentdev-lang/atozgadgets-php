@@ -177,7 +177,7 @@ class CatalogController extends Controller
                     'slug' => $slug,
                     'sku' => $merchantSku,
                     'price' => $pricing['selling_price'],
-                    'discount_price' => round($pricing['selling_price'] * 0.85, 2),
+                    'discount_price' => \App\Models\Setting::get('pricing_mode', 'fixed_profit') === 'fixed_profit' ? null : round($pricing['selling_price'] * 0.85, 2),
                     'description' => $cleanDescription,
                     'thumbnail_image' => $effectiveThumbnail,
                     'stock_quantity' => 100,
@@ -193,7 +193,8 @@ class CatalogController extends Controller
                     [
                         'internal_product_id' => $product->id,
                         'title' => $cleanTitle,
-                        'sell_price' => $data['price'],
+                        'original_price' => (float)$data['price'],
+                        'sell_price' => $pricing['selling_price'],
                         'cj_image' => $sourceImage,
                         'category_name' => $data['category'] ?? 'General',
                         'status' => 'imported'

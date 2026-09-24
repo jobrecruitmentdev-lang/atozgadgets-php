@@ -628,23 +628,10 @@
     });
 
     function calculateTieredPrice(cost) {
-        let mult = 2.0;
-        let ship = 5.0;
-        if (cost < 10.0) {
-            mult = 2.5;
-            ship = 3.0;
-        } else if (cost <= 50.0) {
-            mult = 2.0;
-            ship = 5.0;
-        } else {
-            mult = 1.6;
-            ship = 8.0;
-        }
-        let raw = (cost * mult) + ship;
-        let rounded = Math.floor(raw) + 0.99;
-        if (rounded < raw) rounded += 1.0;
-        let profit = rounded - cost;
-        let msrp = rounded * 1.35;
+        let fixedProfit = 2.00;
+        let rounded = parseFloat((cost + fixedProfit).toFixed(2));
+        let profit = fixedProfit;
+        let msrp = parseFloat((rounded * 1.35).toFixed(2));
         return {
             sellingPrice: rounded.toFixed(2),
             msrp: msrp.toFixed(2),

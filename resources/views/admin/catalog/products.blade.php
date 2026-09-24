@@ -471,7 +471,7 @@
                             <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="cursor: pointer;">
                         </th>
                         <th>Product Info</th>
-                        <th>Price</th>
+                        <th style="min-width: 140px;">Pricing & Profit</th>
                         <th>Stock</th>
                         <th>Status</th>
                         <th>Fulfillment</th>
@@ -501,13 +501,41 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="font-weight: 700; color: var(--accent); font-size: 14.5px;">
-                                ${{ number_format($product->price, 2) }}
-                                @if($product->discount_price && $product->discount_price > 0 && $product->discount_price < $product->price)
-                                    <div style="font-size: 11px; color: var(--text-secondary); text-decoration: line-through;">
-                                        ${{ number_format($product->discount_price, 2) }}
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                                        <span style="font-weight: 800; color: var(--accent); font-size: 15px;">
+                                            ${{ number_format($product->price, 2) }}
+                                        </span>
+                                        @if($product->discount_price && $product->discount_price > 0 && $product->discount_price < $product->price)
+                                            <span style="font-size: 11px; color: var(--text-secondary); text-decoration: line-through;">
+                                                ${{ number_format($product->discount_price, 2) }}
+                                            </span>
+                                        @endif
                                     </div>
-                                @endif
+
+                                    @php
+                                        $cjCost = $product->cj_cost_price;
+                                        $profit = $product->estimated_profit;
+                                    @endphp
+
+                                    @if($cjCost !== null)
+                                        <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+                                            <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color);" title="CJ Supplier Base Cost">
+                                                CJ: ${{ number_format($cjCost, 2) }}
+                                            </span>
+                                            @if($profit !== null)
+                                                <span class="pill pill-live" style="font-size: 10.5px; padding: 2px 7px;" title="Estimated Net Profit (Retail - CJ Cost)">
+                                                    +${{ number_format($profit, 2) }} Profit
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span style="font-size: 11px; color: var(--text-secondary); font-style: italic;">
+                                            In-House Catalog
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 @if($product->stock_quantity > 0)
