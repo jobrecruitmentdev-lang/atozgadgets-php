@@ -25,7 +25,7 @@ class CatalogController extends Controller
         $cjCategories = CjProductService::getCategories();
         $cjCategoryTree = CjProductService::getCategoriesTree();
         $brands = \App\Models\Brand::all();
-        $stagedProducts = \App\Models\Product::where('fulfillment_type', 'cj')->get();
+        $stagedProducts = \App\Models\Product::where('fulfillment_type', 'cj')->with('cjProduct')->latest()->get();
         return view('admin.catalog.import', compact('categories', 'cjCategories', 'cjCategoryTree', 'brands', 'stagedProducts'));
     }
 
@@ -165,9 +165,8 @@ class CatalogController extends Controller
             $status = ($targetPublish && $validation['can_publish']) ? 'active' : 'draft';
             $isActive = ($status === 'active');
 
-            // Eagerly download media to local disk to avoid runtime proxy latency & cache stampedes
-            $localThumbnail = ProductContentService::downloadAndStoreMedia($sourceImage);
-            $effectiveThumbnail = !empty($localThumbnail) ? $localThumbnail : $sourceImage;
+            // High-speed CDN media URL for reliable, permanent rendering across shared hosting environments
+            $effectiveThumbnail = !empty($sourceImage) ? $sourceImage : ProductContentService::downloadAndStoreMedia($sourceImage);
 
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
             $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $effectiveThumbnail, $sourceImage) {
