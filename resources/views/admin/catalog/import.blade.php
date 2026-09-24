@@ -555,17 +555,13 @@
         const maxPrice = document.getElementById('maxPrice');
         const country = document.getElementById('countryFilter');
 
-        const catSearchInput = document.getElementById('cjCategorySearchInput');
-        const catDropdown = document.getElementById('cjCategoryDropdown');
-        const catHidden = document.getElementById('cjCategoryFilter');
-        const btnClearCat = document.getElementById('btnClearCategory');
-
         const debouncedSearch = debounce(() => searchCJ(), 300);
 
         if (searchInput) searchInput.addEventListener('input', debouncedSearch);
         if (minPrice) minPrice.addEventListener('input', debouncedSearch);
         if (maxPrice) maxPrice.addEventListener('input', debouncedSearch);
         if (country) country.addEventListener('change', () => searchCJ());
+    });
 
     function setWarehouse(code, btn) {
         document.querySelectorAll('.warehouse-pill').forEach(el => el.classList.remove('active'));
