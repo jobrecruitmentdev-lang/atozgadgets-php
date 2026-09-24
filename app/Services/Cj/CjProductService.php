@@ -535,12 +535,12 @@ class CjProductService
         return $clean;
     }
 
-    public static function getProductDetails($pid): array
+    public static function getProductDetails($pid, ?string $fallbackName = null, ?string $fallbackImage = null): array
     {
         $token = CjAuthService::getAccessToken();
 
         if ($token === 'SANDBOX_DEMO_TOKEN') {
-            return self::getDemoProductDetails($pid);
+            return self::getDemoProductDetails($pid, $fallbackName, $fallbackImage);
         }
 
         try {
@@ -609,47 +609,40 @@ class CjProductService
             Log::warning("CJ Live Details Fetch Warning for PID {$pid}: " . $e->getMessage());
         }
 
-        return self::getDemoProductDetails($pid);
+        return self::getDemoProductDetails($pid, $fallbackName, $fallbackImage);
     }
 
-    private static function getDemoProductDetails($pid): array
+    private static function getDemoProductDetails($pid, ?string $fallbackName = null, ?string $fallbackImage = null): array
     {
+        $name = !empty($fallbackName) ? trim($fallbackName) : 'AtoZ Smart Gadget Pro Edition';
+        $mainImg = !empty($fallbackImage) ? self::normalizeImageUrl($fallbackImage) : '';
+        if (empty($mainImg)) {
+            $mainImg = 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop';
+        }
+
         return [
             'pid' => $pid,
-            'nameEn' => 'AtoZ Smart Gadget Pro Edition',
+            'nameEn' => $name,
             'sku' => 'CJ-GADGET-' . strtoupper(substr(md5($pid), 0, 6)),
             'sellPrice' => 19.50,
-            'mainImage' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+            'mainImage' => $mainImg,
             'images' => [
-                'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
-                'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
+                $mainImg
             ],
-            'description' => 'Premium high-performance smart gadget designed for modern lifestyle and maximum convenience.',
-            'categoryName' => 'Consumer Electronics',
+            'description' => "Premium {$name} designed for modern lifestyle and maximum convenience.",
+            'categoryName' => 'General',
             'variants' => [
                 [
-                    'vid' => 'CJ-VID-BLK-64G-' . substr(md5($pid), 0, 8),
-                    'variantSku' => 'CJ-VAR-BLK',
-                    'variantName' => 'Midnight Black / Standard',
+                    'vid' => 'CJ-VID-STD-' . substr(md5($pid), 0, 8),
+                    'variantSku' => 'CJ-VAR-STD',
+                    'variantName' => 'Standard Edition',
                     'costPrice' => 19.50,
-                    'image' => 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=800&auto=format&fit=crop',
+                    'image' => $mainImg,
                     'inventory' => 250,
-                    'option1_name' => 'Color',
-                    'option1_value' => 'Midnight Black',
-                    'option2_name' => 'Edition',
-                    'option2_value' => 'Standard',
-                ],
-                [
-                    'vid' => 'CJ-VID-SLV-128G-' . substr(md5($pid), 0, 8),
-                    'variantSku' => 'CJ-VAR-SLV',
-                    'variantName' => 'Titanium Silver / Pro',
-                    'costPrice' => 24.50,
-                    'image' => 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800&auto=format&fit=crop',
-                    'inventory' => 180,
-                    'option1_name' => 'Color',
-                    'option1_value' => 'Titanium Silver',
-                    'option2_name' => 'Edition',
-                    'option2_value' => 'Pro',
+                    'option1_name' => 'Option',
+                    'option1_value' => 'Standard',
+                    'option2_name' => null,
+                    'option2_value' => null,
                 ]
             ]
         ];

@@ -18,12 +18,24 @@ class CartController extends Controller
         $hasChanges = false;
         foreach ($cart as $key => &$item) {
             if (!empty($item['product_id'])) {
-                $product = Product::with('variants')->find($item['product_id']);
+                $product = Product::with(['variants', 'category'])->find($item['product_id']);
                 if ($product) {
                     $variant = !empty($item['variant_id']) ? $product->variants->firstWhere('id', $item['variant_id']) : null;
                     $resolvedPrice = (float)\App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant);
                     if (abs((float)($item['price'] ?? 0) - $resolvedPrice) > 0.001) {
                         $item['price'] = $resolvedPrice;
+                        $hasChanges = true;
+                    }
+
+                    // Auto-heal any cart session corrupted by placeholder watch images
+                    $isWatch = str_contains(strtolower($product->name ?? ''), 'watch') || str_contains(strtolower($product->category?->name ?? ''), 'watch');
+                    $currentImg = $item['image'] ?? '';
+                    if (!$isWatch && (str_contains($currentImg, 'photo-1546868871') || str_contains($currentImg, 'photo-1523275335') || empty($currentImg))) {
+                        $item['image'] = $product->customer_thumbnail ?: $product->thumbnail_image;
+                        $hasChanges = true;
+                    }
+                    if (!$isWatch && isset($item['variant_name']) && (str_contains($item['variant_name'], 'Midnight Black / Standard') || str_contains($item['variant_name'], 'Titanium Silver / Pro'))) {
+                        $item['variant_name'] = 'Standard';
                         $hasChanges = true;
                     }
                 }
@@ -55,7 +67,7 @@ class CartController extends Controller
         ]);
 
         $quantity = (int)($validated['quantity'] ?? 1);
-        $product = Product::with(['variants', 'cjProduct'])->findOrFail($validated['product_id']);
+        $product = Product::with(['variants', 'cjProduct', 'category'])->findOrFail($validated['product_id']);
         
         $variant = null;
         if (!empty($validated['variant_id'])) {
@@ -74,6 +86,19 @@ class CartController extends Controller
         $price = \App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant);
         $cartKey = $variant ? "{$product->id}_{$variant->id}" : "{$product->id}_0";
 
+        $isWatch = str_contains(strtolower($product->name ?? ''), 'watch') || str_contains(strtolower($product->category?->name ?? ''), 'watch');
+        $effectiveVariantImg = $variant?->image_url;
+        $effectiveVariantName = $variant?->name;
+
+        if (!$isWatch) {
+            if (empty($effectiveVariantImg) || str_contains($effectiveVariantImg, 'photo-1546868871') || str_contains($effectiveVariantImg, 'photo-1523275335')) {
+                $effectiveVariantImg = $product->customer_thumbnail ?: $product->thumbnail_image;
+            }
+            if ($effectiveVariantName && (str_contains($effectiveVariantName, 'Midnight Black / Standard') || str_contains($effectiveVariantName, 'Titanium Silver / Pro'))) {
+                $effectiveVariantName = 'Standard';
+            }
+        }
+
         $cart = session()->get('cart', []);
         
         if (isset($cart[$cartKey])) {
@@ -83,10 +108,10 @@ class CartController extends Controller
                 'product_id'     => $product->id,
                 'variant_id'     => $variant?->id,
                 'name'           => $product->name,
-                'variant_name'   => $variant?->name,
+                'variant_name'   => $effectiveVariantName,
                 'price'          => (float)$price,
                 'quantity'       => $quantity,
-                'image'          => $variant?->image_url ?: $product->customer_thumbnail,
+                'image'          => $effectiveVariantImg ?: $product->customer_thumbnail,
                 'sku'            => $variant?->sku ?: $product->merchant_sku,
                 'cj_product_id'  => $product->cjProduct?->cj_product_id,
                 'cj_variant_id'  => $variant?->cj_variant_id ?: $product->cjProduct?->cj_variant_id,

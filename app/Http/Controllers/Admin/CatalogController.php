@@ -139,8 +139,8 @@ class CatalogController extends Controller
             $cleanTitle = ProductContentService::normalizeTitle($data['title'], $categoryName);
             $slug = Str::slug($cleanTitle) . '-' . substr((string) Str::uuid(), 0, 6);
 
-            // Fetch live/mock details and variants for this PID
-            $cjDetails = CjProductService::getProductDetails($data['pid']);
+            // Fetch live/mock details and variants for this PID with contextual fallback image/name
+            $cjDetails = CjProductService::getProductDetails($data['pid'], $cleanTitle, $data['image'] ?? null);
             $rawDesc = $cjDetails['description'] ?? $data['title'];
             $cleanDescription = ProductContentService::normalizeDescription($rawDesc, $cleanTitle, $categoryName);
 
@@ -248,6 +248,18 @@ class CatalogController extends Controller
                     foreach ($cjDetails['variants'] as $vIdx => $v) {
                         $vPricing = PricingService::calculateRetailPrice((float)$v['costPrice'], $customMultiplier);
                         $vSku = $merchantSku . '-V' . str_pad((string)($vIdx + 1), 2, '0', STR_PAD_LEFT);
+                        $isWatchCategory = str_contains(strtolower($cleanTitle), 'watch') || str_contains(strtolower($categoryName), 'watch');
+
+                        // Sanitize variant image if it's pointing to generic unsplash watch placeholder for non-watch products
+                        $rawVariantImg = $v['image'] ?? $data['image'];
+                        if (!$isWatchCategory && (empty($rawVariantImg) || str_contains($rawVariantImg, 'photo-1546868871') || str_contains($rawVariantImg, 'photo-1523275335'))) {
+                            $rawVariantImg = $effectiveThumbnail ?: $sourceImage;
+                        }
+
+                        $vName = $v['variantName'] ?? 'Standard Variant';
+                        if (!$isWatchCategory && (str_contains($vName, 'Midnight Black / Standard') || str_contains($vName, 'Titanium Silver / Pro'))) {
+                            $vName = 'Standard';
+                        }
 
                         // Supplier variant (VID)
                         \App\Models\CjVariant::updateOrCreate(
@@ -255,7 +267,7 @@ class CatalogController extends Controller
                             [
                                 'cj_product_id' => $data['pid'],
                                 'cj_variant_sku' => $v['variantSku'] ?? '',
-                                'variant_name' => $v['variantName'] ?? 'Standard Variant',
+                                'variant_name' => $vName,
                                 'option1_name' => $v['option1_name'] ?? null,
                                 'option1_value' => $v['option1_value'] ?? null,
                                 'option2_name' => $v['option2_name'] ?? null,
@@ -272,7 +284,7 @@ class CatalogController extends Controller
                             'product_id' => $product->id,
                             'cj_variant_id' => $v['vid'],
                             'sku' => $vSku,
-                            'name' => $v['variantName'] ?? 'Standard Variant',
+                            'name' => $vName,
                             'option1_name' => $v['option1_name'] ?? null,
                             'option1_value' => $v['option1_value'] ?? null,
                             'option2_name' => $v['option2_name'] ?? null,
@@ -281,16 +293,16 @@ class CatalogController extends Controller
                             'cost_price' => $v['costPrice'],
                             'stock_quantity' => $v['inventory'] ?? 100,
                             'status' => 'active',
-                            'image_url' => $v['image'] ?? $data['image'],
+                            'image_url' => $rawVariantImg,
                         ]);
 
-                        if (!empty($v['image']) && $v['image'] !== $data['image']) {
+                        if (!empty($rawVariantImg) && $rawVariantImg !== $data['image'] && !$isWatchCategory) {
                             \App\Models\ProductMedia::create([
                                 'product_id' => $product->id,
                                 'variant_id' => $variant->id,
                                 'type' => 'image',
-                                'url' => $v['image'],
-                                'alt_text' => "{$cleanTitle} - " . ($v['variantName'] ?? 'Variant'),
+                                'url' => $rawVariantImg,
+                                'alt_text' => "{$cleanTitle} - " . $vName,
                                 'sort_order' => 99,
                                 'is_primary' => false,
                             ]);
