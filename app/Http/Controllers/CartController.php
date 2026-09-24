@@ -98,6 +98,88 @@ class CartController extends Controller
         return redirect()->back()->with('success', 'Product added to cart successfully!');
     }
     
+    public function updateQuantity(Request $request)
+    {
+        $validated = $request->validate([
+            'cart_key' => 'required|string',
+            'quantity' => 'required|integer|min:0|max:100',
+        ]);
+
+        $cart = session()->get('cart', []);
+        $cartKey = $validated['cart_key'];
+
+        if (isset($cart[$cartKey])) {
+            if ($validated['quantity'] <= 0) {
+                unset($cart[$cartKey]);
+            } else {
+                $cart[$cartKey]['quantity'] = $validated['quantity'];
+            }
+            session()->put('cart', $cart);
+        }
+
+        $cart = $this->syncCartWithDatabase($cart);
+        $itemTotal = isset($cart[$cartKey]) ? round((float)$cart[$cartKey]['price'] * (int)$cart[$cartKey]['quantity'], 2) : 0;
+        $subtotal = (float)collect($cart)->sum(fn($item) => (float)$item['price'] * (int)$item['quantity']);
+        $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
+        $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
+        $shipping = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0.00 : $stdRate;
+        $grandTotal = $subtotal + $shipping;
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'cart_key' => $cartKey,
+                'quantity' => $cart[$cartKey]['quantity'] ?? 0,
+                'item_total' => $itemTotal,
+                'subtotal' => round($subtotal, 2),
+                'shipping' => round($shipping, 2),
+                'shipping_text' => $shipping == 0 ? 'FREE' : '$' . number_format($shipping, 2),
+                'grand_total' => round($grandTotal, 2),
+                'item_count' => collect($cart)->sum('quantity'),
+                'is_empty' => empty($cart)
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Cart updated successfully.');
+    }
+
+    public function removeFromCart(Request $request)
+    {
+        $validated = $request->validate([
+            'cart_key' => 'required|string',
+        ]);
+
+        $cart = session()->get('cart', []);
+        $cartKey = $validated['cart_key'];
+
+        if (isset($cart[$cartKey])) {
+            unset($cart[$cartKey]);
+            session()->put('cart', $cart);
+        }
+
+        $cart = $this->syncCartWithDatabase($cart);
+        $subtotal = (float)collect($cart)->sum(fn($item) => (float)$item['price'] * (int)$item['quantity']);
+        $freeThreshold = (float)\App\Models\Setting::get('free_shipping_threshold', 50.00);
+        $stdRate = (float)\App\Models\Setting::get('standard_shipping_rate', 5.99);
+        $shipping = ($subtotal >= $freeThreshold || $subtotal == 0) ? 0.00 : $stdRate;
+        $grandTotal = $subtotal + $shipping;
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'cart_key' => $cartKey,
+                'subtotal' => round($subtotal, 2),
+                'shipping' => round($shipping, 2),
+                'shipping_text' => $shipping == 0 ? 'FREE' : '$' . number_format($shipping, 2),
+                'grand_total' => round($grandTotal, 2),
+                'item_count' => collect($cart)->sum('quantity'),
+                'is_empty' => empty($cart)
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Item removed from cart.');
+    }
+
     public function checkout()
     {
         $cart = $this->syncCartWithDatabase(session()->get('cart', []));

@@ -72,6 +72,8 @@ Route::middleware('storefront')->group(function () {
     Route::view('/shipping-policy', 'store.shipping');
     Route::get('/cart', [\App\Http\Controllers\CartController::class, 'viewCart'])->name('store.cart');
     Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'addToCart'])->name('store.cart.add');
+    Route::post('/cart/update', [\App\Http\Controllers\CartController::class, 'updateQuantity'])->name('store.cart.update');
+    Route::post('/cart/remove', [\App\Http\Controllers\CartController::class, 'removeFromCart'])->name('store.cart.remove');
     Route::get('/checkout', [\App\Http\Controllers\CartController::class, 'checkout'])->name('store.checkout');
     Route::post('/checkout', [\App\Http\Controllers\CartController::class, 'processCheckout'])->name('store.checkout.process');
     Route::post('/checkout/send-otp', [\App\Http\Controllers\CartController::class, 'sendOtp'])->middleware('throttle:10,1')->name('store.checkout.send-otp');

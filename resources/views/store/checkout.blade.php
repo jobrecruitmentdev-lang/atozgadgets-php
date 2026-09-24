@@ -255,17 +255,28 @@
                         $itemPrice = (float)($item['price'] ?? 0);
                         $itemQty = (int)($item['quantity'] ?? 1);
                     @endphp
-                    <div class="summary-item">
+                    <div class="summary-item" id="co-item-{{ $id }}">
                         <img src="{{ $item['image'] ?? asset('favicon.png') }}" alt="{{ $item['name'] ?? 'Product' }}" onerror="this.src='{{ asset('favicon.png') }}'">
                         <div class="item-info">
-                            <p style="font-weight:600; color:var(--text-primary);">{{ $item['name'] ?? 'Product' }}</p>
-                            <span>Qty: {{ $itemQty }} &times; ${{ number_format($itemPrice, 2) }}</span>
+                            <p style="font-weight:600; color:var(--text-primary); margin-bottom:4px;">{{ $item['name'] ?? 'Product' }}</p>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.06); border:1px solid var(--glass-border); border-radius:6px; overflow:hidden;">
+                                    <button type="button" onclick="updateCheckoutQty('{{ $id }}', -1)" style="background:none; border:none; color:var(--text-primary); width:24px; height:24px; font-weight:700; cursor:pointer;" aria-label="Decrease quantity">-</button>
+                                    <span id="co-qty-{{ $id }}" style="font-size:12px; font-weight:700; min-width:18px; text-align:center;">{{ $itemQty }}</span>
+                                    <button type="button" onclick="updateCheckoutQty('{{ $id }}', 1)" style="background:none; border:none; color:var(--text-primary); width:24px; height:24px; font-weight:700; cursor:pointer;" aria-label="Increase quantity">+</button>
+                                </div>
+                                <span style="font-size:12px; color:var(--text-secondary);">&times; ${{ number_format($itemPrice, 2) }}</span>
+                            </div>
                         </div>
-                        <div class="item-price">${{ number_format($itemPrice * $itemQty, 2) }}</div>
+                        <div class="item-price" id="co-line-total-{{ $id }}">${{ number_format($itemPrice * $itemQty, 2) }}</div>
                     </div>
                 @empty
                     <p style="color:var(--text-secondary); font-size:14px; text-align:center; padding:20px 0;">No items in cart.</p>
                 @endforelse
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; padding:8px 0 6px 0;">
+                <a href="{{ route('store.cart') }}" style="color:var(--accent); font-size:12px; font-weight:500; text-decoration:none;">&larr; View / Edit Full Cart</a>
             </div>
 
             <div class="summary-totals">
@@ -589,5 +600,42 @@
             verifyOtpBtn.disabled = false;
         });
     });
+
+    async function updateCheckoutQty(cartKey, delta) {
+        const qtyEl = document.getElementById('co-qty-' + cartKey);
+        if (!qtyEl) return;
+        const currentQty = parseInt(qtyEl.innerText) || 1;
+        const targetQty = currentQty + delta;
+
+        if (targetQty <= 0) {
+            if (!confirm('Do you want to remove this item from checkout?')) return;
+        }
+
+        try {
+            qtyEl.style.opacity = '0.4';
+            const res = await fetch("{{ route('store.cart.update') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ cart_key: cartKey, quantity: targetQty })
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (data.is_empty) {
+                    window.location.href = "{{ route('store.shop') }}";
+                    return;
+                }
+                window.location.reload();
+            } else {
+                qtyEl.style.opacity = '1';
+            }
+        } catch (e) {
+            qtyEl.style.opacity = '1';
+            console.error('Failed to update checkout quantity', e);
+        }
+    }
 </script>
 @endsection
