@@ -9,9 +9,38 @@ use Illuminate\Support\Facades\Mail;
 
 class CartController extends Controller
 {
+    protected function syncCartWithDatabase(array $cart): array
+    {
+        if (empty($cart)) {
+            return [];
+        }
+
+        $hasChanges = false;
+        foreach ($cart as $key => &$item) {
+            if (!empty($item['product_id'])) {
+                $product = Product::with('variants')->find($item['product_id']);
+                if ($product) {
+                    $variant = !empty($item['variant_id']) ? $product->variants->firstWhere('id', $item['variant_id']) : null;
+                    $resolvedPrice = (float)\App\Services\Catalog\PricingService::resolveCustomerPrice($product, $variant);
+                    if (abs((float)($item['price'] ?? 0) - $resolvedPrice) > 0.001) {
+                        $item['price'] = $resolvedPrice;
+                        $hasChanges = true;
+                    }
+                }
+            }
+        }
+        unset($item);
+
+        if ($hasChanges) {
+            session()->put('cart', $cart);
+        }
+
+        return $cart;
+    }
+
     public function viewCart()
     {
-        $cart = session()->get('cart', []);
+        $cart = $this->syncCartWithDatabase(session()->get('cart', []));
         $total = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
         
         return view('store.cart', compact('cart', 'total'));
@@ -71,7 +100,7 @@ class CartController extends Controller
     
     public function checkout()
     {
-        $cart = session()->get('cart', []);
+        $cart = $this->syncCartWithDatabase(session()->get('cart', []));
         if (empty($cart)) {
             return redirect()->route('store.shop')->with('info', 'Your cart is empty. Add gadgets to proceed to checkout!');
         }
