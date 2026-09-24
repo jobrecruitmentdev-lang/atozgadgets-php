@@ -230,6 +230,15 @@ class Product extends Model
         return null;
     }
 
+    /**
+     * Sanitized storefront description with supplier packing lists and boilerplate stripped.
+     */
+    public function getCleanDescriptionAttribute(): string
+    {
+        $raw = (string)($this->description ?? '');
+        return ProductContentService::sanitizeSupplierBoilerplate($raw);
+    }
+
     public function getAverageRatingAttribute(): float
     {
         $avg = $this->reviews()->where('status', 'approved')->avg('rating');

@@ -455,6 +455,7 @@
                     <span style="font-size: 10px; color: var(--accent);">Target Store Category</span>
                 </label>
                 <select id="importCategory">
+                    <option value="" selected>⚡ Auto-Detect Category from Product (Recommended)</option>
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                     @endforeach

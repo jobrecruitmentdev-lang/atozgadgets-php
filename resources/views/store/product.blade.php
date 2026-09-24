@@ -2,11 +2,11 @@
 
 @section('title', ($product->name ?? 'Product') . ' - AtoZGadgets')
 
-@section('meta_description', Str::limit(strip_tags($product->description ?? $product->name), 155))
+@section('meta_description', Str::limit(strip_tags($product->clean_description ?? $product->name), 155))
 @section('meta_keywords', addslashes($product->name) . ', buy online, USA fast shipping, premium gadgets, smart electronics')
 @section('og_type', 'product')
 @section('og_title', ($product->name ?? 'Product') . ' - AtoZGadgets')
-@section('og_description', Str::limit(strip_tags($product->description ?? $product->name), 155))
+@section('og_description', Str::limit(strip_tags($product->clean_description ?? $product->name), 155))
 @section('og_image', $product->customer_thumbnail)
 @section('canonical', url()->current())
 
@@ -23,7 +23,7 @@
           "image": [
             "{{ $product->customer_thumbnail }}"
           ],
-          "description": "{{ addslashes(Str::limit(strip_tags($product->description ?? $product->name), 250)) }}",
+          "description": "{{ addslashes(Str::limit(strip_tags($product->clean_description ?? $product->name), 250)) }}",
           "sku": "{{ $product->merchant_sku }}",
           "brand": {
             "@type": "Brand",
@@ -501,8 +501,8 @@
 
     <!-- Tab 1: Description (Pillar 2 Clean Content) -->
     <div id="tab-desc" class="tab-pane active">
-        @if(!empty($product->description))
-            {!! strip_tags($product->description, '<p><br><b><strong><ul><ol><li><span><em><i><div><h1><h2><h3><h4><h5><h6>') !!}
+        @if(!empty($product->clean_description))
+            {!! $product->clean_description !!}
         @else
             <p>{{ $product->name }} is designed for premium performance, durability, and daily convenience. Sourced from certified manufacturers with rigorous quality assurance checks before fulfillment.</p>
         @endif

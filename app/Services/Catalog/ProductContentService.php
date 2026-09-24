@@ -85,6 +85,9 @@ class ProductContentService
         // 4. Strip raw HTML except standard formatting tags
         $clean = strip_tags($clean, '<p><br><ul><ol><li><strong><b><em><h3><h4>');
 
+        // 5. Clean supplier warehouse boilerplate (Packing list, Product Image placeholders)
+        $clean = self::sanitizeSupplierBoilerplate($clean);
+
         // 5. Category-to-description affinity check (prevents guitar picks with smartwatch copy)
         if ($categoryName && isset(self::$categoryKeywords[$categoryName])) {
             $descLower = strtolower($clean);
@@ -111,6 +114,34 @@ class ProductContentService
         }
 
         return $clean;
+    }
+
+    /**
+     * Clean supplier warehouse packing lists, image boilerplate, and empty placeholders from description.
+     */
+    public static function sanitizeSupplierBoilerplate(string $html): string
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        // 1. Remove "Product Image:" blocks and empty image placeholders
+        $html = preg_replace('/(<(p|b|strong|div|span|h[1-6])[^>]*>)?\s*Product\s*Image\s*:\s*(<\/(p|b|strong|div|span|h[1-6])>)?/i', '', $html);
+
+        // 2. Remove "Packing list:", "Package list:", "Package content:", "Package size:" labels
+        $html = preg_replace('/(<(p|b|strong|div|span|h[1-6])[^>]*>)?\s*(Packing\s*list|Package\s*list|Package\s*content|Package\s*size)\s*:\s*(<\/(p|b|strong|div|span|h[1-6])>)?/i', '', $html);
+
+        // 3. Remove raw warehouse item counts (e.g. "Night light X1PC", "Handheld Lamp x 1pc", "Lamp x 1pc&nbsp;")
+        $html = preg_replace('/(?i)\b[a-zA-Z0-9\s-]+\s*[xX]\s*\d+\s*(pc|pcs|set|sets)?(&nbsp;|\s)*(\.|\n|<br\s*\/?>|<\/p>)?/i', '', $html);
+
+        // 4. Clean up leftover empty tags and whitespace
+        $html = preg_replace('/<p>\s*(<br\s*\/?>|&nbsp;|\s)*<\/p>/i', '', $html);
+        $html = preg_replace('/(<br\s*\/?>\s*){2,}/i', '<br>', $html);
+        $html = preg_replace('/(&nbsp;\s*)+/i', ' ', $html);
+        $html = preg_replace('/^(<br\s*\/?>\s*)+/i', '', trim($html));
+        $html = preg_replace('/(<br\s*\/?>\s*)+$/i', '', trim($html));
+
+        return trim($html);
     }
 
     /**

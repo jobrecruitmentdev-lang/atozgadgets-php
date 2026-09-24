@@ -33,9 +33,9 @@ class CategoryResolverService
         ],
         'Home & Kitchen' => [
             'slug' => 'home-kitchen',
-            'keywords' => ['home', 'kitchen', 'lamp', 'light', 'cleaner', 'vacuum', 'blender', 'purifier', 'aroma', 'diffuser', 'cook', 'baking', 'bedroom', 'living'],
+            'keywords' => ['home', 'kitchen', 'lamp', 'light', 'cleaner', 'vacuum', 'blender', 'purifier', 'aroma', 'diffuser', 'cook', 'baking', 'bedroom', 'living', 'decor', 'decoration', 'christmas'],
             'subcategories' => [
-                'Smart Lighting & Lamps' => ['lamp', 'light', 'led', 'night light', 'rgb', 'bulb', 'strip', 'chandelier', 'projector light'],
+                'Smart Lighting & Lamps' => ['lamp', 'light', 'led', 'night light', 'rgb', 'bulb', 'strip', 'chandelier', 'projector light', 'lantern', 'tree lamp', 'atmosphere lamp', 'desk lamp'],
                 'Kitchen Gadgets & Small Appliances' => ['kitchen', 'blender', 'mixer', 'juicer', 'cutter', 'grinder', 'peeler', 'cook', 'baking', 'scale', 'opener', 'dispenser'],
                 'Home Cleaning & Robot Vacuums' => ['vacuum', 'cleaner', 'mop', 'sweeper', 'scrubber', 'trash can', 'dust', 'lint remover'],
                 'Aroma & Air Purifiers' => ['purifier', 'humidifier', 'diffuser', 'aroma', 'essential oil', 'air quality', 'deodorizer'],
@@ -53,11 +53,11 @@ class CategoryResolverService
         ],
         'Lifestyle & Personal Care' => [
             'slug' => 'lifestyle-personal-care',
-            'keywords' => ['massage', 'massager', 'beauty', 'travel', 'outdoor', 'shaving', 'trimmer', 'grooming', 'personal', 'novelty', 'gift', 'relax'],
+            'keywords' => ['massage', 'massager', 'beauty', 'travel', 'outdoor', 'shaving', 'trimmer', 'grooming', 'personal', 'novelty', 'gift', 'relax', 'decor', 'decoration'],
             'subcategories' => [
                 'Health & Massage Gadgets' => ['massager', 'massage', 'neck massager', 'fascia gun', 'foot massager', 'cervical', 'therapy', 'relaxation'],
                 'Travel & Outdoor Gear' => ['travel', 'outdoor', 'camping', 'flashlight', 'bottle', 'backpack', 'pocket', 'compass', 'survival'],
-                'Novelty & Creative Gifts' => ['gift', 'toy', 'fidget', 'novelty', 'creative', 'puzzle', 'decor', 'desk gadget'],
+                'Novelty & Creative Gifts' => ['gift', 'toy', 'fidget', 'novelty', 'creative', 'puzzle', 'decor', 'desk gadget', 'christmas', 'decoration', 'pendant', 'ornament'],
             ]
         ]
     ];
@@ -109,11 +109,21 @@ class CategoryResolverService
      */
     public function resolveOrCreateCategory(?string $incomingCategory, ?string $productTitle = null, ?int $explicitCategoryId = null): Category
     {
-        // 1. If explicit valid category provided, return it
+        // 1. If explicit category provided, verify there is no egregious category mismatch before returning
         if (!empty($explicitCategoryId)) {
             $explicit = Category::find($explicitCategoryId);
             if ($explicit) {
-                return $explicit;
+                $explicitNameLower = strtolower($explicit->name . ' ' . $explicit->slug);
+                $titleLower = strtolower((string)$productTitle);
+
+                // Sanity guard: Do not force lamps, lights, Christmas items, or home decor into watches or wearables
+                $isWatchCategory = Str::contains($explicitNameLower, ['watch', 'wearable', 'smartwatch']);
+                $hasDecorKeywords = Str::contains($titleLower, ['christmas', 'decor', 'decoration', 'lamp', 'light', 'night light', 'tree', 'lantern', 'candle', 'curtain', 'garland', 'ornament', 'pendant']);
+
+                if (!($isWatchCategory && $hasDecorKeywords)) {
+                    return $explicit;
+                }
+                Log::warning("[CategoryResolver] Overriding mismatched watch category '{$explicit->name}' for decor item '{$productTitle}'");
             }
         }
 

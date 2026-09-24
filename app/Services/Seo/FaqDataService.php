@@ -131,7 +131,7 @@ class FaqDataService
         $faqs = [
             [
                 'q' => "What is {$name} and how does it work?",
-                'a' => "{$name} is a high-performance {$categoryName} engineered for convenience, durability, and daily reliability. " . (!empty($product->description) ? \Illuminate\Support\Str::limit(strip_tags($product->description), 150) : "It features intuitive controls and modern craftsmanship.")
+                'a' => "{$name} is a high-performance {$categoryName} engineered for convenience, durability, and daily reliability. " . (!empty($product->clean_description) ? \Illuminate\Support\Str::limit(strip_tags($product->clean_description), 150) : "It features intuitive controls and modern craftsmanship.")
             ],
             [
                 'q' => "How much does {$name} cost on AtoZGadgets?",
