@@ -124,9 +124,13 @@ class DownloadProductImagesToDesktopCommand extends Command
             $detailResp = null;
             if (!empty($slug)) {
                 try {
-                    $detailResp = Http::timeout(10)->get("{$liveBaseUrl}/api/products/{$slug}");
+                    usleep(350000); // 350ms throttle to respect host rate-limits
+                    $detailResp = Http::timeout(20)->retry(3, 1000)->get("{$liveBaseUrl}/api/products/{$slug}");
+                    if (!$detailResp->successful()) {
+                        $this->line("  <fg=yellow>⚠</> Detail fetch warning ({$detailResp->status()}) for #{$id}");
+                    }
                 } catch (\Throwable $e) {
-                    // non-fatal, fallback to list item
+                    $this->line("  <fg=red>✗</> Detail API error for #{$id}: " . $e->getMessage());
                 }
             }
 
