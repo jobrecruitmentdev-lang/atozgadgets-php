@@ -169,7 +169,7 @@ class CatalogController extends Controller
             $effectiveThumbnail = !empty($sourceImage) ? $sourceImage : ProductContentService::downloadAndStoreMedia($sourceImage);
 
             // Strict ACID Transaction - Create Product, Variants, Media, Specs & CJ Supplier Mapping
-            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $effectiveThumbnail, $sourceImage) {
+            $product = \Illuminate\Support\Facades\DB::transaction(function () use ($categoryId, $categoryName, $brandId, $createdBy, $cleanTitle, $slug, $merchantSku, $data, $pricing, $status, $isActive, $cleanDescription, $cjDetails, $customMultiplier, $effectiveThumbnail, $sourceImage) {
                 $product = Product::create([
                     'category_id' => $categoryId,
                     'brand_id' => $brandId,
@@ -248,7 +248,7 @@ class CatalogController extends Controller
                     foreach ($cjDetails['variants'] as $vIdx => $v) {
                         $vPricing = PricingService::calculateRetailPrice((float)$v['costPrice'], $customMultiplier);
                         $vSku = $merchantSku . '-V' . str_pad((string)($vIdx + 1), 2, '0', STR_PAD_LEFT);
-                        $isWatchCategory = str_contains(strtolower($cleanTitle), 'watch') || str_contains(strtolower($categoryName), 'watch');
+                        $isWatchCategory = str_contains(strtolower($cleanTitle), 'watch') || str_contains(strtolower($categoryName ?? ''), 'watch');
 
                         // Sanitize variant image if it's pointing to generic unsplash watch placeholder for non-watch products
                         $rawVariantImg = $v['image'] ?? $data['image'];

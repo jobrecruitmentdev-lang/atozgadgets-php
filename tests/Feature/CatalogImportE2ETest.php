@@ -87,7 +87,8 @@ class CatalogImportE2ETest extends TestCase
 
         $this->assertDatabaseHas('cj_products', [
             'cj_product_id' => 'CJ-TEST-001',
-            'sell_price' => 45.50,
+            'original_price' => 45.50,
+            'sell_price' => 91.0,
             'status' => 'imported'
         ]);
     }
