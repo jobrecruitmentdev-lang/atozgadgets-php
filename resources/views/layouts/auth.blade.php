@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-app="auth">
 <head>
-    @include('partials.theme-init')
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS0E52WE2D"></script>
     <script>
@@ -11,6 +10,7 @@
 
       gtag('config', 'G-LS0E52WE2D');
     </script>
+    @include('partials.theme-init')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'AtoZGadgets')</title>
