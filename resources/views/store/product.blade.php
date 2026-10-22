@@ -41,33 +41,62 @@
               "@type": "Organization",
               "name": "AtoZGadgets"
             },
-            "shippingDetails": {
-              "@type": "OfferShippingDetails",
-              "shippingRate": {
-                "@type": "MonetaryAmount",
-                "value": "0.00",
-                "currency": "USD"
-              },
-              "shippingDestination": {
-                "@type": "DefinedRegion",
-                "addressCountry": "US"
-              },
-              "deliveryTime": {
-                "@type": "ShippingDeliveryTime",
-                "handlingTime": {
-                  "@type": "QuantitativeValue",
-                  "minValue": 0,
-                  "maxValue": 1,
-                  "unitCode": "DAY"
+            "shippingDetails": [
+              {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "0.00",
+                  "currency": "USD"
                 },
-                "transitTime": {
-                  "@type": "QuantitativeValue",
-                  "minValue": 3,
-                  "maxValue": 7,
-                  "unitCode": "DAY"
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "US"
+                },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 0,
+                    "maxValue": 1,
+                    "unitCode": "DAY"
+                  },
+                  "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 3,
+                    "maxValue": 7,
+                    "unitCode": "DAY"
+                  }
+                }
+              },
+              {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "0.00",
+                  "currency": "USD"
+                },
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "IN"
+                },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 0,
+                    "maxValue": 1,
+                    "unitCode": "DAY"
+                  },
+                  "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 4,
+                    "maxValue": 8,
+                    "unitCode": "DAY"
+                  }
                 }
               }
-            },
+            ],
             "hasMerchantReturnPolicy": {
               "@type": "MerchantReturnPolicy",
               "applicableCountry": "US",
@@ -530,15 +559,17 @@
 
     <!-- Tab 3: Shipping & Returns -->
     <div id="tab-shipping" class="tab-pane">
-        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Fast USA Delivery</h4>
-        <p>All orders are processed and dispatched within 1–2 business days. Direct delivery across all 50 US States is fulfilled via USPS Priority Mail & UPS Express.</p>
+        <h4 style="color: var(--text-primary); margin-bottom: 10px;">Fast USA & India Tracked Delivery</h4>
+        <p>All orders are processed and dispatched within 1–2 business days with end-to-end flight and courier tracking. All pricing and checkout transactions are denominated transparently in US Dollars (USD $).</p>
         <ul style="padding-left: 20px; margin-top: 10px; margin-bottom: 20px;">
-            <li><strong>Standard US Delivery:</strong> 3–7 Business Days</li>
-            <li><strong>Live Tracking:</strong> Real-time USPS / UPS GPS tracking provided upon dispatch</li>
-            <li><strong>Coverage:</strong> Residential, apartments, and commercial addresses in all 50 states</li>
+            <li><strong>United States Delivery:</strong> 3–7 Business Days via USPS Priority Mail & UPS Express</li>
+            <li><strong>India Doorstep Delivery:</strong> 4–8 Business Days via Tracked Air Express Courier</li>
+            <li><strong>Live Tracking:</strong> Real-time courier tracking provided via email upon dispatch</li>
+            <li><strong>Coverage:</strong> Residential and business addresses across all 50 US States and Indian Metros</li>
+            <li><strong>Pricing:</strong> Billed strictly in USD ($) with zero hidden currency surcharges</li>
         </ul>
         <h4 style="color: var(--text-primary); margin-bottom: 10px;">30-Day Money-Back Guarantee</h4>
-        <p>We provide a 30-day hassle-free return and replacement policy. If your product is defective or does not meet your expectations, contact our 24/7 support team for an immediate replacement or full refund.</p>
+        <p>We provide a 30-day hassle-free return and replacement policy for all domestic and international customers. If your product is defective or does not meet your expectations, contact our 24/7 support team for an immediate replacement or full refund.</p>
     </div>
 
     <!-- Tab: Product FAQs -->

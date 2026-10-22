@@ -20,10 +20,13 @@
 
     <!-- Canonical URL -->
     <link rel="canonical" href="@yield('canonical', url()->current())">
+    <link rel="alternate" hreflang="en-US" href="@yield('canonical', url()->current())">
+    <link rel="alternate" hreflang="en-IN" href="@yield('canonical', url()->current())">
+    <link rel="alternate" hreflang="x-default" href="@yield('canonical', url()->current())">
 
     <!-- US Geo-Targeting & Regional Search Signals -->
-    <meta name="geo.region" content="US">
-    <meta name="geo.placename" content="United States">
+    <meta name="geo.region" content="US, IN">
+    <meta name="geo.placename" content="United States, India">
     <meta name="target" content="all">
     <meta name="audience" content="all">
     <meta name="coverage" content="Worldwide">

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
 use App\Services\Seo\UsGeoDataService;
+use App\Services\Seo\IndiaGeoDataService;
 use App\Services\Seo\FaqDataService;
 use App\Services\Seo\GuideDataService;
 
@@ -212,6 +213,75 @@ class SeoHubController extends Controller
         );
 
         return view('store.seo.usa_city', compact('stateData', 'cityData', 'products', 'faqs', 'siblingCities'));
+    }
+
+    /**
+     * India National Shipping & 28-State Hub (/india)
+     */
+    public function indiaNational()
+    {
+        $states = IndiaGeoDataService::getAllStates();
+        $topCities = IndiaGeoDataService::getTopCommercialCities(24);
+        $trendingProducts = Product::published()->latest()->limit(8)->get();
+        $shippingFaqs = [
+            [
+                'q' => 'Does AtoZGadgets ship gadgets across India?',
+                'a' => 'Yes! AtoZGadgets ships directly to residential and commercial doorsteps across all 28 Indian States and Union Territories via priority air tracked express delivery.'
+            ],
+            [
+                'q' => 'Are all prices on AtoZGadgets charged in USD ($)?',
+                'a' => 'Yes! All prices, products, and checkout transactions are transparently billed in US Dollars (USD $). You can pay securely using PayPal and all major international credit or debit cards.'
+            ],
+            [
+                'q' => 'How long does shipping take to Indian metropolitan cities?',
+                'a' => 'Major Indian tech metros (Bengaluru, Mumbai, Delhi NCR, Hyderabad, Pune, Chennai) typically receive orders within 4 to 7 business days with end-to-end flight and courier tracking.'
+            ],
+            [
+                'q' => 'Is there a 30-day money-back guarantee for customers in India?',
+                'a' => 'Yes! Every purchase delivered to India is backed by our comprehensive 30-Day Money-Back Guarantee and replacement protection.'
+            ]
+        ];
+
+        return view('store.seo.india_national', compact('states', 'topCities', 'trendingProducts', 'shippingFaqs'));
+    }
+
+    /**
+     * India State Landing Page (/india/{state})
+     */
+    public function indiaState(string $state)
+    {
+        $stateData = IndiaGeoDataService::getStateBySlug($state);
+        if (!$stateData) {
+            abort(404);
+        }
+
+        $cities = IndiaGeoDataService::getCitiesForState($state);
+        $popularProducts = Product::published()->latest()->limit(8)->get();
+        $allStates = IndiaGeoDataService::getAllStates();
+
+        return view('store.seo.india_state', compact('stateData', 'cities', 'popularProducts', 'allStates'));
+    }
+
+    /**
+     * India City Landing Page (/india/{state}/{city})
+     */
+    public function indiaCity(string $state, string $city)
+    {
+        $stateData = IndiaGeoDataService::getStateBySlug($state);
+        $cityData = IndiaGeoDataService::getCityBySlug($state, $city);
+
+        if (!$stateData || !$cityData) {
+            abort(404);
+        }
+
+        $products = Product::published()->latest()->limit(12)->get();
+        $faqs = FaqDataService::getIndiaCityFaqs($cityData, $stateData);
+        $siblingCities = array_filter(
+            IndiaGeoDataService::getCitiesForState($state),
+            fn($c) => $c['slug'] !== $city
+        );
+
+        return view('store.seo.india_city', compact('stateData', 'cityData', 'products', 'faqs', 'siblingCities'));
     }
 
     /**

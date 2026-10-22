@@ -40,6 +40,9 @@ Route::middleware('storefront')->group(function () {
     Route::get('/usa', [\App\Http\Controllers\SeoHubController::class, 'usaNational'])->name('seo.usa_national');
     Route::get('/usa/{state}', [\App\Http\Controllers\SeoHubController::class, 'usaState'])->name('seo.usa_state');
     Route::get('/usa/{state}/{city}', [\App\Http\Controllers\SeoHubController::class, 'usaCity'])->name('seo.usa_city');
+    Route::get('/india', [\App\Http\Controllers\SeoHubController::class, 'indiaNational'])->name('seo.india_national');
+    Route::get('/india/{state}', [\App\Http\Controllers\SeoHubController::class, 'indiaState'])->name('seo.india_state');
+    Route::get('/india/{state}/{city}', [\App\Http\Controllers\SeoHubController::class, 'indiaCity'])->name('seo.india_city');
     Route::get('/guides', [\App\Http\Controllers\SeoHubController::class, 'guidesIndex'])->name('seo.guides_index');
     Route::get('/guides/{slug}', [\App\Http\Controllers\SeoHubController::class, 'guideDetail'])->name('seo.guide_detail');
     Route::get('/faq', [\App\Http\Controllers\SeoHubController::class, 'faqMaster'])->name('seo.faq_master');

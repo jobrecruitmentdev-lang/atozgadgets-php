@@ -69,6 +69,9 @@ class SeoMasterPlanTest extends TestCase
         $locResponse->assertSee('/usa', false);
         $locResponse->assertSee('/usa/california/los-angeles', false);
         $locResponse->assertSee('/usa/new-york/new-york-city', false);
+        $locResponse->assertSee('/india', false);
+        $locResponse->assertSee('/india/karnataka/bengaluru', false);
+        $locResponse->assertSee('/india/maharashtra/mumbai', false);
 
         $guideResponse = $this->get('/sitemap-guides.xml');
         $guideResponse->assertStatus(200);
@@ -132,6 +135,37 @@ class SeoMasterPlanTest extends TestCase
         $invalidState->assertStatus(404);
     }
 
+    public function test_india_geo_targeting_hubs_return_200_and_usd(): void
+    {
+        $natResponse = $this->get('/india');
+        $natResponse->assertStatus(200);
+        $natResponse->assertSee('India Nationwide Coverage Directory', false);
+        $natResponse->assertSee('Bengaluru', false);
+        $natResponse->assertSee('Mumbai', false);
+
+        $stateResponse = $this->get('/india/karnataka');
+        $stateResponse->assertStatus(200);
+        $stateResponse->assertSee('Karnataka', false);
+        $stateResponse->assertSee('Bengaluru', false);
+
+        $cityResponse = $this->get('/india/karnataka/bengaluru');
+        $cityResponse->assertStatus(200);
+        $cityResponse->assertSee('Bengaluru', false);
+        $cityResponse->assertSee('KA', false);
+        $cityResponse->assertSee('FAQPage', false);
+        $cityResponse->assertSee('$', false); // Prices strictly in USD
+
+        $mumCityResponse = $this->get('/india/maharashtra/mumbai');
+        $mumCityResponse->assertStatus(200);
+        $mumCityResponse->assertSee('Mumbai', false);
+        $mumCityResponse->assertSee('MH', false);
+        $mumCityResponse->assertSee('$', false); // Prices strictly in USD
+
+        // Invalid Indian state or city should 404
+        $invalidState = $this->get('/india/shangrila');
+        $invalidState->assertStatus(404);
+    }
+
     public function test_buying_guides_and_faq_master_return_200(): void
     {
         $guidesIndex = $this->get('/guides');
@@ -162,5 +196,10 @@ class SeoMasterPlanTest extends TestCase
         $response->assertSee('FAQPage', false);
         $response->assertSee('OfferShippingDetails', false);
         $response->assertSee('MerchantReturnPolicy', false);
+        $response->assertSee('hreflang="en-US"', false);
+        $response->assertSee('hreflang="en-IN"', false);
+        $response->assertSee('addressCountry": "US"', false);
+        $response->assertSee('addressCountry": "IN"', false);
+        $response->assertSee('priceCurrency": "USD"', false);
     }
 }

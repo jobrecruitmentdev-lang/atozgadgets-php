@@ -162,6 +162,40 @@ class FaqDataService
     }
 
     /**
+     * Generate India city-specific shipping, USD pricing, and delivery FAQs.
+     */
+    public static function getIndiaCityFaqs(array $city, array $state): array
+    {
+        $cityName = $city['name'];
+        $stateName = $state['name'];
+        $transit = $city['transit_days'] ?? '4-7';
+        $focus = $city['focus'] ?? 'Smart Gadgets & Electronics';
+
+        return [
+            [
+                'q' => "Does AtoZGadgets ship gadgets directly to {$cityName}, {$stateName}?",
+                'a' => "Yes! AtoZGadgets ships directly to residential and commercial addresses across {$cityName} and the {$stateName} metropolitan region with end-to-end international tracking."
+            ],
+            [
+                'q' => "How long does delivery take to {$cityName}?",
+                'a' => "Orders to {$cityName} typically arrive within {$transit} business days via premium air express couriers. Live tracking updates are provided as soon as the package is dispatched."
+            ],
+            [
+                'q' => "Are all prices on AtoZGadgets charged in US Dollars (USD)?",
+                'a' => "Yes. All products, cart totals, and checkout transactions on AtoZGadgets are billed in transparent US Dollars (USD $). You can pay securely using PayPal and all major international credit/debit cards."
+            ],
+            [
+                'q' => "Can I buy {$focus} in {$cityName} with buyer protection?",
+                'a' => "Absolutely. Every order delivered to {$cityName} is covered by our comprehensive 30-Day Money-Back Guarantee and damaged-in-transit replacement protection."
+            ],
+            [
+                'q' => "How do I track my shipment to {$cityName}?",
+                'a' => "Once dispatched, you will receive an official tracking number via email to monitor live flight, customs clearance, and local doorstep delivery milestones right to {$cityName}."
+            ]
+        ];
+    }
+
+    /**
      * Generate state-specific shipping and delivery FAQs.
      */
     public static function getCategoryFaqs(Category $category): array

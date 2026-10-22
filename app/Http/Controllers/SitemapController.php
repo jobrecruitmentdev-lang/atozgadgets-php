@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Services\Seo\UsGeoDataService;
+use App\Services\Seo\IndiaGeoDataService;
 use App\Services\Seo\GuideDataService;
 use Illuminate\Http\Response;
 
@@ -159,6 +160,34 @@ class SitemapController extends Controller
         foreach (UsGeoDataService::getAllCities() as $city) {
             $urls[] = [
                 'loc' => route('seo.usa_city', [$city['state_slug'], $city['slug']]),
+                'lastmod' => now()->startOfWeek()->toAtomString(),
+                'changefreq' => 'weekly',
+                'priority' => '0.75'
+            ];
+        }
+
+        // National India Hub
+        $urls[] = [
+            'loc' => route('seo.india_national'),
+            'lastmod' => now()->startOfWeek()->toAtomString(),
+            'changefreq' => 'daily',
+            'priority' => '0.9'
+        ];
+
+        // 28 Indian States
+        foreach (IndiaGeoDataService::getAllStates() as $stateSlug => $state) {
+            $urls[] = [
+                'loc' => route('seo.india_state', $stateSlug),
+                'lastmod' => now()->startOfWeek()->toAtomString(),
+                'changefreq' => 'weekly',
+                'priority' => '0.8'
+            ];
+        }
+
+        // 50+ Major Indian Cities
+        foreach (IndiaGeoDataService::getAllCities() as $city) {
+            $urls[] = [
+                'loc' => route('seo.india_city', [$city['state_slug'], $city['slug']]),
                 'lastmod' => now()->startOfWeek()->toAtomString(),
                 'changefreq' => 'weekly',
                 'priority' => '0.75'
