@@ -1,12 +1,12 @@
 @extends('layouts.store')
 
-@section('title', ($product->name ?? 'Product') . ' - AtoZGadgets')
+@section('title', \App\Services\Seo\SeoMetadataService::getMetaTitle($product))
 
-@section('meta_description', Str::limit(strip_tags($product->clean_description ?? $product->name), 155))
-@section('meta_keywords', addslashes($product->name) . ', buy online, USA fast shipping, premium gadgets, smart electronics')
+@section('meta_description', \App\Services\Seo\SeoMetadataService::getMetaDescription($product))
+@section('meta_keywords', \App\Services\Seo\SeoMetadataService::getMetaKeywords($product))
 @section('og_type', 'product')
-@section('og_title', ($product->name ?? 'Product') . ' - AtoZGadgets')
-@section('og_description', Str::limit(strip_tags($product->clean_description ?? $product->name), 155))
+@section('og_title', \App\Services\Seo\SeoMetadataService::getMetaTitle($product))
+@section('og_description', \App\Services\Seo\SeoMetadataService::getMetaDescription($product))
 @section('og_image', $product->customer_thumbnail)
 @section('canonical', url()->current())
 
@@ -23,7 +23,7 @@
           "image": [
             "{{ $product->customer_thumbnail }}"
           ],
-          "description": "{{ addslashes(Str::limit(strip_tags($product->clean_description ?? $product->name), 250)) }}",
+          "description": "{{ addslashes(\App\Services\Seo\SeoMetadataService::getMetaDescription($product)) }}",
           "sku": "{{ $product->merchant_sku }}",
           "brand": {
             "@type": "Brand",
@@ -501,44 +501,31 @@
 
     <!-- Tab 1: Description (Pillar 2 Clean Content) -->
     <div id="tab-desc" class="tab-pane active">
-        @if(!empty($product->clean_description))
+        @if(!empty($product->description) && strlen(trim(strip_tags($product->clean_description))) > 30)
             {!! $product->clean_description !!}
         @else
-            <p>{{ $product->name }} is designed for premium performance, durability, and daily convenience. Sourced from certified manufacturers with rigorous quality assurance checks before fulfillment.</p>
+            <p style="font-size: 15px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 16px;">
+                {{ \App\Services\Seo\SeoMetadataService::getAeoDirectAnswer($product) }}
+            </p>
+            <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
+                Every item curated by <strong>AtoZGadgets</strong> undergoes strict quality verification prior to dispatch. Sourced directly from certified manufacturers and shipped with authentic retail packaging, real-time tracking, and our comprehensive 30-day money-back guarantee.
+            </p>
         @endif
     </div>
 
     <!-- Tab 2: Specifications -->
     <div id="tab-specs" class="tab-pane">
-        @if($product->specifications && $product->specifications->count() > 0)
-            <table class="specs-table">
-                @foreach($product->specifications as $spec)
-                    <tr>
-                        <td>{{ $spec->name }}</td>
-                        <td>{{ $spec->value }}</td>
-                    </tr>
-                @endforeach
-            </table>
-        @else
-            <table class="specs-table">
+        @php
+            $displaySpecs = \App\Services\Seo\SeoMetadataService::getDynamicSpecifications($product);
+        @endphp
+        <table class="specs-table">
+            @foreach($displaySpecs as $specName => $specValue)
                 <tr>
-                    <td>Product Name</td>
-                    <td>{{ $product->name }}</td>
+                    <td>{{ $specName }}</td>
+                    <td>{{ $specValue }}</td>
                 </tr>
-                <tr>
-                    <td>Merchant SKU</td>
-                    <td>{{ $product->merchant_sku }}</td>
-                </tr>
-                <tr>
-                    <td>Category</td>
-                    <td>{{ $product->category->name ?? 'Gadgets' }}</td>
-                </tr>
-                <tr>
-                    <td>Condition</td>
-                    <td>Brand New (Factory Sealed)</td>
-                </tr>
-            </table>
-        @endif
+            @endforeach
+        </table>
     </div>
 
     <!-- Tab 3: Shipping & Returns -->

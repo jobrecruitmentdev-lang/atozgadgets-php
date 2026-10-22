@@ -236,7 +236,11 @@ class Product extends Model
     public function getCleanDescriptionAttribute(): string
     {
         $raw = (string)($this->description ?? '');
-        return ProductContentService::sanitizeSupplierBoilerplate($raw);
+        $cleaned = ProductContentService::sanitizeSupplierBoilerplate($raw);
+        if (empty(trim(strip_tags($cleaned)))) {
+            return \App\Services\Seo\SeoMetadataService::getAeoDirectAnswer($this);
+        }
+        return $cleaned;
     }
 
     public function getAverageRatingAttribute(): float

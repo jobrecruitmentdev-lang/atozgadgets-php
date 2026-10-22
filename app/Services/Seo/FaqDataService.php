@@ -124,38 +124,7 @@ class FaqDataService
      */
     public static function getProductFaqs(Product $product): array
     {
-        $price = '$' . number_format($product->price, 2);
-        $name = $product->name;
-        $categoryName = $product->category->name ?? 'Gadget';
-
-        $faqs = [
-            [
-                'q' => "What is {$name} and how does it work?",
-                'a' => "{$name} is a high-performance {$categoryName} engineered for convenience, durability, and daily reliability. " . (!empty($product->clean_description) ? \Illuminate\Support\Str::limit(strip_tags($product->clean_description), 150) : "It features intuitive controls and modern craftsmanship.")
-            ],
-            [
-                'q' => "How much does {$name} cost on AtoZGadgets?",
-                'a' => "{$name} is currently available for {$price} on AtoZGadgets, backed by our best-price promise and fast US delivery."
-            ],
-            [
-                'q' => "Does AtoZGadgets ship {$name} across the United States?",
-                'a' => "Yes! We ship {$name} to all 50 US States via USPS Priority Mail and UPS Express. Standard delivery takes 3 to 7 business days with end-to-end tracking."
-            ],
-            [
-                'q' => "What is included with {$name}?",
-                'a' => "Every order includes the brand new {$name}, factory accessories, standard charging/mounting cables (if applicable), and an official user manual in retail packaging."
-            ],
-            [
-                'q' => "Can I return {$name} if I am not satisfied?",
-                'a' => "Yes. {$name} is covered by our 30-Day Money-Back Guarantee. If you experience any issues or are not completely satisfied, you can request a hassle-free return or replacement."
-            ],
-            [
-                'q' => "What payment methods can I use to buy {$name}?",
-                'a' => "You can securely purchase {$name} using PayPal, Visa, MasterCard, American Express, or Discover with 256-bit encrypted checkout."
-            ]
-        ];
-
-        return $faqs;
+        return SeoMetadataService::getProductFaqs($product);
     }
 
     /**
